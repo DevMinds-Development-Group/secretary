@@ -20,7 +20,8 @@ import '../screens/home/login.dart';
 import '../screens/network/networks.dart';
 
 class AppRoutes {
-  static const String home = '/';
+  static const String auth_wrapper = '/';
+  static const String home = 'home';
   static const String login = 'login';
   static const String profile = 'profile';
   static const String dashboard = 'dashboard';
@@ -37,7 +38,6 @@ class AppRoutes {
   static const String admin = 'admin';
   static const String users = 'users';
   static const String network_manage = 'network_manage';
-  static const String auth_wrapper = 'auth_wrapper';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return <String, WidgetBuilder>{

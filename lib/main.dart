@@ -12,8 +12,7 @@ import 'package:app/providers/service_provider.dart';
 import 'package:app/providers/service_type_provider.dart';
 // 1. Importa el nuevo UserProvider que creamos
 import 'package:app/providers/user_provider.dart';
-import 'package:app/screens/home/dashboard.dart';
-import 'package:app/screens/home/home.dart';
+import 'package:app/routes/routes.dart';
 import 'package:app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -49,28 +48,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Secretaría Viento Recio',
-      home: Consumer<AuthService>(
-        builder: (context, authService, child) {
-          return FutureBuilder<String?>(
-            future: authService.getToken(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (snapshot.hasData && snapshot.data != null) {
-                // Si hay token, ve al Dashboard/Home
-                return const Dashboard(); // O tu pantalla Home
-              }
-              // Si no, ve al Login
-              return const Home();
-            },
-          );
-        },
-      ),
-      //initialRoute: AppRoutes.home,
-      //routes: AppRoutes.getRoutes(),
+      initialRoute: AppRoutes.auth_wrapper,
+      routes: AppRoutes.getRoutes(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

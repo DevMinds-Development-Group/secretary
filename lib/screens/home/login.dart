@@ -1,10 +1,10 @@
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/home/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../routes/routes.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/button.dart';
+import '../../widgets/custom_text_form_field.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -46,7 +46,11 @@ class _LoginState extends State<Login> {
           SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
         );
       } else {
-        Navigator.push(context, createFadeRoute(Dashboard()));
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.dashboard,
+          (route) => false,
+        );
       }
     }
   }
@@ -89,85 +93,26 @@ class _LoginState extends State<Login> {
                           constraints: const BoxConstraints(maxWidth: 400),
                           child: Column(
                             children: [
-                              TextFormField(
+                              CustomTextFormField(
                                 controller: _usernameController,
                                 keyboardType: TextInputType.text,
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(Icons.phone_android),
-                                  labelText: 'Nombre de usuario',
-                                  filled: true,
-                                  fillColor: Colors.grey.shade100,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    borderSide:
-                                        BorderSide.none, // Sin borde visible
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    // Borde cuando el campo está enfocado
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    borderSide:
-                                        BorderSide.none, // Sin borde visible
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    // Borde cuando el campo está habilitado
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    borderSide:
-                                        BorderSide.none, // Sin borde visible
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 15.0,
-                                    horizontal: 15.0,
-                                  ), //
-                                  labelStyle: const TextStyle(
-                                    color: Colors.black87,
-                                  ), // Padding interno
-                                ),
-
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Por favor, ingresa tu nombre de usuario';
-                                  }
-
-                                  return null;
-                                },
+                                labelText: 'Nombre de usuario',
+                                validator: (value) => value!.isEmpty
+                                    ? 'Ingresa tu usuario'
+                                    : null,
                               ),
                               const SizedBox(
                                 height: 20,
                               ), // Espacio entre campos
 
-                              TextFormField(
+                              CustomTextFormField(
                                 controller: _passwordController,
-                                obscureText: true, // Para ocultar la contraseña
-                                decoration: InputDecoration(
-                                  prefixIcon: const Icon(Icons.lock),
-                                  labelText: 'Contraseña',
-                                  filled: true,
-                                  fillColor: Colors.grey.shade100,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(5.0),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  labelStyle: const TextStyle(
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Por favor, ingresa tu contraseña';
-                                  }
-                                  if (value.length < 3) {
-                                    return 'La contraseña debe tener al menos 3 caracteres';
-                                  }
-                                  return null;
-                                },
+                                obscureText: true,
+                                labelText: 'Contraseña',
+                                suffixIcon: Icon(Icons.lock_outline),
+                                validator: (value) => value!.length < 3
+                                    ? 'Mínimo 3 caracteres'
+                                    : null,
                               ),
                               const SizedBox(height: 30),
                               _isLoading
@@ -182,7 +127,7 @@ class _LoginState extends State<Login> {
                               TextButton(
                                 onPressed: () {
                                   // Lógica para recuperar contraseña
-                                  print('Olvidé mi contraseña presionado');
+
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(

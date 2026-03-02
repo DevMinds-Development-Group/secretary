@@ -1,8 +1,9 @@
-import 'package:app/colors.dart';
 import 'package:app/routes/page_route_builder.dart';
+import 'package:app/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 
-import 'login.dart';
+import '../../routes/routes.dart';
+import '../public_announcements.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -16,96 +17,80 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(isMobile ? 'assets/06.png' : 'assets/03.png'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(isMobile ? 'assets/06.png' : 'assets/03.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
-        child: Container(
-          padding: EdgeInsets.all(30),
-          child: Column(
-            mainAxisAlignment: isMobile
-                ? MainAxisAlignment.start
-                : MainAxisAlignment.center,
-            children: <Widget>[
-              SizedBox(height: isMobile ? 200 : 50),
-              isMobile
-                  ? Column(
-                      children: [
-                        Text(
-                          'Secretaría',
-                          textAlign: TextAlign.center,
-                          style: _mobileTextStyle(),
-                        ),
-                        Text(
-                          'Viento Recio',
-                          textAlign: TextAlign.center,
-                          style: _mobileTextStyle(),
-                        ),
-                      ],
-                    )
-                  : Text(
-                      'Bienvenido al Ministerio Viento Recio',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 60,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black,
-                            offset: Offset(3, 3),
-                            blurRadius: 7,
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.3),
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.7),
+                ],
+              ),
+            ),
+          ),
+          Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.all(30),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: isMobile
+                      ? MainAxisAlignment.start
+                      : MainAxisAlignment.center,
+                  children: <Widget>[
+                    SizedBox(height: isMobile ? 200 : 50),
+                    isMobile
+                        ? Column(
+                            children: [
+                              Text(
+                                'Secretaría',
+                                textAlign: TextAlign.center,
+                                style: _mobileTextStyle(),
+                              ),
+                              Text(
+                                'Viento Recio',
+                                textAlign: TextAlign.center,
+                                style: _mobileTextStyle(),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'Bienvenido al Ministerio Viento Recio',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 60,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black.withOpacity(0.5),
+                                  offset: Offset(4, 4),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-              SizedBox(height: isMobile ? 120 : 40),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  fixedSize: Size(isMobile ? 200 : 210, isMobile ? 60 : 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      10,
-                    ), // Usa el radio de borde personalizado
-                  ),
-                  backgroundColor: isMobile ? primaryColor : Colors.white,
-                  elevation: 5,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 10 : 20,
-                    vertical: isMobile ? 10 : 20,
-                  ),
-                  textStyle: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(context, createFadeRoute(Login()));
-                },
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Iniciar sesión',
-                      style: TextStyle(
-                        color: isMobile ? Colors.white : Colors.black,
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    Icon(
-                      Icons.login,
-                      color: isMobile ? Colors.white : Colors.black,
-                    ),
+                    SizedBox(height: isMobile ? 120 : 40),
+                    _buildButtons(context, isMobile),
                   ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -120,4 +105,28 @@ class _HomeState extends State<Home> {
       ],
     );
   }
+}
+
+Widget _buildButtons(BuildContext context, bool isMobile) {
+  return Wrap(
+    spacing: 20,
+    runSpacing: 20,
+    alignment: WrapAlignment.center,
+    children: [
+      CustomButton(
+        text: 'Ver anuncios',
+        icon: Icons.event_note,
+        onPressed: () => Navigator.push(
+          context,
+          createFadeRoute(const PublicAnnouncements()),
+        ),
+      ),
+      CustomButton(
+        text: 'Iniciar sesión',
+        icon: Icons.login_rounded,
+        onPressed: () =>
+            Navigator.pushReplacementNamed(context, AppRoutes.login),
+      ),
+    ],
+  );
 }

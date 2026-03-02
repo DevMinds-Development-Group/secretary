@@ -8,7 +8,6 @@ import '../../colors.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/service_provider.dart';
 
-// Widget para las tarjetas de métricas en la parte superior del dashboard
 class MetricCard extends StatelessWidget {
   final String title;
   final String value;
@@ -62,7 +61,6 @@ class MetricCard extends StatelessWidget {
   }
 }
 
-// Widget para los elementos de lista en las secciones
 class DashboardListItem extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -110,7 +108,6 @@ class DashboardListItem extends StatelessWidget {
   }
 }
 
-// Clase principal del Dashboard
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
 
@@ -123,14 +120,10 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
 
-    // Usamos context.watch para que el dashboard se redibuje si los datos cambian.
     final memberProvider = context.watch<MemberProvider>();
     final serviceProvider = context.watch<ServiceProvider>();
-
-    // --- LÓGICA PARA LAS MÉTRICAS DE MIEMBROS ---
     final totalMembers = memberProvider.members.length;
 
-    // Filtramos los servicios para obtener solo los futuros y los ordenamos.
     final upcomingServices = serviceProvider.services
         .where(
           (s) =>
@@ -264,21 +257,31 @@ class _DashboardState extends State<Dashboard> {
 
     // Menú lateral para vista web
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      //extendBodyBehindAppBar: true,
-      appBar: CustomAppBar(title: 'Inicio', isDrawerEnabled: isMobile),
-      body: isMobile
-          ? mainContent
-          : Row(
-              children: [
-                Menu(),
-                Expanded(child: mainContent),
-              ],
-            ),
-      drawer: isMobile
-          ? Drawer(child: Menu())
-          : null, // El Drawer solo en móvil
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+      },
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        //extendBodyBehindAppBar: true,
+        appBar: CustomAppBar(
+          title: 'Inicio',
+          isDrawerEnabled: isMobile,
+          showBackButton: false,
+        ),
+        body: isMobile
+            ? mainContent
+            : Row(
+                children: [
+                  Menu(),
+                  Expanded(child: mainContent),
+                ],
+              ),
+        drawer: isMobile
+            ? Drawer(child: Menu())
+            : null, // El Drawer solo en móvil
+      ),
     );
   }
 }

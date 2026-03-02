@@ -1,46 +1,48 @@
+import 'package:app/screens/home/dashboard.dart';
 import 'package:flutter/material.dart';
 
 import '../routes/page_route_builder.dart';
 import '../screens/admin/profile.dart';
-import '../screens/home/dashboard.dart';
 import '../screens/home/home.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final PreferredSizeWidget? bottom;
   final bool isDrawerEnabled;
+  final bool showBackButton;
 
   CustomAppBar({
     Key? key,
     required this.title,
     this.bottom,
     this.isDrawerEnabled = false,
+    this.showBackButton = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
-    final bool canGoBack = Navigator.canPop(context);
 
     Widget leadingWidget;
 
-    if (isMobile && isDrawerEnabled) {
-      // 1. En móvil y con Drawer, forzamos el ícono de Menú.
-      leadingWidget = Builder(
-        builder: (context) {
-          return IconButton(
-            icon: const Icon(Icons.menu, color: Colors.white),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
+    if (showBackButton) {
+      leadingWidget = IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () async {
+          Navigator.pushReplacement(
+            context,
+            createFadeRoute(const Dashboard()),
           );
         },
       );
-    } else if (canGoBack) {
-      // 2. Si NO hay Drawer o es Web, y podemos volver, mostramos la flecha de atrás.
-      leadingWidget = const BackButton(color: Colors.white);
+    } else if (isMobile && isDrawerEnabled) {
+      leadingWidget = Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      );
     } else {
-      // 3. En caso contrario (Web, sin atrás, sin Drawer), un espacio vacío.
       leadingWidget = const SizedBox(width: 56.0);
     }
 
@@ -51,10 +53,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       automaticallyImplyLeading: false,
 
-      // 3. Definimos el widget 'leading' con nuestra lógica condicional.
       leading: leadingWidget,
 
-      // Si no, muestra un espacio invisible del mismo ancho.
       title: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -84,10 +84,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   createFadeRoute(Profile()),
                 ); // Navegar a editar perfil
               } else if (value == 'logout') {
-                Navigator.push(
+                Navigator.pushAndRemoveUntil(
                   context,
                   createFadeRoute(Home()),
-                ); // Navegar a editar perfil
+                  (route) => false,
+                );
               }
             },
             itemBuilder: (context) => [

@@ -68,7 +68,11 @@ class _MembersState extends State<Members> {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Miembros', isDrawerEnabled: isMobile),
+      appBar: CustomAppBar(
+        title: 'Miembros',
+        isDrawerEnabled: isMobile,
+        showBackButton: true,
+      ),
       drawer: isMobile ? Drawer(child: Menu()) : null,
       body: isMobile
           ? _buildMembersContent(

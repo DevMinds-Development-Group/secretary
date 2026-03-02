@@ -35,7 +35,11 @@ class _ServicesState extends State<Services> {
     final isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Servicios', isDrawerEnabled: isMobile),
+      appBar: CustomAppBar(
+        title: 'Servicios',
+        isDrawerEnabled: isMobile,
+        showBackButton: true,
+      ),
       drawer: isMobile ? Drawer(child: Menu()) : null,
       body: isMobile
           ? SingleChildScrollView(

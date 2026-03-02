@@ -60,8 +60,10 @@ class _MenuState extends State<Menu> {
             title: const Text('Inicio', style: TextStyle(color: Colors.black)),
             selected: _selectedIndex == 0,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Dashboard()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Dashboard()));
               setState(() {
                 _selectedIndex = 0;
               });
@@ -75,8 +77,10 @@ class _MenuState extends State<Menu> {
             title: const Text('Servicios'),
             selected: _selectedIndex == 1,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Services()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Services()));
               setState(() {
                 _selectedIndex = 1;
               });
@@ -90,8 +94,10 @@ class _MenuState extends State<Menu> {
             ),
             selected: _selectedIndex == 2,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Members()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Members()));
               setState(() {
                 _selectedIndex = 2;
               });
@@ -102,8 +108,10 @@ class _MenuState extends State<Menu> {
             title: const Text('Asistencia'),
             selected: _selectedIndex == 3,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Attendance()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Attendance()));
               setState(() {
                 _selectedIndex = 3;
               });
@@ -115,8 +123,10 @@ class _MenuState extends State<Menu> {
             title: const Text('Redes'),
             selected: _selectedIndex == 4,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Networks()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Networks()));
               setState(() {
                 _selectedIndex = 4;
               });
@@ -130,8 +140,10 @@ class _MenuState extends State<Menu> {
             title: const Text('Ministerios'),
             selected: _selectedIndex == 5,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Ministries()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Ministries()));
               setState(() {
                 _selectedIndex = 5;
               });
@@ -143,13 +155,14 @@ class _MenuState extends State<Menu> {
               color: Colors.deepPurpleAccent,
             ),
             title: const Text('Reportes'),
-            selected:
-                _selectedIndex == 6, // Cambiado a 5 para evitar duplicidad
+            selected: _selectedIndex == 6,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Reports()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Reports()));
               setState(() {
-                _selectedIndex = 6; // Cambiado a 5
+                _selectedIndex = 6;
               });
             },
           ),
@@ -158,8 +171,10 @@ class _MenuState extends State<Menu> {
             title: const Text('Administración'),
             selected: _selectedIndex == 7,
             onTap: () {
-              Navigator.pop(context);
-              Navigator.push(context, createFadeRoute(Admin()));
+              if (isMobile) {
+                Navigator.pop(context);
+              }
+              Navigator.pushReplacement(context, createFadeRoute(Admin()));
               setState(() {
                 _selectedIndex = 7;
               });
