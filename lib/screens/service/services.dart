@@ -1,4 +1,5 @@
 import 'package:app/routes/page_route_builder.dart';
+import 'package:app/screens/create/create_other_service.dart';
 import 'package:app/screens/create/create_service.dart';
 import 'package:app/widgets/add_button.dart';
 import 'package:app/widgets/button.dart';
@@ -67,6 +68,50 @@ class _ServicesState extends State<Services> {
                 ),
               ],
             ),
+    );
+  }
+
+  void _showAddOptions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: const Text('¿Qué deseas crear?', textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.church, color: Colors.blue),
+                title: const Text('Servicio'),
+                subtitle: const Text('Cultos, reuniones, etc.'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    createFadeRoute(const CreateService()),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.event_note, color: Colors.orange),
+                title: const Text('Otro'),
+                subtitle: const Text('Eventos especiales, ensayos, etc.'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    createFadeRoute(const CreateOtherService()),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -139,12 +184,7 @@ class _ServicesState extends State<Services> {
                             ),
                             const SizedBox(width: 16),
                             AddButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  createFadeRoute(CreateService()),
-                                );
-                              },
+                              onPressed: () => _showAddOptions(context),
                             ),
                           ],
                         ),
@@ -292,9 +332,7 @@ class _ServicesState extends State<Services> {
         const SizedBox(height: 15),
         AddButton(
           size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-          onPressed: () {
-            Navigator.push(context, createFadeRoute(CreateService()));
-          },
+          onPressed: () => _showAddOptions(context),
         ),
       ],
     );

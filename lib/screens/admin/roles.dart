@@ -1,5 +1,6 @@
 // lib/screens/admin/roles.dart
 
+import 'package:app/colors.dart';
 import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,14 +29,10 @@ class _RolesState extends State<Roles> {
     });
   }
 
-  TextStyle _headerStyle() {
-    return const TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Roles'),
       body: Consumer<RoleProvider>(
         builder: (context, roleProvider, child) {
@@ -65,7 +62,7 @@ class _RolesState extends State<Roles> {
             onRefresh: () => roleProvider.fetchRoles(),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return constraints.maxWidth < 600
+                return constraints.maxWidth < 700
                     ? _buildMobileLayout(context, roles)
                     : _buildWebLayout(context, roles);
               },
@@ -77,7 +74,6 @@ class _RolesState extends State<Roles> {
   }
 
   Widget _buildMobileLayout(BuildContext context, List<Role> roles) {
-    // Este widget ya estaba correcto, no se necesita ningún cambio aquí.
     return Column(
       children: [
         const SizedBox(height: 10),
@@ -135,6 +131,112 @@ class _RolesState extends State<Roles> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildWebLayout(BuildContext context, List<Role> roles) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              AddButton(
+                onPressed: () {
+                  Navigator.push(context, createFadeRoute(const CreateRole()));
+                },
+              ),
+              const SizedBox(width: 35),
+            ],
+          ),
+          SizedBox(height: 20),
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: 1500),
+              child: Card(
+                elevation: 5,
+                color: Colors.white,
+                child: DataTable(
+                  columnSpacing: MediaQuery.of(context).size.width * 0.1,
+                  columns: [
+                    DataColumn(
+                      label: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.15,
+                        child: Text('Nombre de rol', style: _headerStyle()),
+                      ),
+                    ),
+                    DataColumn(
+                      label: Text('Descripción', style: _headerStyle()),
+                    ),
+
+                    DataColumn(label: Text('Permisos', style: _headerStyle())),
+                    DataColumn(label: Text('Acciones', style: _headerStyle())),
+                  ],
+                  rows: roles.map((role) {
+                    final permissionsText = role.permissions.isEmpty
+                        ? 'Ninguno'
+                        : role.permissions.join(', ');
+
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(role.displayName)),
+                        DataCell(
+                          Text(
+                            role.description,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        DataCell(
+                          Tooltip(
+                            message: permissionsText,
+                            child: Text(
+                              maxLines: 2,
+                              permissionsText,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.edit,
+                                  size: 20,
+                                  color: Colors.blue,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    createFadeRoute(
+                                      CreateRole(roleToEdit: role),
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete,
+                                  size: 20,
+                                  color: Colors.red,
+                                ),
+                                onPressed: () {
+                                  _showDelete(context, role);
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -197,93 +299,7 @@ class _RolesState extends State<Roles> {
     );
   }
 
-  Widget _buildWebLayout(BuildContext context, List<Role> roles) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              AddButton(
-                onPressed: () {
-                  Navigator.push(context, createFadeRoute(const CreateRole()));
-                },
-              ),
-              const SizedBox(width: 35),
-            ],
-          ),
-          Center(
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.95,
-              child: DataTable(
-                columnSpacing: MediaQuery.of(context).size.width * 0.1,
-                columns: [
-                  DataColumn(label: Text('Rol', style: _headerStyle())),
-                  DataColumn(label: Text('Descripción', style: _headerStyle())),
-                  DataColumn(label: Text('Permisos', style: _headerStyle())),
-                  DataColumn(label: Text('Acciones', style: _headerStyle())),
-                ],
-                rows: roles.map((role) {
-                  // --- 2. ESTA ES LA LÍNEA CORREGIDA ---
-                  // Simplemente usamos .join(', ') en la lista de Strings.
-                  final permissionsText = role.permissions.isEmpty
-                      ? 'Ninguno'
-                      : role.permissions.join(', ');
-
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(role.displayName)), // Usamos displayName
-                      DataCell(Text(role.description)),
-                      DataCell(
-                        Tooltip(
-                          message: permissionsText,
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.2,
-                            child: Text(
-                              permissionsText,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                size: 20,
-                                color: Colors.blue,
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  createFadeRoute(CreateRole(roleToEdit: role)),
-                                );
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                              onPressed: () {
-                                _showDelete(context, role);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  TextStyle _headerStyle() {
+    return const TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
   }
 }

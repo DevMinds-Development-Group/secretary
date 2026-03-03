@@ -28,22 +28,30 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     if (showBackButton) {
       leadingWidget = IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
-        onPressed: () async {
-          Navigator.pushReplacement(
-            context,
-            createFadeRoute(const Dashboard()),
-          );
+        onPressed: () {
+          if (Navigator.of(context).canPop()) {
+            Navigator.of(context).pop();
+          } else {
+            Navigator.pushReplacement(
+              context,
+              createFadeRoute(const Dashboard()),
+            );
+          }
         },
       );
-    } else if (isMobile && isDrawerEnabled) {
+    } else {
+      leadingWidget = IconButton(
+        icon: Icon(Icons.arrow_back, color: Colors.white.withOpacity(0.3)),
+        onPressed: null,
+      );
+    }
+    if (!showBackButton && isMobile && isDrawerEnabled) {
       leadingWidget = Builder(
         builder: (context) => IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       );
-    } else {
-      leadingWidget = const SizedBox(width: 56.0);
     }
 
     return AppBar(

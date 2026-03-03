@@ -1,5 +1,6 @@
 // lib/screens/admin/logs.dart
 
+import 'package:app/colors.dart';
 import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -54,12 +55,13 @@ class _LogsState extends State<Logs> {
     return Consumer<LogProvider>(
       builder: (context, logProvider, child) {
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: backgroundColor,
           appBar: CustomAppBar(title: 'Registros de Actividad'),
           body: RefreshIndicator(
             onRefresh: () => logProvider.fetchLogs(),
             child: Column(
               children: [
+                SizedBox(height: 30),
                 Expanded(
                   child: logProvider.isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -78,23 +80,17 @@ class _LogsState extends State<Logs> {
                           },
                         ),
                 ),
-                // El widget de paginación que construimos
+
                 if (logProvider.totalPages > 0 && !logProvider.isLoading)
                   Pagination(
                     currentPage: logProvider.currentPage,
                     totalPages: logProvider.totalPages,
                     itemsPerPage: logProvider.pageSize,
-                    // Conectamos los callbacks del widget a los métodos del provider
+
                     onPageChanged: (page) {
-                      print(
-                        '--- LOGS SCREEN: Recibido evento onPageChanged para página: $page ---',
-                      );
                       logProvider.onPageChanged(page);
                     },
                     onItemsPerPageChanged: (size) {
-                      print(
-                        '--- LOGS SCREEN: Recibido evento onItemsPerPageChanged para tamaño: $size ---',
-                      );
                       logProvider.onItemsPerPageChanged(size);
                     },
                   ),
@@ -135,61 +131,43 @@ class _LogsState extends State<Logs> {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Center(
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.95,
-          child: DataTable(
-            //columnSpacing: ,
-            columns: [
-              DataColumn(
-                label: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.12,
-                  child: Text('Fecha', style: _headerStyle()),
-                ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.1,
-                  child: Text('Usuario', style: _headerStyle()),
-                ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.1,
-                  child: Text('Módulo', style: _headerStyle()),
-                ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.1,
-                  child: Text('Acción', style: _headerStyle()),
-                ),
-              ),
-              DataColumn(
-                label: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.2,
-                  child: Text('Detalles', style: _headerStyle()),
-                ),
-              ),
-            ],
-            rows: logs.map((log) {
-              final formattedDate = DateFormat(
-                'dd/MM/yyyy HH:mm:ss',
-              ).format(log.timestamp);
-              return DataRow(
-                cells: [
-                  DataCell(Text(formattedDate)),
-                  DataCell(Text(log.username)),
-                  DataCell(Text(log.module)),
-                  DataCell(Text(log.action.replaceAll('_', ' '))),
-                  DataCell(
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.25,
-                      child: Text(log.details),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 1500),
+          child: Card(
+            elevation: 5,
+            color: Colors.white,
+            child: DataTable(
+              columnSpacing: MediaQuery.of(context).size.width * 0.1,
+              columns: [
+                DataColumn(label: Text('Fecha', style: _headerStyle())),
+
+                DataColumn(label: Text('Usuario', style: _headerStyle())),
+
+                DataColumn(label: Text('Módulo', style: _headerStyle())),
+
+                DataColumn(label: Text('Acción', style: _headerStyle())),
+                DataColumn(label: Text('Detalles', style: _headerStyle())),
+              ],
+              rows: logs.map((log) {
+                final formattedDate = DateFormat(
+                  'dd/MM/yyyy HH:mm:ss',
+                ).format(log.timestamp);
+                return DataRow(
+                  cells: [
+                    DataCell(Text(formattedDate)),
+                    DataCell(Text(log.username)),
+                    DataCell(Text(log.module)),
+                    DataCell(Text(log.action.replaceAll('_', ' '))),
+                    DataCell(
+                      SizedBox(
+                        child: Text(log.details, maxLines: 2),
+                        width: MediaQuery.of(context).size.width * 0.25,
+                      ),
                     ),
-                  ),
-                ],
-              );
-            }).toList(),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),

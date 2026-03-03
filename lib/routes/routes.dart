@@ -4,6 +4,7 @@ import 'package:app/screens/attendance.dart';
 import 'package:app/screens/auth/auth_wrapper.dart';
 import 'package:app/screens/create/create_member.dart';
 import 'package:app/screens/create/create_network.dart';
+import 'package:app/screens/create/create_other_service.dart';
 import 'package:app/screens/create/create_service.dart';
 import 'package:app/screens/members.dart';
 import 'package:app/screens/ministry/ministries.dart';
@@ -38,6 +39,7 @@ class AppRoutes {
   static const String admin = 'admin';
   static const String users = 'users';
   static const String network_manage = 'network_manage';
+  static const String create_other_service = 'create_other_service';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return <String, WidgetBuilder>{
@@ -59,6 +61,7 @@ class AppRoutes {
       users: (context) => Users(),
       network_manage: (context) => NetworkManage(),
       auth_wrapper: (context) => AuthWrapper(),
+      create_other_service: (context) => CreateOtherService(),
     };
   }
 }

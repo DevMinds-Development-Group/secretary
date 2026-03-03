@@ -1,4 +1,5 @@
 // En tu archivo 'users_screen.dart'
+import 'package:app/colors.dart';
 import 'package:app/widgets/custom_appbar.dart';
 import 'package:app/widgets/showDeleteConfirmationDialog.dart';
 import 'package:flutter/material.dart';
@@ -40,15 +41,14 @@ class _UsersState extends State<Users> {
     final List<User> users = userProvider.users;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Usuarios'),
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
-          // --- Caso 1: Cargando ---
           if (userProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          // --- Caso 2: Error ---
+
           if (userProvider.error != null) {
             return Center(
               child: Column(
@@ -69,12 +69,15 @@ class _UsersState extends State<Users> {
             );
           }
           final users = userProvider.users;
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              return constraints.maxWidth < 600
-                  ? _buildMobileLayout(context, users, memberProvider)
-                  : _buildWebLayout(context, users);
-            },
+          return RefreshIndicator(
+            onRefresh: () => userProvider.fetchUsers(),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return constraints.maxWidth < 700
+                    ? _buildMobileLayout(context, users, memberProvider)
+                    : _buildWebLayout(context, users);
+              },
+            ),
           );
         },
       ),
@@ -168,18 +171,6 @@ class _UsersState extends State<Users> {
     );
   }
 
-  Future<void> _showDelete(BuildContext context, User user) {
-    return showDeleteConfirmationDialog(
-      context: context,
-      itemName: user.username,
-      onConfirm: () {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-
-        userProvider.deleteUser(user.username);
-      },
-    );
-  }
-
   Widget _buildWebLayout(BuildContext context, List<User> users) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
@@ -196,74 +187,91 @@ class _UsersState extends State<Users> {
               SizedBox(width: 35),
             ],
           ),
+          SizedBox(height: 20),
           Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(maxWidth: 1500),
-              child: DataTable(
-                columnSpacing: MediaQuery.of(context).size.width * 0.2,
-                columns: [
-                  DataColumn(
-                    label: Text('Nombre de usuario', style: _headerStyle()),
-                  ),
-                  DataColumn(label: Text('Rol', style: _headerStyle())),
-                  DataColumn(
-                    label: Text('Miembro asociado', style: _headerStyle()),
-                  ),
-                  DataColumn(label: Text('Acciones', style: _headerStyle())),
-                ],
-                rows: users
-                    .map(
-                      (user) => DataRow(
-                        cells: [
-                          DataCell(Text(user.username)),
-                          DataCell(Text(user.role)),
-                          DataCell(
-                            Text(
-                              user.member != null
-                                  ? '${user.member!.name} ${user.member!.lastName}'
-                                  : 'Sin miembro asociado',
+              child: Card(
+                elevation: 5,
+                color: Colors.white,
+                child: DataTable(
+                  columnSpacing: MediaQuery.of(context).size.width * 0.2,
+                  columns: [
+                    DataColumn(
+                      label: Text('Nombre de usuario', style: _headerStyle()),
+                    ),
+                    DataColumn(label: Text('Rol', style: _headerStyle())),
+                    DataColumn(
+                      label: Text('Miembro asociado', style: _headerStyle()),
+                    ),
+                    DataColumn(label: Text('Acciones', style: _headerStyle())),
+                  ],
+                  rows: users
+                      .map(
+                        (user) => DataRow(
+                          cells: [
+                            DataCell(Text(user.username)),
+                            DataCell(Text(user.role)),
+                            DataCell(
+                              Text(
+                                user.member != null
+                                    ? '${user.member!.name} ${user.member!.lastName}'
+                                    : 'Sin miembro asociado',
+                              ),
                             ),
-                          ),
-                          DataCell(
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    size: 20,
-                                    color: Colors.blue,
+                            DataCell(
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 20,
+                                      color: Colors.blue,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        createFadeRoute(
+                                          CreateUser(userToEdit: user),
+                                        ),
+                                      );
+                                    },
                                   ),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      createFadeRoute(
-                                        CreateUser(userToEdit: user),
-                                      ),
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete,
-                                    size: 20,
-                                    color: Colors.red,
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      size: 20,
+                                      color: Colors.red,
+                                    ),
+                                    onPressed: () {
+                                      _showDelete(context, user);
+                                    },
                                   ),
-                                  onPressed: () {
-                                    _showDelete(context, user);
-                                  },
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                    .toList(),
+                          ],
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showDelete(BuildContext context, User user) {
+    return showDeleteConfirmationDialog(
+      context: context,
+      itemName: user.username,
+      onConfirm: () {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+        userProvider.deleteUser(user.username);
+      },
     );
   }
 
