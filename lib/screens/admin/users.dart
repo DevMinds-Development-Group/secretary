@@ -195,7 +195,7 @@ class _UsersState extends State<Users> {
                 elevation: 5,
                 color: Colors.white,
                 child: DataTable(
-                  columnSpacing: MediaQuery.of(context).size.width * 0.2,
+                  columnSpacing: MediaQuery.of(context).size.width * 0.1,
                   columns: [
                     DataColumn(
                       label: Text('Nombre de usuario', style: _headerStyle()),

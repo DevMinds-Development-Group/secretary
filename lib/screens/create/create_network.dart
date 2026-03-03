@@ -3,9 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../models/member_model.dart';
 import '../../models/network_model.dart';
-import '../../models/pastor_model.dart';
 import '../../providers/network_provider.dart';
 import '../../providers/pastor_provider.dart'; // <-- Importa el PastorProvider
 import '../../widgets/button.dart';
@@ -22,12 +20,12 @@ class CreateNetwork extends StatefulWidget {
 
 class _CreateNetworkState extends State<CreateNetwork> {
   final _formKey = GlobalKey<FormState>();
-  Set<String> _selectedLeader = '' as Set<String>;
+  Set<String> _selectedLeaderIds = {};
 
   final _nameController = TextEditingController();
   final _missionController = TextEditingController();
 
-  List<Member> _leaders = [];
+  //List<Member> _leaders = [];
 
   bool get _isEditing => widget.networkToEdit != null;
 
@@ -38,11 +36,11 @@ class _CreateNetworkState extends State<CreateNetwork> {
       final network = widget.networkToEdit!;
       _nameController.text = network.name;
       _missionController.text = network.mission ?? '';
-      _leaders = List.from(network.leaders);
+      _selectedLeaderIds = network.leaders.map((l) => l.id).toSet();
+      //_leaders = List.from(network.leaders);
     }
   }
 
-  // ... (dispose y _saveNetwork no necesitan cambios)
   @override
   void dispose() {
     _nameController.dispose();
@@ -50,36 +48,42 @@ class _CreateNetworkState extends State<CreateNetwork> {
     super.dispose();
   }
 
-  void _saveNetwork() {
+  void _saveNetwork() async {
     if (!_formKey.currentState!.validate()) return;
     final networkProvider = Provider.of<NetworkProvider>(
       context,
       listen: false,
     );
-    if (_isEditing) {
-      final updatedNetwork = widget.networkToEdit!.copyWith(
-        name: _nameController.text,
-        mission: _missionController.text.trim(),
-        leaders: _leaders,
+    try {
+      if (_isEditing) {
+        final updatedNetwork = widget.networkToEdit!.copyWith(
+          name: _nameController.text.trim(),
+          mission: _missionController.text.trim(),
+          //leaders: _leaders,
+        );
+        networkProvider.updateNetwork(
+          updatedNetwork,
+          _selectedLeaderIds.toList(),
+        );
+      } else {
+        await networkProvider.addNetwork(
+          _nameController.text.trim(),
+          _missionController.text.trim(),
+        );
+      }
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error al guardar los cambios.')),
       );
-      networkProvider.updateNetwork(updatedNetwork);
-    } else {
-      final newNetwork = NetworkModel(
-        id: '',
-        name: _nameController.text.trim(),
-        mission: _missionController.text.trim(),
-        membersCount: 0,
-        leaders: [],
-      );
-      networkProvider.addNetwork(newNetwork);
     }
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final pastorProvider = Provider.of<PastorProvider>(context, listen: false);
-    final List<PastorModel> availablePastors = pastorProvider.pastors;
+    final pastorProvider = Provider.of<PastorProvider>(context);
+    final availablePastors = pastorProvider.pastors;
+
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
       appBar: CustomAppBar(title: _isEditing ? 'Editar Red' : 'Crear Red'),
@@ -104,16 +108,6 @@ class _CreateNetworkState extends State<CreateNetwork> {
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
-                    controller: _missionController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Misión / Descripción',
-                      border: OutlineInputBorder(),
-                      alignLabelWithHint: true,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
                       labelText: 'Nombre de la Red',
@@ -124,6 +118,16 @@ class _CreateNetworkState extends State<CreateNetwork> {
                         : null,
                   ),
                   const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _missionController,
+                    maxLines: 3,
+                    decoration: const InputDecoration(
+                      labelText: 'Misión / Descripción',
+                      border: OutlineInputBorder(),
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
                   InkWell(
                     onTap: () async {
                       final Set<String>? result = await showDialog<Set<String>>(
@@ -131,7 +135,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                         builder: (ctx) => MultiSelectDialog<String>(
                           title: 'Seleccionar líderes',
                           items: availablePastors.map((p) => p.id).toList(),
-                          initialSelectedItems: _selectedLeader,
+                          initialSelectedItems: _selectedLeaderIds,
                           displayItem: (pastorId) =>
                               pastorProvider.findById(pastorId).name,
                         ),
@@ -139,32 +143,30 @@ class _CreateNetworkState extends State<CreateNetwork> {
 
                       if (result != null) {
                         setState(() {
-                          _selectedLeader = result;
+                          _selectedLeaderIds = result;
                         });
                       }
                     },
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Pastores Asignados',
+                        labelText: 'Líderes',
                         border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_pin),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 16,
                         ),
                       ),
-                      child: _selectedLeader.isEmpty
+                      child: _selectedLeaderIds.isEmpty
                           ? Text(
                               'Ninguno seleccionado',
                               style: TextStyle(color: Colors.grey.shade600),
                             )
-                          // Usamos el método helper del provider para mostrar los nombres
                           : Text(
-                              '',
-                              // pastorProvider.getPastorNamesByIds(
-                              //   _selectedLeader.toList(),
-                              // ),
-                              // maxLines: 2,
-                              // overflow: TextOverflow.ellipsis,
+                              _selectedLeaderIds
+                                  .map((id) => pastorProvider.findById(id).name)
+                                  .join(', '),
+                              overflow: TextOverflow.ellipsis,
                             ),
                     ),
                   ),
@@ -174,7 +176,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                     children: [
                       Button(
                         size: Size(150, 45),
-                        text: _isEditing ? 'Guardar' : 'Crear Red',
+                        text: _isEditing ? 'Actualizar' : 'Crear Red',
                         onPressed: _saveNetwork,
                       ),
                     ],

@@ -14,8 +14,23 @@ import '../../providers/network_provider.dart';
 import '../../widgets/menu.dart';
 import 'network_detail.dart';
 
-class Networks extends StatelessWidget {
+class Networks extends StatefulWidget {
   const Networks({super.key});
+
+  @override
+  State<Networks> createState() => _NetworksState();
+}
+
+class _NetworksState extends State<Networks> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
+      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +58,6 @@ class Networks extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
-                  // La grilla (sin cambios, ya estaba bien)
                   Expanded(
                     child: GridView.builder(
                       gridDelegate:
@@ -55,7 +69,7 @@ class Networks extends StatelessWidget {
                           ),
                       itemCount: networks.length,
                       itemBuilder: (context, index) {
-                        final network = networks[index];
+                        final network = networkProvider.networks[index];
                         final membersInNetwork = memberProvider.members
                             .where((m) => m.networkName == network.name)
                             .toList();
@@ -90,7 +104,6 @@ class Networks extends StatelessWidget {
   Widget _buildHeader(BuildContext context, bool isMobile) {
     final headerItems = _buildHeaderItems(context, isMobile);
 
-    // Si es móvil, los ponemos en una Columna.
     if (isMobile) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -99,7 +112,6 @@ class Networks extends StatelessWidget {
       );
     }
 
-    // Si es web/escritorio, los ponemos en una Fila.
     return Row(children: headerItems);
   }
 
@@ -126,7 +138,6 @@ class Networks extends StatelessWidget {
         ),
       ),
 
-      // Si ES móvil, espacio vertical. Si NO, espacio horizontal.
       isMobile ? const SizedBox(height: 10) : const SizedBox(width: 15),
       AddButton(
         size: Size(
@@ -140,7 +151,6 @@ class Networks extends StatelessWidget {
     ];
   }
 
-  // Widget para las tarjetas de grupo (simplificado y sin cambios de lógica)
   Widget _buildGroupCard({
     required String title,
     required int memberCount,

@@ -14,68 +14,162 @@ class NetworkDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Obtener el provider de miembros
+    bool isMobile = MediaQuery.of(context).size.width < 700;
+
     final memberProvider = Provider.of<MemberProvider>(context);
 
-    // 2. Filtrar la lista para obtener solo los miembros de este grupo
     final List<Member> membersInGroup = memberProvider.allMembers
         .where((member) => member.networkName == network.name)
         .toList();
 
-    // Opcional: Ordenar la lista de miembros alfabéticamente
     membersInGroup.sort(
       (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: network.name, // El título del AppBar es el nombre de la red
-      ),
-      body: membersInGroup.isEmpty
-          ? const Center(
-              child: Text(
-                'No hay miembros en esta red.',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
+      appBar: CustomAppBar(title: network.name),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: 1500),
+          child: Column(
+            children: [
+              SizedBox(height: 20),
+              _buildNetworkHeader(network, isMobile),
+              Expanded(
+                child: membersInGroup.isEmpty
+                    ? _buildEmptyState()
+                    : _buildMemberList(membersInGroup, isMobile),
               ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: membersInGroup.length,
-              itemBuilder: (context, index) {
-                final member = membersInGroup[index];
-                return Card(
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: primaryColor.withOpacity(0.1),
-                      foregroundColor: primaryColor,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetworkHeader(NetworkModel network, bool isMobile) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(20.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.5),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Líderes:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  //color: Colors.blueGrey,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Wrap(
+                spacing: 8,
+                children: network.leaders.map((leader) {
+                  return Chip(
+                    backgroundColor: primaryColor.withOpacity(0.1),
+                    avatar: CircleAvatar(
+                      backgroundColor: primaryColor,
                       child: Text(
-                        member.name.isNotEmpty
-                            ? member.name[0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        leader.name[0],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
-                    title: Text(
-                      '${member.name} ${member.lastName}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text('${member.address} \n${member.phone}'),
+                    label: Text('${leader.name} ${leader.lastName}'),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          const Divider(height: 30),
+          Row(
+            children: [
+              const Text(
+                'Misión de la Red:',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  // color: Colors.blueGrey,
+                ),
+              ),
+              SizedBox(width: 10),
+              Text(
+                network.mission ?? 'Sin misión definida',
+                style: const TextStyle(fontSize: 16, color: Colors.black87),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
 
-                    // 1. Quita el ícono de la flecha
-                    // trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          // Mostramos los nombres de los líderes mapeados
+        ],
+      ),
+    );
+  }
 
-                    // 2. Quita la acción de onTap
-                    // onTap: () { ... },
-                  ),
-                );
-              },
+  // Widget para la lista de miembros (Estilo Members.dart)
+  Widget _buildMemberList(List<Member> members, bool isMobile) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              blurRadius: 5,
+              spreadRadius: 2,
+              offset: const Offset(0, 3),
             ),
+          ],
+        ),
+        child: ListView.separated(
+          shrinkWrap: true,
+          padding: const EdgeInsets.all(10),
+          itemCount: members.length,
+          separatorBuilder: (context, index) =>
+              const Divider(height: 1, thickness: 0.1),
+          itemBuilder: (context, index) {
+            final member = members[index];
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Colors.red[200],
+                child: Text(
+                  member.name[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              title: Text(
+                '${member.name} ${member.lastName}',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(member.phone),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -93,47 +187,6 @@ class NetworkDetail extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  // Widget para construir la lista de miembros
-  Widget _buildMemberList(List<Member> members) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-      itemCount: members.length,
-      itemBuilder: (context, index) {
-        final member = members[index];
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.symmetric(vertical: 8.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: accentColor.withOpacity(0.2),
-              foregroundColor: accentColor,
-              child: Text(
-                member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            title: Text(
-              '${member.name} ${member.lastName}',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.grey,
-            ),
-            onTap: () {
-              // Futuro: Navegar al perfil detallado del miembro individual
-              print('Ver detalles de ${member.name}');
-            },
-          ),
-        );
-      },
     );
   }
 }

@@ -7,7 +7,7 @@ class NetworkModel {
   final String name;
   final String? mission;
   final int membersCount;
-  final List<dynamic> leaders;
+  final List<Member> leaders;
 
   NetworkModel({
     required this.id,
@@ -17,14 +17,17 @@ class NetworkModel {
     required this.leaders,
   });
 
-  // Factory para crear una instancia desde el JSON del backend
   factory NetworkModel.fromJson(Map<String, dynamic> json) {
     return NetworkModel(
       id: json['id'] ?? '',
       name: json['name'] ?? 'Sin Nombre',
       mission: json['mission'],
       membersCount: json['membersCount'] ?? 0,
-      leaders: json['leaders'] as List<dynamic>? ?? [],
+      leaders:
+          (json['leaders'] as List<dynamic>?)
+              ?.map((l) => Member.fromJson(l))
+              .toList() ??
+          [],
     );
   }
 
