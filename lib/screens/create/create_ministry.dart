@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/ministry_model.dart';
-import '../../providers/log_provider.dart';
+import '../../providers/leader_provider.dart';
 import '../../providers/ministry_provider.dart';
-import '../../providers/pastor_provider.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/multi_select_dialog.dart';
 
@@ -21,71 +20,84 @@ class CreateMinistry extends StatefulWidget {
 
 class _CreateMinistryState extends State<CreateMinistry> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _detailsController;
+  final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
 
-  Set<String> _selectedPastorIds = {};
+  Set<String> _selectedLeaderIds = {};
   bool get _isEditing => widget.ministryToEdit != null;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(
-      text: widget.ministryToEdit?.name ?? '',
-    );
-    _detailsController = TextEditingController(
-      text: widget.ministryToEdit?.details ?? '',
-    );
 
-    if (_isEditing) {
-      _selectedPastorIds = widget.ministryToEdit!.pastorIds.toSet();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<LeaderProvider>(context, listen: false).fetchLeaders();
+    });
+    if (widget.ministryToEdit != null) {
+      final ministry = widget.ministryToEdit!;
+      _nameController.text = ministry.name;
+      _descriptionController.text = ministry.description;
+
+      _selectedLeaderIds = ministry.leaders.map((l) => l.id).toSet();
     }
-    ;
   }
 
   @override
   void dispose() {
-    // Limpia los controladores
     _nameController.dispose();
-    _detailsController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      final ministryProvider = Provider.of<MinistryProvider>(
-        context,
-        listen: false,
-      );
-      final logProvider = Provider.of<LogProvider>(context, listen: false);
+  void _saveMinistry() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      if (_isEditing) {
-        // Lógica para ACTUALIZAR
-        final updatedMinistry = MinistryModel(
-          id: widget.ministryToEdit!.id,
-          name: _nameController.text,
-          details: _detailsController.text,
-          pastorIds: _selectedPastorIds.toList(),
+    final ministryProvider = Provider.of<MinistryProvider>(
+      context,
+      listen: false,
+    );
+    final List<String> selectedIds = _selectedLeaderIds.toList();
+
+    try {
+      if (widget.ministryToEdit != null) {
+        await ministryProvider.updateMinistry(
+          widget.ministryToEdit!.id,
+          _nameController.text.trim(),
+          _descriptionController.text.trim(),
+          selectedIds,
         );
-        ministryProvider.updateMinistry(updatedMinistry);
       } else {
-        // Lógica para CREAR
-        final newMinistry = MinistryModel(
-          id: '', // El provider asignará un ID
-          name: _nameController.text,
-          details: _detailsController.text,
-          pastorIds: _selectedPastorIds.toList(),
+        await ministryProvider.addMinistry(
+          _nameController.text.trim(),
+          _descriptionController.text.trim(),
+          selectedIds,
         );
-        ministryProvider.addMinistry(newMinistry);
       }
-      Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ministerio guardado con éxito'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al conectar con el servidor'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
-    final pastorProvider = Provider.of<PastorProvider>(context, listen: false);
+    final leaderProvider = Provider.of<LeaderProvider>(context, listen: false);
+    final ministryProvider = context.watch<MinistryProvider>();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(
@@ -124,7 +136,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
                   ),
                   const SizedBox(height: 20),
                   CustomTextFormField(
-                    controller: _detailsController,
+                    controller: _descriptionController,
                     labelText: 'Descripción',
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -141,41 +153,40 @@ class _CreateMinistryState extends State<CreateMinistry> {
                         context: context,
                         builder: (ctx) => MultiSelectDialog<String>(
                           title: 'Seleccionar Pastores',
-                          items: pastorProvider.pastors
+                          items: leaderProvider.leaders
                               .map((p) => p.id)
                               .toList(),
-                          initialSelectedItems: _selectedPastorIds,
-                          displayItem: (pastorId) =>
-                              pastorProvider.findById(pastorId).name,
+                          initialSelectedItems: _selectedLeaderIds,
+                          displayItem: (id) => leaderProvider.findById(id).name,
                         ),
                       );
                       if (result != null) {
                         setState(() {
-                          _selectedPastorIds = result;
+                          _selectedLeaderIds = result;
                         });
                       }
                     },
                     child: InputDecorator(
                       decoration: const InputDecoration(
-                        labelText: 'Pastores a Cargo',
+                        labelText: 'Líderes del Ministerio',
                         border: OutlineInputBorder(),
                         contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 16,
                         ),
                       ),
-                      child: _selectedPastorIds.isEmpty
+                      child: _selectedLeaderIds.isEmpty
                           ? Text(
                               'Ninguno seleccionado',
                               style: TextStyle(color: Colors.grey.shade600),
                             )
                           : Text(
-                              '',
-                              // pastorProvider.getPastorNamesByIds(
-                              //   _selectedPastorIds.toList(),
-                              // ),
-                              // maxLines: 2,
-                              // overflow: TextOverflow.ellipsis,
+                              leaderProvider.leaders
+                                  .where(
+                                    (p) => _selectedLeaderIds.contains(p.id),
+                                  )
+                                  .map((p) => '${p.name} ${p.lastName}')
+                                  .join(', '),
                             ),
                     ),
                   ),
@@ -186,9 +197,11 @@ class _CreateMinistryState extends State<CreateMinistry> {
                     children: [
                       Button(
                         size: Size(130, 45),
-                        onPressed: _submitForm,
-                        // Texto del botón dinámico
-                        text: _isEditing ? 'Actualizar' : 'Guardar',
+                        text: widget.ministryToEdit != null
+                            ? 'Actualizar'
+                            : 'Guardar',
+                        isLoading: ministryProvider.isLoading,
+                        onPressed: _saveMinistry,
                       ),
                     ],
                   ),

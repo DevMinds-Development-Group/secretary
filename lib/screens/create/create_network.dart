@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/network_model.dart';
+import '../../providers/leader_provider.dart';
 import '../../providers/network_provider.dart';
-import '../../providers/pastor_provider.dart'; // <-- Importa el PastorProvider
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/multi_select_dialog.dart';
@@ -32,12 +32,15 @@ class _CreateNetworkState extends State<CreateNetwork> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<LeaderProvider>(context, listen: false).fetchLeaders();
+    });
+
     if (_isEditing) {
       final network = widget.networkToEdit!;
       _nameController.text = network.name;
       _missionController.text = network.mission ?? '';
       _selectedLeaderIds = network.leaders.map((l) => l.id).toSet();
-      //_leaders = List.from(network.leaders);
     }
   }
 
@@ -72,6 +75,12 @@ class _CreateNetworkState extends State<CreateNetwork> {
         );
       }
       if (mounted) Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Red guardada con éxito'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Error al guardar los cambios.')),
@@ -81,8 +90,9 @@ class _CreateNetworkState extends State<CreateNetwork> {
 
   @override
   Widget build(BuildContext context) {
-    final pastorProvider = Provider.of<PastorProvider>(context);
-    final availablePastors = pastorProvider.pastors;
+    final leaderProvider = Provider.of<LeaderProvider>(context);
+    final availableLeaders = leaderProvider.leaders;
+    final networkProvider = context.watch<NetworkProvider>();
 
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
@@ -127,17 +137,19 @@ class _CreateNetworkState extends State<CreateNetwork> {
                       alignLabelWithHint: true,
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 16),
                   InkWell(
                     onTap: () async {
                       final Set<String>? result = await showDialog<Set<String>>(
                         context: context,
                         builder: (ctx) => MultiSelectDialog<String>(
                           title: 'Seleccionar líderes',
-                          items: availablePastors.map((p) => p.id).toList(),
+                          items: availableLeaders.map((p) => p.id).toList(),
                           initialSelectedItems: _selectedLeaderIds,
-                          displayItem: (pastorId) =>
-                              pastorProvider.findById(pastorId).name,
+                          displayItem: (id) {
+                            final p = leaderProvider.findById(id);
+                            return '${p.name} ${p.lastName}';
+                          },
                         ),
                       );
 
@@ -163,9 +175,17 @@ class _CreateNetworkState extends State<CreateNetwork> {
                               style: TextStyle(color: Colors.grey.shade600),
                             )
                           : Text(
-                              _selectedLeaderIds
-                                  .map((id) => pastorProvider.findById(id).name)
+                              availableLeaders
+                                  .where(
+                                    (p) => _selectedLeaderIds.contains(p.id),
+                                  )
+                                  .map((p) => p.name)
                                   .join(', '),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                     ),
@@ -176,7 +196,10 @@ class _CreateNetworkState extends State<CreateNetwork> {
                     children: [
                       Button(
                         size: Size(150, 45),
-                        text: _isEditing ? 'Actualizar' : 'Crear Red',
+                        text: widget.networkToEdit != null
+                            ? 'Actualizar'
+                            : 'Guardar',
+                        isLoading: networkProvider.isLoading,
                         onPressed: _saveNetwork,
                       ),
                     ],

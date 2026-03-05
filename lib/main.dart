@@ -2,11 +2,11 @@
 
 import 'package:app/colors.dart';
 import 'package:app/providers/attendance_provider.dart';
+import 'package:app/providers/leader_provider.dart';
 import 'package:app/providers/log_provider.dart';
 import 'package:app/providers/member_provider.dart';
 import 'package:app/providers/ministry_provider.dart';
 import 'package:app/providers/network_provider.dart';
-import 'package:app/providers/pastor_provider.dart';
 import 'package:app/providers/role_provider.dart';
 import 'package:app/providers/service_provider.dart';
 import 'package:app/providers/service_type_provider.dart';
@@ -33,7 +33,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => NetworkProvider()),
         ChangeNotifierProvider(create: (context) => MinistryProvider()),
         ChangeNotifierProvider(create: (context) => ServiceTypeProvider()),
-        ChangeNotifierProvider(create: (context) => PastorProvider()),
+        ChangeNotifierProvider(create: (context) => LeaderProvider()),
         ChangeNotifierProvider(create: (context) => AuthService()),
       ],
       child: const MyApp(),

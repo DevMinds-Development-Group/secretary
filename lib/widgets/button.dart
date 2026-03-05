@@ -1,3 +1,4 @@
+import 'package:app/colors.dart';
 import 'package:flutter/material.dart';
 
 class Button extends StatelessWidget {
@@ -5,7 +6,7 @@ class Button extends StatelessWidget {
   final VoidCallback onPressed;
   final Color? backgroundColor;
   final Color? textColor;
-
+  final bool isLoading;
   final Size? size;
 
   const Button({
@@ -14,7 +15,7 @@ class Button extends StatelessWidget {
     required this.onPressed,
     this.backgroundColor,
     this.textColor,
-
+    this.isLoading = false,
     this.size,
   });
 
@@ -22,31 +23,34 @@ class Button extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
     return SizedBox(
-      // Si se proporciona un ancho, úsalo; de lo contrario, ocupa el ancho máximo.
       child: ElevatedButton(
+        onPressed: isLoading ? () {} : onPressed,
         style: ElevatedButton.styleFrom(
           fixedSize: size,
-          foregroundColor:
-              textColor ?? Colors.white, // Color del texto (por defecto blanco)
-          backgroundColor:
-              backgroundColor ??
-              Colors.blueAccent.shade700, // Color de fondo (por defecto azul)
+          foregroundColor: textColor ?? Colors.white,
+          backgroundColor: primaryColor,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              10,
-            ), // Usa el radio de borde personalizado
+            borderRadius: BorderRadius.circular(10),
           ),
-          elevation: 5, // Sombra para el botón
+          elevation: 5,
         ),
-        onPressed: onPressed,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: isMobile ? 16 : 18,
-            fontWeight: FontWeight.bold,
-            color: textColor ?? Colors.white,
-          ),
-        ),
+        child: isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white, // Círculo blanco sobre tu botón de color
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
       ),
     );
   }

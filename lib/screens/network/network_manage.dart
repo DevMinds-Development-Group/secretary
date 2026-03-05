@@ -72,7 +72,6 @@ class NetworkManage extends StatelessWidget {
     );
   }
 
-  // VISTA MÓVIL: Lista simple sin dividers pesados
   Widget _buildMobileList(BuildContext context, List<NetworkModel> networks) {
     return ListView.separated(
       padding: const EdgeInsets.all(10),
@@ -101,10 +100,11 @@ class NetworkManage extends StatelessWidget {
 
   Widget _buildWebTable(BuildContext context, List<NetworkModel> networks) {
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(15.0),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+          //headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
           columnSpacing: MediaQuery.of(context).size.width * 0.1,
           columns: [
             DataColumn(label: Text('Red', style: _headerStyle())),
@@ -117,12 +117,21 @@ class NetworkManage extends StatelessWidget {
             return DataRow(
               cells: [
                 DataCell(
-                  Text(
-                    network.name,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.1,
+                    child: Text(
+                      network.name,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      maxLines: 2,
+                    ),
                   ),
                 ),
-                DataCell(Text(network.mission ?? 'Sin misión')),
+                DataCell(
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.15,
+                    child: Text(network.mission ?? 'Sin misión'),
+                  ),
+                ),
                 DataCell(
                   Text(leaderNames.isEmpty ? 'Sin asignar' : leaderNames),
                 ),

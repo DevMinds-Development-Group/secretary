@@ -1,109 +1,219 @@
 import 'package:flutter/material.dart';
 
-import '../models/ministry_member_model.dart';
+import '../models/member_model.dart';
 import '../models/ministry_model.dart';
+import '../services/api_client.dart';
 
 class MinistryProvider with ChangeNotifier {
-  // Lista de ejemplo. En el futuro, esto vendrá de una base de datos.
-  List<MinistryModel> _ministries = [
-    MinistryModel(
-      id: '01',
-      name: 'Misericordia',
-      details: 'Personas vulnerables',
-    ),
-    MinistryModel(id: '02', name: 'Ensancha', details: 'Personas de negocios'),
-    MinistryModel(
-      id: '03',
-      name: 'Libres como el viento',
-      details: 'Personas presas',
-    ),
-  ];
+  final ApiClient _apiClient = ApiClient();
+  List<MinistryModel> _ministries = [];
+  bool _isLoading = false;
 
-  List<MinistryModel> get ministries => List.unmodifiable(_ministries);
+  List<MinistryModel> get ministries => _ministries;
+  bool get isLoading => _isLoading;
 
-  // 2. Lista privada para almacenar las relaciones
-  List<MinistryMember> _ministryMembers = [
-    // Datos de ejemplo:
-    MinistryMember(
-      ministryId: 'm1',
-      memberId: 'mem1',
-    ), // Juan Pérez en Misericordia
-    MinistryMember(
-      ministryId: 'm1',
-      memberId: 'mem2',
-    ), // María García en Misericordia
-    MinistryMember(
-      ministryId: 'm2',
-      memberId: 'mem3',
-    ), // Pedro Rodríguez en Ensancha
-  ];
+  Future<void> fetchMinistries() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await _apiClient.dio.get('/ministries');
+      print("Respuesta API Ministerios: ${response.data}");
 
-  // 3. Getter para obtener los IDs de los miembros de un ministerio específico
-  List<String> getMemberIdsForMinistry(String ministryId) {
-    return _ministryMembers
-        .where((mm) => mm.ministryId == ministryId)
-        .map((mm) => mm.memberId)
-        .toList();
+      final List<dynamic> data = response.data is List
+          ? response.data
+          : (response.data['content'] ?? []);
+
+      _ministries = data.map((m) => MinistryModel.fromJson(m)).toList();
+      print("Ministerios cargados: ${_ministries.length}");
+    } catch (e) {
+      print("Error cargando ministerios: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> addMinistry(
+    String name,
+    String description,
+    List<String> leaderIds,
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await _apiClient.dio.post(
+        '/ministries',
+        data: {
+          "name": name,
+          "description": description,
+          "leaderIds": leaderIds,
+        },
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        await fetchMinistries();
+      }
+    } catch (e) {
+      print("Error al crear ministerio: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateMinistry(
+    String id,
+    String name,
+    String description,
+    List<String> leaderIds,
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await _apiClient.dio.put(
+        '/ministries',
+        data: {
+          "id": id,
+          "name": name,
+          "description": description,
+          "leaderIds": leaderIds,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        await fetchMinistries();
+      }
+    } catch (e) {
+      print("Error al actualizar ministerio: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteMinistry(String id) async {
+    final index = _ministries.indexWhere((m) => m.id == id);
+    MinistryModel? deletedMinistry;
+
+    if (index != -1) {
+      deletedMinistry = _ministries[index];
+      _ministries.removeAt(index);
+      notifyListeners();
+    }
+    try {
+      final response = await _apiClient.dio.delete('/ministries/$id');
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception("Error al eliminar");
+      }
+    } catch (e) {
+      if (deletedMinistry != null) {
+        _ministries.insert(index, deletedMinistry);
+        notifyListeners();
+      }
+    }
+  }
+
+  List<Member> getMembersForMinistry(String ministryId) {
+    final ministry = _ministries.firstWhere(
+      (m) => m.id == ministryId,
+      orElse: () => MinistryModel(id: '', name: '', description: ''),
+    );
+    return ministry.members;
   }
 
   int getMemberCountForMinistry(String ministryId) {
-    // Simplemente contamos cuántas veces aparece el ministryId en nuestra lista de relaciones.
-    return _ministryMembers.where((mm) => mm.ministryId == ministryId).length;
+    final ministry = _ministries.firstWhere(
+      (m) => m.id == ministryId,
+      orElse: () =>
+          MinistryModel(id: '', name: '', description: '', membersCount: 0),
+    );
+    return ministry.membersCount;
   }
 
-  // 4. Método para agregar un miembro a un ministerio
-  void addMemberToMinistry(String ministryId, String memberId) {
-    // Evitar duplicados
-    final exists = _ministryMembers.any(
-      (mm) => mm.ministryId == ministryId && mm.memberId == memberId,
-    );
+  Future<void> addMemberToMinistry(String ministryId, Member member) async {
+    final index = _ministries.indexWhere((m) => m.id == ministryId);
+    if (index != -1) {
+      final alreadyExists = _ministries[index].members.any(
+        (m) => m.id == member.id,
+      );
+      if (alreadyExists) return;
 
-    if (!exists) {
-      _ministryMembers.add(
-        MinistryMember(ministryId: ministryId, memberId: memberId),
+      final currentMembers = List<Member>.from(_ministries[index].members);
+      currentMembers.add(member);
+
+      _ministries[index] = _ministries[index].copyWith(
+        members: currentMembers,
+        membersCount: _ministries[index].membersCount + 1,
       );
       notifyListeners();
     }
-  }
-
-  // 5. Método para eliminar un miembro de un ministerio
-  void removeMemberFromMinistry(String ministryId, String memberId) {
-    _ministryMembers.removeWhere(
-      (mm) => mm.ministryId == ministryId && mm.memberId == memberId,
-    );
-    notifyListeners();
-  }
-
-  void addMinistry(MinistryModel ministry) {
-    final newMinistry = MinistryModel(
-      id: DateTime.now().toString(), // ID único simple
-      name: ministry.name,
-      details: ministry.details,
-    );
-    _ministries = [..._ministries, newMinistry];
-
-    notifyListeners(); // Notifica a los widgets que escuchan para que se redibujen
-  }
-
-  void updateMinistry(MinistryModel updatedMinistry) {
-    {
-      // Creamos una lista completamente nueva usando .map()
-      _ministries = _ministries.map(
-        (ministry) {
-          // Si el ID coincide, devolvemos el ministerio actualizado.
-          // Si no, devolvemos el ministerio original sin cambios.
-          return ministry.id == updatedMinistry.id ? updatedMinistry : ministry;
-        },
-      ).toList(); // .toList() convierte el resultado del map en una nueva lista.
-
-      notifyListeners();
+    try {
+      await _apiClient.dio.post('/ministries/$ministryId/members/${member.id}');
+      await fetchMinistryDetails(ministryId, silent: true);
+    } catch (e) {
+      await fetchMinistryDetails(ministryId, silent: true);
+      rethrow;
     }
   }
 
-  void deleteMinistry(String ministryId) {
-    _ministries = _ministries
-        .where((ministry) => ministry.id != ministryId)
-        .toList();
-    notifyListeners();
+  Future<void> removeMemberFromMinistry(
+    String ministryId,
+    Member member,
+  ) async {
+    final index = _ministries.indexWhere((m) => m.id == ministryId);
+    if (index != -1) {
+      final currentMembers = List<Member>.from(_ministries[index].members);
+      currentMembers.removeWhere((m) => m.id == member.id);
+
+      _ministries[index] = _ministries[index].copyWith(
+        members: currentMembers,
+        membersCount: _ministries[index].membersCount - 1,
+      );
+      notifyListeners();
+    }
+    try {
+      // 2. Petición real al servidor
+      await _apiClient.dio.delete(
+        '/ministries/$ministryId/members/${member.id}',
+      );
+      // Sincronización silenciosa
+      await fetchMinistryDetails(ministryId, silent: true);
+    } catch (e) {
+      // Si falla, recargamos para restaurar al miembro
+      await fetchMinistryDetails(ministryId, silent: true);
+      rethrow;
+    }
+  }
+
+  List<String> getMemberIdsForMinistry(String ministryId) {
+    final ministry = _ministries.firstWhere(
+      (m) => m.id == ministryId,
+      orElse: () => MinistryModel(id: '', name: '', description: ''),
+    );
+    return [];
+  }
+
+  Future<void> fetchMinistryDetails(String id, {bool silent = false}) async {
+    if (!silent) {
+      _isLoading = true;
+      notifyListeners();
+    }
+    try {
+      final response = await _apiClient.dio.get('/ministries/$id');
+      final updatedMinistry = MinistryModel.fromJson(response.data);
+      final index = _ministries.indexWhere((m) => m.id == id);
+
+      if (index != -1) {
+        _ministries[index] = updatedMinistry;
+      }
+    } catch (e) {
+      print("Error cargando detalle del ministerio: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

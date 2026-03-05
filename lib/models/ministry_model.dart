@@ -1,27 +1,56 @@
+import 'member_model.dart';
+
 class MinistryModel {
   final String id;
   String name;
-  final String details;
-  final List<String> pastorIds;
+  final String description;
+  final List<Member> leaders;
+  final List<Member> members;
+  final int membersCount;
 
   MinistryModel({
     required this.id,
     required this.name,
-    required this.details,
-    this.pastorIds = const [],
+    required this.description,
+    this.leaders = const [],
+    this.members = const [],
+    this.membersCount = 0,
   });
 
   MinistryModel copyWith({
     String? id,
     String? name,
-    String? details,
-    List<String>? pastorIds,
+    String? description,
+    List<Member>? leaders,
+    List<Member>? members,
+    int? membersCount,
   }) {
     return MinistryModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      details: details ?? this.details,
-      pastorIds: pastorIds ?? this.pastorIds,
+      description: description ?? this.description,
+      leaders: leaders ?? this.leaders,
+      members: members ?? this.members,
+      membersCount: membersCount ?? this.membersCount,
+    );
+  }
+
+  factory MinistryModel.fromJson(Map<String, dynamic> json) {
+    return MinistryModel(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      description: json['description'] ?? '',
+      membersCount: json['membersCount'] ?? 0,
+      leaders:
+          (json['leaders'] as List<dynamic>?)
+              ?.map((l) => Member.fromJson(l))
+              .toList() ??
+          [],
+      members:
+          (json['members'] as List<dynamic>?)
+              ?.map((m) => Member.fromJson(m))
+              .toList() ??
+          [],
     );
   }
 }

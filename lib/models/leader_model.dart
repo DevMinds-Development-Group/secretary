@@ -1,11 +1,11 @@
-class PastorModel {
+class LeaderModel {
   final String id;
   final String name;
 
-  const PastorModel({required this.id, required this.name});
+  const LeaderModel({required this.id, required this.name});
 
-  factory PastorModel.fromJson(Map<String, dynamic> json) {
-    return PastorModel(
+  factory LeaderModel.fromJson(Map<String, dynamic> json) {
+    return LeaderModel(
       id: json['id'] as String? ?? '',
       name: json['name'] as String? ?? 'Sin nombre',
     );

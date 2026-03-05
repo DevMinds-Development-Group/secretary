@@ -13,15 +13,28 @@ import '../../widgets/button.dart';
 import '../../widgets/menu.dart';
 import 'ministry_member.dart';
 
-class Ministries extends StatelessWidget {
+class Ministries extends StatefulWidget {
   const Ministries({super.key});
+
+  @override
+  State<Ministries> createState() => _MinistriesState();
+}
+
+class _MinistriesState extends State<Ministries> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(
+      () => Provider.of<MinistryProvider>(
+        context,
+        listen: false,
+      ).fetchMinistries(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-
-    // Usamos context.watch para que esta pantalla se reconstruya
-    // cada vez que los datos en MinistryProvider cambien.
     final ministryProvider = context.watch<MinistryProvider>();
     final List<MinistryModel> ministries = ministryProvider.ministries;
 
@@ -34,61 +47,61 @@ class Ministries extends StatelessWidget {
         children: [
           if (!isMobile) Menu(),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, isMobile),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: GridView.builder(
-                      shrinkWrap: true,
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent:
-                                350.0, // Ancho máximo de cada elemento
-                            childAspectRatio:
-                                2.3, // Proporción de aspecto (ancho/alto)
-                            crossAxisSpacing: 20, // Espacio entre columnas
-                            mainAxisSpacing: 20, // Espacio entre filas
+            child: ministryProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(context, isMobile),
+                        const SizedBox(height: 24),
+                        Expanded(
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent:
+                                      350.0, // Ancho máximo de cada elemento
+                                  childAspectRatio: 2.3,
+                                  crossAxisSpacing:
+                                      20, // Espacio entre columnas
+                                  mainAxisSpacing: 20, // Espacio entre filas
+                                ),
+                            itemCount: ministries.length,
+                            itemBuilder: (context, index) {
+                              final ministry = ministries[index];
+                              final memberCount = ministryProvider
+                                  .getMemberCountForMinistry(ministry.id);
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MinistryMembers(ministry: ministry),
+                                    ),
+                                  );
+                                },
+                                child: _buildMinistryCard(
+                                  title: ministry.name,
+                                  details: ministry.description,
+                                  icon: Icons.group,
+                                  memberCount: memberCount,
+                                ),
+                              );
+                            },
                           ),
-                      itemCount: ministries.length,
-                      itemBuilder: (context, index) {
-                        final ministry = ministries[index];
-                        final memberCount = ministryProvider
-                            .getMemberCountForMinistry(ministry.id);
-                        return InkWell(
-                          onTap: () {
-                            // Acción de navegación
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    MinistryMembers(ministry: ministry),
-                              ),
-                            );
-                          },
-                          child: _buildMinistryCard(
-                            title: ministry.name,
-                            details: ministry.details,
-                            icon: Icons.group, // O un ícono dinámico
-                            memberCount: memberCount,
-                          ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  // Widget de ejemplo para la tarjeta de ministerio
   Widget _buildMinistryCard({
     required String title,
     required String details,
@@ -106,7 +119,6 @@ class Ministries extends StatelessWidget {
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-
               children: [
                 Icon(icon, size: 36, color: primaryColor),
                 const SizedBox(width: 16),
@@ -159,7 +171,6 @@ class Ministries extends StatelessWidget {
   Widget _buildHeader(BuildContext context, bool isMobile) {
     final headerItems = _buildHeaderItems(context, isMobile);
 
-    // Si es móvil, los ponemos en una Columna.
     if (isMobile) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -168,7 +179,6 @@ class Ministries extends StatelessWidget {
       );
     }
 
-    // Si es web/escritorio, los ponemos en una Fila.
     return Row(children: headerItems);
   }
 

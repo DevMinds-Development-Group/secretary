@@ -6,36 +6,55 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/member_model.dart';
 import '../../models/ministry_model.dart';
-import '../../providers/member_provider.dart'; // Necesitas un MemberProvider
+import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
 
-class MinistryMembers extends StatelessWidget {
+class MinistryMembers extends StatefulWidget {
   final MinistryModel ministry;
 
   const MinistryMembers({Key? key, required this.ministry}) : super(key: key);
 
-  // Diálogo para agregar miembro con Autocomplete
+  @override
+  State<MinistryMembers> createState() => _MinistryMembersState();
+}
+
+class _MinistryMembersState extends State<MinistryMembers> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = Provider.of<MinistryProvider>(context, listen: false);
+      provider.fetchMinistryDetails(widget.ministry.id);
+
+      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+    });
+  }
+
   void _showAddMemberDialog(
     BuildContext context,
     List<Member> allMembers,
-    isMobile,
-  ) {
+    bool isMobile,
+    MinistryModel currentMinistry,
+  ) async {
     showDialog(
       context: context,
       builder: (ctx) {
-        Member? selectedMember; // Para guardar el miembro seleccionado
+        Member? selectedMember;
+
+        final existingMemberIds = currentMinistry.members
+            .map((m) => m.id)
+            .toSet();
 
         return AlertDialog(
           title: Text(
             textAlign: TextAlign.center,
-            'Agregar Miembro a "${ministry.name}"',
+            'Agregar Miembro a "${widget.ministry.name}"',
             style: TextStyle(fontSize: isMobile ? 20 : 24),
           ),
           content: Autocomplete<Member>(
-            // Función que construye las opciones a mostrar
             optionsBuilder: (TextEditingValue textEditingValue) {
               if (textEditingValue.text == '') {
                 return const Iterable<Member>.empty();
@@ -43,13 +62,15 @@ class MinistryMembers extends StatelessWidget {
               return allMembers.where((member) {
                 final fullName = '${member.name} ${member.lastName}'
                     .toLowerCase();
-                return fullName.contains(textEditingValue.text.toLowerCase());
+                final query = textEditingValue.text.toLowerCase();
+                return fullName.contains(query) &&
+                    !existingMemberIds.contains(member.id);
               });
             },
-            // Función que muestra el nombre del miembro en la lista de sugerencias
+
             displayStringForOption: (Member option) =>
                 '${option.name} ${option.lastName}',
-            // Cuando un miembro es seleccionado
+
             onSelected: (Member selection) {
               selectedMember = selection;
             },
@@ -74,14 +95,21 @@ class MinistryMembers extends StatelessWidget {
             ),
             SmallButton(
               text: 'Agregar',
-              onPressed: () {
+              onPressed: () async {
                 if (selectedMember != null) {
-                  // Llama al provider para agregar al miembro
-                  Provider.of<MinistryProvider>(
-                    context,
-                    listen: false,
-                  ).addMemberToMinistry(ministry.id, selectedMember!.id);
                   Navigator.of(ctx).pop();
+                  try {
+                    await Provider.of<MinistryProvider>(
+                      context,
+                      listen: false,
+                    ).addMemberToMinistry(widget.ministry.id, selectedMember!);
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error al sincronizar con el servidor'),
+                      ),
+                    );
+                  }
                 }
               },
             ),
@@ -93,33 +121,40 @@ class MinistryMembers extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Observamos ambos providers
     final ministryProvider = context.watch<MinistryProvider>();
-    final memberProvider = context
-        .watch<MemberProvider>(); // Asumo que tienes un MemberProvider
-
-    // Obtenemos los IDs de los miembros de este ministerio
-    final memberIds = ministryProvider.getMemberIdsForMinistry(ministry.id);
-
-    // Obtenemos los objetos MemberModel completos a partir de los IDs
-    final members = memberProvider.getMembersByIds(
-      memberIds,
-    ); // Necesitarás este método en MemberProvider
-
-    // Obtenemos todos los miembros para el Autocomplete
+    final memberProvider = context.watch<MemberProvider>();
+    final memberIds = ministryProvider.getMemberIdsForMinistry(
+      widget.ministry.id,
+    );
+    final currentMinistry = ministryProvider.ministries.firstWhere(
+      (m) => m.id == widget.ministry.id,
+      orElse: () => widget.ministry,
+    );
+    final members = currentMinistry.members;
     final allMembers = memberProvider.members;
+
     bool isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(
-        title: isMobile ? '${ministry.name}' : 'Miembros de ${ministry.name}',
+        title: isMobile
+            ? widget.ministry.name
+            : 'Miembros de ${currentMinistry.name}',
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: primaryColor,
-        onPressed: () => _showAddMemberDialog(context, allMembers, isMobile),
+        onPressed: () => _showAddMemberDialog(
+          context,
+          allMembers,
+          isMobile,
+          currentMinistry,
+        ),
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: members.isEmpty
+      body: ministryProvider.isLoading
+          ? const Center(child: CircularProgressIndicator()) // Mostrar carga
+          : members.isEmpty
           ? const Center(child: Text('No hay miembros en este ministerio.'))
           : ListView.builder(
               padding: const EdgeInsets.all(16.0),
@@ -130,19 +165,31 @@ class MinistryMembers extends StatelessWidget {
                   child: ListTile(
                     leading: CircleAvatar(child: Text(member.name[0])),
                     title: Text('${member.name} ${member.lastName}'),
-                    subtitle: Text(member.phone), // O cualquier otro dato
+                    subtitle: Text(member.phone),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () => showDeleteConfirmationDialog(
                         context: context,
                         itemName: member.name,
-                        onConfirm: () {
-                          // Llama al provider para quitar al miembro
-                          Provider.of<MinistryProvider>(
-                            context,
-                            listen: false,
-                          ).removeMemberFromMinistry(ministry.id, member.id);
-                          Navigator.of(context).pop();
+                        onConfirm: () async {
+                          try {
+                            await Provider.of<MinistryProvider>(
+                              context,
+                              listen: false,
+                            ).removeMemberFromMinistry(
+                              widget.ministry.id,
+                              member,
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Error al eliminar miembro del servidor',
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
                         },
                       ),
                     ),

@@ -40,14 +40,12 @@ class MemberProvider with ChangeNotifier {
 
     try {
       final response = await _apiClient.dio.get('/members');
-
-      final List<dynamic> data = response.data['content'] ?? response.data;
+      final List<dynamic> data = response.data is List
+          ? response.data
+          : (response.data['content'] ?? []);
       _members = data.map((m) => Member.fromJson(m)).toList();
-    } on DioException catch (e) {
-      _error = 'Error al cargar miembros: ${e.message}';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    } catch (e) {
+      _error = 'Error al cargar miembros: ${e}';
     }
   }
 
@@ -55,8 +53,6 @@ class MemberProvider with ChangeNotifier {
     _searchQuery = query;
     notifyListeners();
   }
-
-  // En lib/providers/member_provider.dart
 
   Future<bool> addMember({
     required String name,
@@ -122,8 +118,6 @@ class MemberProvider with ChangeNotifier {
     }
   }
 
-  // lib/providers/member_provider.dart
-
   Future<bool> deleteMember(String id) async {
     try {
       print('DEBUG: Enviando DELETE a /members/$id');
@@ -131,7 +125,6 @@ class MemberProvider with ChangeNotifier {
       final response = await _apiClient.dio.delete('/members/$id');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        // Eliminamos el miembro de la lista local para que la UI se actualice de inmediato
         _members.removeWhere((m) => m.id == id);
         notifyListeners();
         return true;

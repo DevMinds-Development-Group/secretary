@@ -49,52 +49,54 @@ class _NetworksState extends State<Networks> {
         children: [
           if (!isMobile) Menu(),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, isMobile),
+            child: networkProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(context, isMobile),
 
-                  const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                  Expanded(
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                            maxCrossAxisExtent: 350.0,
-                            childAspectRatio: 2.5,
-                            crossAxisSpacing: 20,
-                            mainAxisSpacing: 20,
+                        Expanded(
+                          child: GridView.builder(
+                            gridDelegate:
+                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 350.0,
+                                  childAspectRatio: 2.5,
+                                  crossAxisSpacing: 20,
+                                  mainAxisSpacing: 20,
+                                ),
+                            itemCount: networks.length,
+                            itemBuilder: (context, index) {
+                              final network = networkProvider.networks[index];
+                              final membersInNetwork = memberProvider.members
+                                  .where((m) => m.networkName == network.name)
+                                  .toList();
+                              final memberCount = membersInNetwork.length;
+
+                              return _buildGroupCard(
+                                title: network.name,
+                                memberCount: memberCount,
+                                icon: Icons.group,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          NetworkDetail(network: network),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
                           ),
-                      itemCount: networks.length,
-                      itemBuilder: (context, index) {
-                        final network = networkProvider.networks[index];
-                        final membersInNetwork = memberProvider.members
-                            .where((m) => m.networkName == network.name)
-                            .toList();
-                        final memberCount = membersInNetwork.length;
-
-                        return _buildGroupCard(
-                          title: network.name,
-                          memberCount: memberCount,
-                          icon: Icons.group,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    NetworkDetail(network: network),
-                              ),
-                            );
-                          },
-                        );
-                      },
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
