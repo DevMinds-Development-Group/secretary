@@ -23,21 +23,25 @@ class NetworkManage extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Gestionar redes'),
-      body: Column(
-        children: [
-          const SizedBox(height: 30),
-          Expanded(
-            child: networks.isEmpty
-                ? const Center(child: Text('No hay redes para mostrar.'))
-                : Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: _buildMainCard(context, isMobile, networks),
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(height: isMobile ? 10 : 30),
+            Expanded(
+              child: networkProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : networks.isEmpty
+                  ? const Center(child: Text('No hay redes para mostrar.'))
+                  : Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: _buildMainCard(context, isMobile, networks),
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -77,7 +81,7 @@ class NetworkManage extends StatelessWidget {
       padding: const EdgeInsets.all(10),
       itemCount: networks.length,
       separatorBuilder: (context, index) =>
-          const Divider(height: 1, thickness: 0.1),
+          const Divider(height: 1, thickness: 0.7),
       itemBuilder: (context, index) {
         final network = networks[index];
         final leaderNames = network.leaders.map((l) => l.name).join(", ");

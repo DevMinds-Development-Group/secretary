@@ -46,6 +46,9 @@ class MemberProvider with ChangeNotifier {
       _members = data.map((m) => Member.fromJson(m)).toList();
     } catch (e) {
       _error = 'Error al cargar miembros: ${e}';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

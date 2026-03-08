@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/ministry_model.dart';
-import '../../providers/leader_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 
@@ -31,29 +30,33 @@ class _MinistryManageState extends State<MinistryManage> {
   Widget build(BuildContext context) {
     final ministryProvider = context.watch<MinistryProvider>();
     final List<MinistryModel> ministries = ministryProvider.ministries;
-    final leaderProvider = context.watch<LeaderProvider>();
+    // final leaderProvider = context.watch<LeaderProvider>();
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Gestionar ministerios'),
-      body: Column(
-        children: [
-          const SizedBox(height: 30),
-          Expanded(
-            child: ministryProvider.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ministries.isEmpty
-                ? const Center(child: Text('No hay ministerios para mostrar.'))
-                : Align(
-                    alignment: Alignment.topCenter,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1200),
-                      child: _buildMainCard(context, isMobile, ministries),
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(height: isMobile ? 10 : 30),
+            Expanded(
+              child: ministryProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ministries.isEmpty
+                  ? const Center(
+                      child: Text('No hay ministerios para mostrar.'),
+                    )
+                  : Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: _buildMainCard(context, isMobile, ministries),
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -97,7 +100,7 @@ class _MinistryManageState extends State<MinistryManage> {
       padding: const EdgeInsets.all(10.0),
       itemCount: ministries.length,
       separatorBuilder: (context, index) =>
-          const Divider(height: 1, thickness: 0.1),
+          const Divider(height: 1, thickness: 0.7),
       itemBuilder: (context, index) {
         final ministry = ministries[index];
 

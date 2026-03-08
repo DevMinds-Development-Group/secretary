@@ -176,6 +176,12 @@ class _MembersState extends State<Members> {
     bool isMobile,
     List<Member> members,
   ) {
+    final provider = Provider.of<MemberProvider>(context, listen: false);
+
+    if (provider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     if (members.isEmpty) {
       return const Center(child: Text('No se encontraron miembros.'));
     }
@@ -196,40 +202,45 @@ class _MembersState extends State<Members> {
           ],
         ),
         child: ListView.builder(
-          padding: EdgeInsets.all(isMobile ? 10.0 : 25),
+          padding: EdgeInsets.all(isMobile ? 5.0 : 25),
           itemCount: members.length,
           itemBuilder: (context, index) {
             final member = members[index];
             return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.red.withOpacity(0.1),
+              leading: isMobile
+                  ? null
+                  : CircleAvatar(
+                      backgroundColor: Colors.red.withOpacity(0.1),
+                      child: Text(
+                        member.name.isNotEmpty
+                            ? member.name.substring(0, 1).toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          color: Colors.redAccent[200],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+              title: SizedBox(
+                width: MediaQuery.of(context).size.width * 0.7,
                 child: Text(
-                  member.name.isNotEmpty
-                      ? member.name.substring(0, 1).toUpperCase()
-                      : '?',
-                  style: TextStyle(
-                    color: Colors.redAccent[200],
-                    fontWeight: FontWeight.bold,
+                  '${member.name} ${member.lastName}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
                   ),
-                ),
-              ),
-              title: Text(
-                '${member.name} ${member.lastName}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
                 ),
               ),
 
               subtitle: Text(
-                member.phone,
+                member.networkName ?? 'Sin red asignada',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 overflow: TextOverflow.ellipsis,
               ),
               trailing: Row(
-                mainAxisSize:
-                    MainAxisSize.min, // Para que ocupe el mínimo espacio
+                spacing: 0.3,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: Icon(Icons.edit, color: Colors.blue[600]),

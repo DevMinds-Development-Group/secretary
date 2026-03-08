@@ -96,6 +96,8 @@ class _RolesState extends State<Roles> {
             itemBuilder: (context, index) {
               final role = roles[index];
               return Card(
+                color: Colors.white,
+                elevation: 2,
                 margin: const EdgeInsets.only(bottom: 16.0),
                 child: ListTile(
                   title: Text(role.displayName),

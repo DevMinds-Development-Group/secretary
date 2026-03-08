@@ -62,6 +62,9 @@ class MyApp extends StatelessWidget {
       ],
       locale: const Locale('es', ''),
       theme: ThemeData(
+        useMaterial3: true,
+        fontFamily: 'sans-serif',
+
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blue.shade200,
           primary: primaryColor,
@@ -70,12 +73,10 @@ class MyApp extends StatelessWidget {
           onSurface: Colors.black87,
         ),
         datePickerTheme: DatePickerThemeData(
-          // --- PADDINGS Y FORMA ---
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15), // Bordes más redondeados
           ),
 
-          // --- COLORES ---
           backgroundColor: Colors.white, // Fondo general del calendario
           headerBackgroundColor:
               primaryColor, // Color de fondo de la cabecera ("Seleccionar fecha")

@@ -4,7 +4,10 @@ class CustomButton extends StatelessWidget {
   final String text;
   final IconData icon;
   final VoidCallback onPressed;
-  final Color? backgroundColor; // Opcional por si quieres forzar un color
+  final Color? backgroundColor;
+  final Color? color;
+  final Color? iconColor;
+  final Color? borderColor;
 
   const CustomButton({
     Key? key,
@@ -12,24 +15,30 @@ class CustomButton extends StatelessWidget {
     required this.icon,
     required this.onPressed,
     this.backgroundColor,
+    this.color,
+    this.iconColor,
+    this.borderColor,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Detectamos si es móvil dentro del widget para que sea responsivo automáticamente
     bool isMobile = MediaQuery.of(context).size.width < 700;
-
-    // Definimos el color primario (puedes importarlo de tu archivo de constantes si prefieres)
-    Color primaryColor = Theme.of(context).primaryColor;
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
-        fixedSize: Size(isMobile ? 200 : 210, isMobile ? 60 : 50),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        // Si pasas un color por parámetro lo usa, si no, usa la lógica original
-        backgroundColor:
-            backgroundColor ?? (isMobile ? primaryColor : Colors.white),
-        elevation: 5,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: borderColor != null
+              ? BorderSide(
+                  color: borderColor!,
+                  width: 1.5,
+                ) // Si hay color, pone borde
+              : BorderSide.none, // Si es null, no pone nada
+        ),
+        fixedSize: Size(400, 50),
+
+        backgroundColor: backgroundColor ?? (Colors.white),
+        elevation: 3,
         padding: EdgeInsets.symmetric(
           horizontal: isMobile ? 10 : 20,
           vertical: isMobile ? 10 : 20,
@@ -42,10 +51,13 @@ class CustomButton extends StatelessWidget {
         children: [
           Text(
             text,
-            style: TextStyle(color: isMobile ? Colors.white : Colors.black),
+            style: TextStyle(
+              color: color ?? Colors.black,
+              fontSize: isMobile ? 18 : 20,
+            ),
           ),
           const SizedBox(width: 10),
-          Icon(icon, color: isMobile ? Colors.white : Colors.black),
+          Icon(icon, color: iconColor ?? Colors.black),
         ],
       ),
     );

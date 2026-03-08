@@ -98,7 +98,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
     return Scaffold(
       appBar: CustomAppBar(title: _isEditing ? 'Editar Red' : 'Crear Red'),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 30 : 70),
+        padding: EdgeInsets.all(isMobile ? 20 : 70),
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 700),
@@ -116,7 +116,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: isMobile ? 30 : 20),
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -172,7 +172,10 @@ class _CreateNetworkState extends State<CreateNetwork> {
                       child: _selectedLeaderIds.isEmpty
                           ? Text(
                               'Ninguno seleccionado',
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 16,
+                              ),
                             )
                           : Text(
                               availableLeaders
@@ -182,7 +185,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                                   .map((p) => p.name)
                                   .join(', '),
                               style: const TextStyle(
-                                fontSize: 15,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w500,
                               ),
                               maxLines: 2,
@@ -192,10 +195,17 @@ class _CreateNetworkState extends State<CreateNetwork> {
                   ),
                   const SizedBox(height: 32),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: isMobile
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.end,
                     children: [
                       Button(
-                        size: Size(150, 45),
+                        size: Size(
+                          isMobile
+                              ? MediaQuery.of(context).size.width * 0.88
+                              : 150,
+                          isMobile ? 50 : 45,
+                        ),
                         text: widget.networkToEdit != null
                             ? 'Actualizar'
                             : 'Guardar',

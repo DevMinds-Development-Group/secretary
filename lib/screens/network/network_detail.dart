@@ -6,6 +6,7 @@ import '../../../models/member_model.dart';
 import '../../../providers/member_provider.dart';
 import '../../../widgets/custom_appbar.dart';
 import '../../models/network_model.dart';
+import '../../providers/network_provider.dart';
 
 class NetworkDetail extends StatelessWidget {
   final NetworkModel network;
@@ -15,7 +16,7 @@ class NetworkDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
-
+    final networkProvider = context.watch<NetworkProvider>();
     final memberProvider = Provider.of<MemberProvider>(context);
 
     final List<Member> membersInGroup = memberProvider.allMembers
@@ -29,22 +30,25 @@ class NetworkDetail extends StatelessWidget {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: network.name),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 1500),
-          child: Column(
-            children: [
-              SizedBox(height: 20),
-              _buildNetworkHeader(network, isMobile),
-              Expanded(
-                child: membersInGroup.isEmpty
-                    ? _buildEmptyState()
-                    : _buildMemberList(membersInGroup, isMobile),
+      body: networkProvider.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          // Mostrar carga
+          : Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 1500),
+                child: Column(
+                  children: [
+                    SizedBox(height: 20),
+                    _buildNetworkHeader(network, isMobile),
+                    Expanded(
+                      child: membersInGroup.isEmpty
+                          ? _buildEmptyState(isMobile)
+                          : _buildMemberList(membersInGroup, isMobile),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
@@ -67,40 +71,14 @@ class NetworkDetail extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text(
-                'Líderes:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  //color: Colors.blueGrey,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Wrap(
-                spacing: 8,
-                children: network.leaders.map((leader) {
-                  return Chip(
-                    backgroundColor: primaryColor.withOpacity(0.1),
-                    avatar: CircleAvatar(
-                      backgroundColor: primaryColor,
-                      child: Text(
-                        leader.name[0],
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                    label: Text('${leader.name} ${leader.lastName}'),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
+          isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: _buildLeadersSection(network, isMobile),
+                )
+              : Row(children: _buildLeadersSection(network, isMobile)),
           const Divider(height: 30),
-          Row(
+          Wrap(
             children: [
               const Text(
                 'Misión de la Red:',
@@ -117,9 +95,7 @@ class NetworkDetail extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-
-          // Mostramos los nombres de los líderes mapeados
+          SizedBox(height: isMobile ? 0 : 8),
         ],
       ),
     );
@@ -174,19 +150,46 @@ class NetworkDetail extends StatelessWidget {
   }
 
   // Widget para cuando no hay miembros en la red
-  Widget _buildEmptyState() {
-    return const Center(
+  Widget _buildEmptyState(isMobile) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.group_off, size: 80, color: Colors.grey),
+          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: Colors.grey),
           SizedBox(height: 16),
           Text(
             'No hay miembros en esta red',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
+            style: TextStyle(fontSize: isMobile ? 15 : 18, color: Colors.grey),
           ),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildLeadersSection(NetworkModel network, isMobile) {
+    return [
+      const Text(
+        'Líderes:',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+      ),
+      const SizedBox(width: 10, height: 5),
+      Wrap(
+        spacing: 5,
+        runSpacing: isMobile ? 0 : 5,
+        children: network.leaders.map((leader) {
+          return Chip(
+            backgroundColor: primaryColor.withOpacity(0.1),
+            avatar: CircleAvatar(
+              backgroundColor: primaryColor,
+              child: Text(
+                leader.name[0].toUpperCase(),
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+            ),
+            label: Text('${leader.name} ${leader.lastName}'),
+          );
+        }).toList(),
+      ),
+    ];
   }
 }

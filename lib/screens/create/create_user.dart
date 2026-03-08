@@ -243,12 +243,8 @@ class _CreateUserState extends State<CreateUser> {
 
                   const SizedBox(height: 16),
 
-                  // --- AUTOCOMPLETE DE MIEMBRO (CÓDIGO COMPLETO) ---
                   Consumer<MemberProvider>(
                     builder: (context, memberProvider, child) {
-                      if (memberProvider.isLoading) {
-                        return const LinearProgressIndicator();
-                      }
                       return Autocomplete<Member>(
                         displayStringForOption: (Member option) =>
                             '${option.name} ${option.lastName}',
@@ -312,24 +308,18 @@ class _CreateUserState extends State<CreateUser> {
                   ),
 
                   const SizedBox(height: 32),
-                  if (_isSaving)
-                    const Center(child: CircularProgressIndicator())
-                  else
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Button(
+                  _isSaving
+                      ? const Center(child: CircularProgressIndicator())
+                      : Button(
                           size: Size(
                             isMobile
-                                ? MediaQuery.of(context).size.width * 0.9
+                                ? MediaQuery.of(context).size.width * 0.8
                                 : 170,
                             isMobile ? 50 : 45,
                           ),
                           text: _isEditing ? 'Guardar' : 'Crear Usuario',
                           onPressed: _saveUser,
                         ),
-                      ],
-                    ),
                 ],
               ),
             ),

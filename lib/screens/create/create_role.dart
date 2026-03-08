@@ -53,9 +53,6 @@ class _CreateRoleState extends State<CreateRole> {
   }
 
   Future<void> _saveRole() async {
-    print('--- BOTÓN GUARDAR PRESIONADO ---'); // 1. Ver si el botón responde
-
-    // Validamos el formulario
     if (_formKey.currentState == null) {
       print('ERROR: _formKey.currentState es nulo');
       return;
@@ -171,22 +168,19 @@ class _CreateRoleState extends State<CreateRole> {
                   InkWell(
                     onTap: () async {
                       // Muestra el diálogo y espera el resultado
-                      final Set<Permission>?
-                      result = await showDialog<Set<Permission>>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return MultiSelectDialog<Permission>(
-                            title: 'Seleccionar Permisos',
-                            items: Permission
-                                .values, // La lista completa de permisos
-                            displayItem: (permission) => getPermissionName(
-                              permission,
-                            ), // Cómo mostrar cada permiso
-                            initialSelectedItems:
-                                _selectedPermissions, // Los que ya están seleccionados
+                      final Set<Permission>? result =
+                          await showDialog<Set<Permission>>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return MultiSelectDialog<Permission>(
+                                title: 'Seleccionar Permisos',
+                                items: Permission.values,
+                                displayItem: (permission) =>
+                                    getPermissionName(permission),
+                                initialSelectedItems: _selectedPermissions,
+                              );
+                            },
                           );
-                        },
-                      ); // Si el usuario presionó "ACEPTAR", actualizamos el estado
                       if (result != null) {
                         setState(() {
                           _selectedPermissions = result;
@@ -201,7 +195,6 @@ class _CreateRoleState extends State<CreateRole> {
                       child: _selectedPermissions.isEmpty
                           ? const Text('Ninguno seleccionado')
                           : Text(
-                              // Muestra los nombres de los permisos seleccionados, separados por comas
                               _selectedPermissions
                                   .map((p) => getPermissionName(p))
                                   .join(', '),
@@ -210,16 +203,18 @@ class _CreateRoleState extends State<CreateRole> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: _isSaving
-                        ? const CircularProgressIndicator()
-                        : Button(
-                            size: const Size(150, 45),
-                            text: 'Guardar',
-                            onPressed: _saveRole,
+                  _isSaving
+                      ? const Center(child: CircularProgressIndicator())
+                      : Button(
+                          size: Size(
+                            isMobile
+                                ? MediaQuery.of(context).size.width * 0.8
+                                : 170,
+                            isMobile ? 50 : 45,
                           ),
-                  ),
+                          text: 'Guardar',
+                          onPressed: _saveRole,
+                        ),
                 ],
               ),
             ),

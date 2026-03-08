@@ -52,7 +52,7 @@ class _NetworksState extends State<Networks> {
             child: networkProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -63,11 +63,11 @@ class _NetworksState extends State<Networks> {
                         Expanded(
                           child: GridView.builder(
                             gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                SliverGridDelegateWithMaxCrossAxisExtent(
                                   maxCrossAxisExtent: 350.0,
                                   childAspectRatio: 2.5,
                                   crossAxisSpacing: 20,
-                                  mainAxisSpacing: 20,
+                                  mainAxisSpacing: isMobile ? 10 : 20,
                                 ),
                             itemCount: networks.length,
                             itemBuilder: (context, index) {
@@ -75,12 +75,15 @@ class _NetworksState extends State<Networks> {
                               final membersInNetwork = memberProvider.members
                                   .where((m) => m.networkName == network.name)
                                   .toList();
+                              final leaderNames = network.leaders
+                                  .map(
+                                    (leader) =>
+                                        '${leader.name} ${leader.lastName}',
+                                  )
+                                  .join(', ');
                               final memberCount = membersInNetwork.length;
 
-                              return _buildGroupCard(
-                                title: network.name,
-                                memberCount: memberCount,
-                                icon: Icons.group,
+                              return InkWell(
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -90,6 +93,23 @@ class _NetworksState extends State<Networks> {
                                     ),
                                   );
                                 },
+                                child: _buildGroupCard(
+                                  title: network.name,
+                                  leaderNames: leaderNames.isEmpty
+                                      ? 'Sin líderes'
+                                      : leaderNames,
+                                  memberCount: memberCount,
+                                  icon: Icons.group,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            NetworkDetail(network: network),
+                                      ),
+                                    );
+                                  },
+                                ),
                               );
                             },
                           ),
@@ -119,13 +139,15 @@ class _NetworksState extends State<Networks> {
 
   List<Widget> _buildHeaderItems(BuildContext context, bool isMobile) {
     return [
-      Text(
-        'Redes',
-        style: TextStyle(
-          fontSize: isMobile ? 24 : 28,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      isMobile
+          ? SizedBox()
+          : Text(
+              'Redes',
+              style: TextStyle(
+                fontSize: isMobile ? 24 : 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
 
       isMobile ? const SizedBox(height: 16) : const Spacer(),
 
@@ -155,47 +177,48 @@ class _NetworksState extends State<Networks> {
 
   Widget _buildGroupCard({
     required String title,
+    required String leaderNames,
     required int memberCount,
     required IconData icon,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Card(
-        color: Colors.white,
-        elevation: 5,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Icon(icon, size: 36, color: primaryColor),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+    return Card(
+      color: Colors.white,
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            Icon(icon, size: 36, color: primaryColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$memberCount Miembros',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Lideres: $leaderNames',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    '$memberCount Miembros',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                ],
               ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

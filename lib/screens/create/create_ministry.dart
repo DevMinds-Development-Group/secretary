@@ -104,7 +104,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
         title: _isEditing ? 'Editar Ministerio' : 'Crear Ministerio',
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(isMobile ? 30 : 70),
+        padding: EdgeInsets.all(isMobile ? 20 : 70),
         child: Center(
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: 700),
@@ -178,7 +178,10 @@ class _CreateMinistryState extends State<CreateMinistry> {
                       child: _selectedLeaderIds.isEmpty
                           ? Text(
                               'Ninguno seleccionado',
-                              style: TextStyle(color: Colors.grey.shade600),
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 16,
+                              ),
                             )
                           : Text(
                               leaderProvider.leaders
@@ -191,12 +194,19 @@ class _CreateMinistryState extends State<CreateMinistry> {
                     ),
                   ),
 
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 32),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: isMobile
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.end,
                     children: [
                       Button(
-                        size: Size(130, 45),
+                        size: Size(
+                          isMobile
+                              ? MediaQuery.of(context).size.width * 0.88
+                              : 130,
+                          isMobile ? 50 : 45,
+                        ),
                         text: widget.ministryToEdit != null
                             ? 'Actualizar'
                             : 'Guardar',

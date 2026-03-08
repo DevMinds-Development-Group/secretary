@@ -23,14 +23,10 @@ class _LogsState extends State<Logs> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 2. PROTEGER LA LLAMADA INICIAL
-    // Solo ejecutaremos fetchLogs si es la carga inicial.
-    // didChangeDependencies es un lugar más seguro que initState para esto.
+
     if (_isInitialLoad) {
       Provider.of<LogProvider>(context, listen: false).fetchLogs();
-      // 3. DESACTIVAR LA BANDERA
-      // Después de la primera llamada, ponemos la bandera en false
-      // para que esto no se vuelva a ejecutar nunca más para esta pantalla.
+
       _isInitialLoad = false;
     }
   }
@@ -39,7 +35,6 @@ class _LogsState extends State<Logs> {
   void initState() {
     super.initState();
 
-    // Cargar los datos iniciales sigue siendo correcto
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<LogProvider>(context, listen: false).fetchLogs();
     });
@@ -52,49 +47,57 @@ class _LogsState extends State<Logs> {
 
   @override
   Widget build(BuildContext context) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     return Consumer<LogProvider>(
       builder: (context, logProvider, child) {
         return Scaffold(
           backgroundColor: backgroundColor,
-          appBar: CustomAppBar(title: 'Registros de Actividad'),
-          body: RefreshIndicator(
-            onRefresh: () => logProvider.fetchLogs(),
-            child: Column(
-              children: [
-                SizedBox(height: 30),
-                Expanded(
-                  child: logProvider.isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : logProvider.logs.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'No hay registros para mostrar.',
-                            style: TextStyle(fontSize: 18, color: Colors.grey),
+          appBar: CustomAppBar(
+            title: isMobile ? 'Registros Actividad' : 'Registros de Actividad',
+          ),
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () => logProvider.fetchLogs(),
+              child: Column(
+                children: [
+                  SizedBox(height: 30),
+                  Expanded(
+                    child: logProvider.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : logProvider.logs.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No hay registros para mostrar.',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : LayoutBuilder(
+                            builder: (context, constraints) {
+                              return constraints.maxWidth < 700
+                                  ? _buildMobileLayout(logProvider.logs)
+                                  : _buildWebLayout(context, logProvider.logs);
+                            },
                           ),
-                        )
-                      : LayoutBuilder(
-                          builder: (context, constraints) {
-                            return constraints.maxWidth < 700
-                                ? _buildMobileLayout(logProvider.logs)
-                                : _buildWebLayout(context, logProvider.logs);
-                          },
-                        ),
-                ),
-
-                if (logProvider.totalPages > 0 && !logProvider.isLoading)
-                  Pagination(
-                    currentPage: logProvider.currentPage,
-                    totalPages: logProvider.totalPages,
-                    itemsPerPage: logProvider.pageSize,
-
-                    onPageChanged: (page) {
-                      logProvider.onPageChanged(page);
-                    },
-                    onItemsPerPageChanged: (size) {
-                      logProvider.onItemsPerPageChanged(size);
-                    },
                   ),
-              ],
+
+                  if (logProvider.totalPages > 0 && !logProvider.isLoading)
+                    Pagination(
+                      currentPage: logProvider.currentPage,
+                      totalPages: logProvider.totalPages,
+                      itemsPerPage: logProvider.pageSize,
+
+                      onPageChanged: (page) {
+                        logProvider.onPageChanged(page);
+                      },
+                      onItemsPerPageChanged: (size) {
+                        logProvider.onItemsPerPageChanged(size);
+                      },
+                    ),
+                ],
+              ),
             ),
           ),
         );
@@ -108,17 +111,17 @@ class _LogsState extends State<Logs> {
       padding: const EdgeInsets.all(16.0),
       itemCount: logs.length,
       itemBuilder: (context, index) {
-        final log = logs[index];
+        final logEntry = logs[index];
         final formattedDate = DateFormat(
           'dd/MM/yyyy, HH:mm',
-        ).format(log.timestamp);
+        ).format(logEntry.timestamp);
         return Card(
+          color: Colors.white,
+          elevation: 2,
           margin: const EdgeInsets.only(bottom: 16.0),
           child: ListTile(
-            title: Text(log.details),
-            subtitle: Text(
-              '${log.action.replaceAll('_', ' ')} por ${log.username}\n$formattedDate',
-            ),
+            title: Text(logEntry.details),
+            subtitle: Text('$formattedDate'),
             isThreeLine: true,
           ),
         );
@@ -148,19 +151,19 @@ class _LogsState extends State<Logs> {
                 DataColumn(label: Text('Acción', style: _headerStyle())),
                 DataColumn(label: Text('Detalles', style: _headerStyle())),
               ],
-              rows: logs.map((log) {
+              rows: logs.map((logEntry) {
                 final formattedDate = DateFormat(
                   'dd/MM/yyyy HH:mm:ss',
-                ).format(log.timestamp);
+                ).format(logEntry.timestamp);
                 return DataRow(
                   cells: [
                     DataCell(Text(formattedDate)),
-                    DataCell(Text(log.username)),
-                    DataCell(Text(log.module)),
-                    DataCell(Text(log.action.replaceAll('_', ' '))),
+                    DataCell(Text(logEntry.username)),
+                    DataCell(Text(logEntry.module)),
+                    DataCell(Text(logEntry.action.replaceAll('_', ' '))),
                     DataCell(
                       SizedBox(
-                        child: Text(log.details, maxLines: 2),
+                        child: Text(logEntry.details, maxLines: 2),
                         width: MediaQuery.of(context).size.width * 0.25,
                       ),
                     ),

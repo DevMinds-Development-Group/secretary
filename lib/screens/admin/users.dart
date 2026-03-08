@@ -117,14 +117,18 @@ class _UsersState extends State<Users> {
                   : 'Sin miembro asociado';
 
               return Card(
+                color: Colors.white,
+                elevation: 2,
                 margin: EdgeInsets.only(bottom: 16.0),
                 child: ListTile(
                   title: Text(user.username),
                   subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text('Rol: ${user.role}'),
                       Text(
-                        'Persona: $memberName',
+                        'Miembro: $memberName',
                         style: TextStyle(
                           color: associatedMember != null
                               ? Colors.blueGrey

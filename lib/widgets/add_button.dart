@@ -35,7 +35,7 @@ class _ButtonState extends State<AddButton> {
             'Añadir',
             style: TextStyle(
               color: Colors.white,
-              fontSize: isMobile ? 15 : 18,
+              fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),

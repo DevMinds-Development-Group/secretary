@@ -1,3 +1,4 @@
+import 'package:app/colors.dart';
 import 'package:app/routes/page_route_builder.dart';
 import 'package:app/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
@@ -20,72 +21,58 @@ class _HomeState extends State<Home> {
       body: Stack(
         children: [
           Container(
-            width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.height,
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(isMobile ? 'assets/06.png' : 'assets/03.png'),
+                image: AssetImage(isMobile ? 'assets/01.jpg' : 'assets/03.png'),
                 fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.7),
-                ],
               ),
             ),
           ),
           Center(
             child: SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.all(30),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: isMobile
-                      ? MainAxisAlignment.start
-                      : MainAxisAlignment.center,
-                  children: <Widget>[
-                    SizedBox(height: isMobile ? 200 : 50),
-                    isMobile
-                        ? Column(
-                            children: [
-                              Text(
-                                'Secretaría',
-                                textAlign: TextAlign.center,
-                                style: _mobileTextStyle(),
-                              ),
-                              Text(
-                                'Viento Recio',
-                                textAlign: TextAlign.center,
-                                style: _mobileTextStyle(),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            'Bienvenido al Ministerio Viento Recio',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 60,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.black.withOpacity(0.5),
-                                  offset: Offset(4, 4),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
+                padding: const EdgeInsets.all(24.0),
+                child: Card(
+                  color: Colors.white,
+                  elevation: 10,
+                  //shadowColor: Colors.white.withOpacity(0.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(30),
+
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Image.asset('assets/logo0.png', width: 160),
+                        Text(
+                          'Ministerio',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isMobile ? 24 : 30,
+                            color: Colors.grey[700],
+                            letterSpacing: 2,
                           ),
-                    SizedBox(height: isMobile ? 120 : 40),
-                    _buildButtons(context, isMobile),
-                  ],
+                        ),
+                        Text(
+                          'Viento Recio',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isMobile ? 32 : 50,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red, // Usando tu color principal
+                          ),
+                        ),
+                        const SizedBox(height: 60),
+
+                        // BOTONES
+                        _buildButtons(context, isMobile),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -94,24 +81,11 @@ class _HomeState extends State<Home> {
       ),
     );
   }
-
-  TextStyle _mobileTextStyle() {
-    return TextStyle(
-      color: Colors.black,
-      fontSize: 34,
-      fontWeight: FontWeight.bold,
-      shadows: [
-        Shadow(color: Colors.white, offset: Offset(3, 3), blurRadius: 7),
-      ],
-    );
-  }
 }
 
 Widget _buildButtons(BuildContext context, bool isMobile) {
-  return Wrap(
-    spacing: 20,
-    runSpacing: 20,
-    alignment: WrapAlignment.center,
+  // En mobile usamos Column para que los botones se vean mejor dentro de la Card
+  return Column(
     children: [
       CustomButton(
         text: 'Ver anuncios',
@@ -120,12 +94,16 @@ Widget _buildButtons(BuildContext context, bool isMobile) {
           context,
           createFadeRoute(const PublicAnnouncements()),
         ),
+        borderColor: Colors.grey.withOpacity(0.5),
       ),
+      const SizedBox(height: 20),
       CustomButton(
+        backgroundColor: primaryColor,
         text: 'Iniciar sesión',
+        color: Colors.white,
         icon: Icons.login_rounded,
-        onPressed: () =>
-            Navigator.pushReplacementNamed(context, AppRoutes.login),
+        iconColor: Colors.white,
+        onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
       ),
     ],
   );

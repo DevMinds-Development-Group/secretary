@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../colors.dart';
 import '../../models/ministry_model.dart';
+import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/menu.dart';
@@ -37,6 +38,7 @@ class _MinistriesState extends State<Ministries> {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final ministryProvider = context.watch<MinistryProvider>();
     final List<MinistryModel> ministries = ministryProvider.ministries;
+    final memberProvider = context.watch<MemberProvider>();
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -50,7 +52,7 @@ class _MinistriesState extends State<Ministries> {
             child: ministryProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -60,17 +62,28 @@ class _MinistriesState extends State<Ministries> {
                           child: GridView.builder(
                             shrinkWrap: true,
                             gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
+                                SliverGridDelegateWithMaxCrossAxisExtent(
                                   maxCrossAxisExtent:
                                       350.0, // Ancho máximo de cada elemento
-                                  childAspectRatio: 2.3,
+                                  childAspectRatio: 2.5,
                                   crossAxisSpacing:
                                       20, // Espacio entre columnas
-                                  mainAxisSpacing: 20, // Espacio entre filas
+                                  mainAxisSpacing: isMobile
+                                      ? 10
+                                      : 20, // Espacio entre filas
                                 ),
                             itemCount: ministries.length,
                             itemBuilder: (context, index) {
                               final ministry = ministries[index];
+                              final leaderNames = ministry.leaders
+                                  .map(
+                                    (leader) =>
+                                        '${leader.name} ${leader.lastName}',
+                                  )
+                                  .join(', ');
+                              final membersInNetwork = memberProvider.members
+                                  .where((m) => m.networkName == ministry.name)
+                                  .toList();
                               final memberCount = ministryProvider
                                   .getMemberCountForMinistry(ministry.id);
                               return InkWell(
@@ -86,6 +99,9 @@ class _MinistriesState extends State<Ministries> {
                                 child: _buildMinistryCard(
                                   title: ministry.name,
                                   details: ministry.description,
+                                  leaderNames: leaderNames.isEmpty
+                                      ? 'Sin líderes'
+                                      : leaderNames,
                                   icon: Icons.group,
                                   memberCount: memberCount,
                                 ),
@@ -105,6 +121,7 @@ class _MinistriesState extends State<Ministries> {
   Widget _buildMinistryCard({
     required String title,
     required String details,
+    required String leaderNames,
     required IconData icon,
     required int memberCount,
   }) {
@@ -114,53 +131,42 @@ class _MinistriesState extends State<Ministries> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(icon, size: 36, color: primaryColor),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        details,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+            Icon(icon, size: 36, color: primaryColor),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  '$memberCount Miembros',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Lideres: $leaderNames',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  SizedBox(height: 5),
+                  Text(
+                    '$memberCount Miembros',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -184,13 +190,15 @@ class _MinistriesState extends State<Ministries> {
 
   List<Widget> _buildHeaderItems(BuildContext context, bool isMobile) {
     return [
-      Text(
-        'Ministerios',
-        style: TextStyle(
-          fontSize: isMobile ? 24 : 28,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      isMobile
+          ? SizedBox()
+          : Text(
+              'Ministerios',
+              style: TextStyle(
+                fontSize: isMobile ? 24 : 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
       isMobile ? const SizedBox(height: 16) : const Spacer(),
       Button(
         text: 'Gestionar ministerios',

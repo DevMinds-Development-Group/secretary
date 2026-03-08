@@ -19,14 +19,21 @@ class Log {
     this.type,
   });
   factory Log.fromJson(Map<String, dynamic> json) {
+    String dateStr =
+        json['timestamp'] ??
+        json['createdAt'] ??
+        DateTime.now().toIso8601String();
+
     return Log(
-      id: json['id'],
-      username: json['username'],
-      module: json['module'],
-      action: json['action'],
-      type: json['type'], // El campo 'type' puede o no venir
+      id: json['id'].toString(),
+      username: json['username'] ?? 'N/A',
+      module: json['module'] ?? '',
+      action: json['action'] ?? '',
+      type: json['type'],
       details: json['details'],
-      timestamp: DateTime.parse(json['timestamp']),
+      timestamp: DateTime.parse(
+        json['timestamp'] ?? json['createdAt'],
+      ).toLocal(),
     );
   }
 

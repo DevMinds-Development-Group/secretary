@@ -262,7 +262,14 @@ class _CreateMemberState extends State<CreateMember> {
             },
           ),
           const SizedBox(height: 30.0),
-          Button(size: Size(150, 45), text: 'Guardar', onPressed: _saveMember),
+          Button(
+            size: Size(
+              isMobile ? MediaQuery.of(context).size.width * 0.9 : 150,
+              45,
+            ),
+            text: 'Guardar',
+            onPressed: _saveMember,
+          ),
         ],
       ),
     );

@@ -66,11 +66,11 @@ class _LoginState extends State<Login> {
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
         decoration: BoxDecoration(
-          color: isMobile ? Colors.grey.shade400 : Colors.transparent,
+          //color: isMobile ? Colors.grey.shade400 : Colors.transparent,
           image: DecorationImage(
             image: AssetImage(isMobile ? 'assets/01.jpg' : 'assets/05.png'),
-            fit: BoxFit.fill,
-            opacity: 0.25,
+            fit: BoxFit.cover,
+            //opacity: 0.25,
           ),
         ),
         child: SafeArea(

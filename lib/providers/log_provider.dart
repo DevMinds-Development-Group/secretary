@@ -9,7 +9,6 @@ import '../services/api_client.dart';
 class LogProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
 
-  // Estado de la lista
   List<Log> _logs = [];
   int _currentPage = 0;
   int _totalPages = 0;
@@ -18,7 +17,6 @@ class LogProvider with ChangeNotifier {
   bool _isLoadingMore = false; // Para cargar las páginas siguientes
   String? _error;
 
-  // Getters públicos
   List<Log> get logs => _logs;
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
@@ -27,15 +25,10 @@ class LogProvider with ChangeNotifier {
   int get totalPages => _totalPages;
   int get pageSize => _pageSize;
 
-  // --- MÉTODO PARA CARGA INICIAL O REFRESCAR (PULL-TO-REFRESH) ---
   Future<void> fetchLogs({int page = 0}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-
-    print(
-      '--- LOG PROVIDER: Pidiendo a la API page: $page, size: $_pageSize ---',
-    );
 
     try {
       final response = await _apiClient.dio.get(
@@ -43,7 +36,9 @@ class LogProvider with ChangeNotifier {
         queryParameters: {
           'pageNo': page,
           'pageSize': _pageSize,
-        }, // Pedimos la página 0
+          'sortBy': 'timestamp',
+          'sortType': 'desc',
+        },
       );
 
       final List<dynamic> logData = response.data['content'];
