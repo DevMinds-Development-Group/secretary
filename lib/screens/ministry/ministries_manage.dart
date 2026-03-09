@@ -2,6 +2,7 @@ import 'package:app/colors.dart';
 import 'package:app/providers/ministry_provider.dart';
 import 'package:app/screens/create/create_ministry.dart';
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_web_table.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -85,7 +86,29 @@ class _MinistryManageState extends State<MinistryManage> {
           borderRadius: BorderRadius.circular(12),
           child: isMobile
               ? _buildMobileList(context, ministries)
-              : _buildWebTable(context, ministries),
+              : CustomWebTable(
+                  items: ministries,
+                  columnLabels: [
+                    'Ministerio',
+                    'Detalles',
+                    'Pastores',
+                    'Acciones',
+                  ],
+                  rowBuilder: (ministry) => [
+                    DataCell(Text(ministry.name)),
+                    DataCell(Text(ministry.description)),
+                    DataCell(
+                      Tooltip(
+                        message: 'Pastores',
+                        child: Text(
+                          ministry.leaders.map((l) => l.name).join(', '),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    DataCell(_buildActions(context, ministry)),
+                  ],
+                ),
         ),
       ),
     );
@@ -118,61 +141,12 @@ class _MinistryManageState extends State<MinistryManage> {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-
-              // Text(
-              //   'Pastores: ${leaderProvider.getleaderNamesByIds(ministry.leaders)}',
-              //   maxLines: 2,
-              //   overflow: TextOverflow.ellipsis,
-              // ),
             ],
           ),
           trailing: _buildActions(context, ministry),
           //onTap: () {},
         );
       },
-    );
-  }
-
-  Widget _buildWebTable(
-    BuildContext context,
-    List<MinistryModel> ministries,
-    //PastorProvider pastorProvider,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(15.0),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: DataTable(
-          // headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-          columnSpacing: MediaQuery.of(context).size.width * 0.1,
-          columns: [
-            DataColumn(label: Text('Ministerio', style: _headerStyle())),
-            DataColumn(label: Text('Detalles', style: _headerStyle())),
-            DataColumn(label: Text('Pastores', style: _headerStyle())),
-            DataColumn(label: Text('Acciones', style: _headerStyle())),
-          ],
-          rows: ministries.map((ministry) {
-            // final pastorNames = pastorProvider.getPastorNamesByIds
-            (ministry.leaders);
-            return DataRow(
-              cells: [
-                DataCell(Text(ministry.name)),
-                DataCell(Text(ministry.description)),
-                DataCell(
-                  Tooltip(
-                    message: 'Pastores',
-                    child: Text(
-                      ministry.leaders.map((l) => l.name).join(', '),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                DataCell(_buildActions(context, ministry)),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
     );
   }
 
@@ -234,10 +208,6 @@ class _MinistryManageState extends State<MinistryManage> {
   }
 
   TextStyle _headerStyle() {
-    return TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 18,
-      color: Colors.blue[900],
-    );
+    return TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
   }
 }

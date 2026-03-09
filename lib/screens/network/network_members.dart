@@ -8,11 +8,16 @@ import '../../../widgets/custom_appbar.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 
-class NetworkDetail extends StatelessWidget {
+class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
 
-  const NetworkDetail({Key? key, required this.network}) : super(key: key);
+  const NetworkMembers({Key? key, required this.network}) : super(key: key);
 
+  @override
+  State<NetworkMembers> createState() => _NetworkMembersState();
+}
+
+class _NetworkMembersState extends State<NetworkMembers> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
@@ -20,7 +25,7 @@ class NetworkDetail extends StatelessWidget {
     final memberProvider = Provider.of<MemberProvider>(context);
 
     final List<Member> membersInGroup = memberProvider.allMembers
-        .where((member) => member.networkName == network.name)
+        .where((member) => member.networkName == widget.network.name)
         .toList();
 
     membersInGroup.sort(
@@ -29,17 +34,16 @@ class NetworkDetail extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: network.name),
+      appBar: CustomAppBar(title: widget.network.name),
       body: networkProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
-          // Mostrar carga
           : Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: 1500),
                 child: Column(
                   children: [
                     SizedBox(height: 20),
-                    _buildNetworkHeader(network, isMobile),
+                    _buildNetworkHeader(widget.network, isMobile),
                     Expanded(
                       child: membersInGroup.isEmpty
                           ? _buildEmptyState(isMobile)
@@ -114,16 +118,14 @@ class NetworkDetail extends StatelessWidget {
               color: Colors.grey.withOpacity(0.5),
               blurRadius: 5,
               spreadRadius: 2,
-              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: ListView.separated(
           shrinkWrap: true,
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(isMobile ? 10 : 15),
           itemCount: members.length,
-          separatorBuilder: (context, index) =>
-              const Divider(height: 1, thickness: 0.1),
+          separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final member = members[index];
             return ListTile(
@@ -141,7 +143,10 @@ class NetworkDetail extends StatelessWidget {
                 '${member.name} ${member.lastName}',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Text(member.phone),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [Text(member.address), Text(member.phone)],
+              ),
             );
           },
         ),

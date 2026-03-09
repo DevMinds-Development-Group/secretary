@@ -463,17 +463,14 @@ class _CreateServiceState extends State<CreateService> {
                         predicadorController.text.isNotEmpty &&
                         alabanzaController.text.isNotEmpty) {
                       final newService = ServiceModel(
+                        type: '',
+                        description: '',
                         id: '',
                         title: selectedTitle!,
                         date: selectedDay,
                         time: dialogSelectedTime!,
-                        preacher: predicadorController.text,
-                        worshipMinister: alabanzaController.text,
                       );
-                      Provider.of<ServiceProvider>(
-                        context,
-                        listen: false,
-                      ).addService(newService);
+
                       Navigator.of(dialogContext).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

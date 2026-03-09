@@ -1,16 +1,14 @@
-// lib/screens/admin/roles.dart
-
 import 'package:app/colors.dart';
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_web_table.dart';
+import 'package:app/widgets/showDeleteConfirmationDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// import '../../models/permission_model.dart'; // <-- 1. ELIMINAMOS ESTA IMPORTACIÓN INNECESARIA
 import '../../models/role_model.dart';
 import '../../providers/role_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/add_button.dart';
-import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_role.dart';
 
 class Roles extends StatefulWidget {
@@ -31,277 +29,205 @@ class _RolesState extends State<Roles> {
 
   @override
   Widget build(BuildContext context) {
+    final roleProvider = context.watch<RoleProvider>();
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Roles'),
-      body: Consumer<RoleProvider>(
-        builder: (context, roleProvider, child) {
-          if (roleProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (roleProvider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Error: ${roleProvider.error}',
-                    textAlign: TextAlign.center,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            // Botón de agregar adaptativo
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Align(
+                alignment: isMobile ? Alignment.center : Alignment.centerRight,
+                child: AddButton(
+                  size: isMobile
+                      ? Size(MediaQuery.of(context).size.width * 0.9, 50)
+                      : null,
+                  onPressed: () => Navigator.push(
+                    context,
+                    createFadeRoute(const CreateRole()),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => roleProvider.fetchRoles(),
-                    child: const Text('Reintentar'),
-                  ),
-                ],
+                ),
               ),
-            );
-          }
-          final roles = roleProvider.roles;
-          return RefreshIndicator(
-            onRefresh: () => roleProvider.fetchRoles(),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return constraints.maxWidth < 700
-                    ? _buildMobileLayout(context, roles)
-                    : _buildWebLayout(context, roles);
-              },
             ),
-          );
-        },
+            SizedBox(height: isMobile ? 20 : 5),
+            Expanded(
+              child: roleProvider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : roleProvider.roles.isEmpty
+                  ? const Center(child: Text('No hay roles para mostrar.'))
+                  : Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: _buildMainContent(
+                          context,
+                          isMobile,
+                          roleProvider.roles,
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, List<Role> roles) {
-    return Column(
-      children: [
-        const SizedBox(height: 10),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Align(
-            alignment: Alignment.center,
-            child: AddButton(
-              size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-              onPressed: () {
-                Navigator.push(context, createFadeRoute(const CreateRole()));
-              },
+  Widget _buildMainContent(
+    BuildContext context,
+    bool isMobile,
+    List<Role> roles,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
             ),
-          ),
+          ],
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: roles.length,
-            itemBuilder: (context, index) {
-              final role = roles[index];
-              return Card(
-                color: Colors.white,
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 16.0),
-                child: ListTile(
-                  title: Text(role.displayName),
-                  subtitle: Text(
-                    '${role.permissions.length} permisos asignados',
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            createFadeRoute(CreateRole(roleToEdit: role)),
-                          );
-                        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: isMobile
+              ? _buildMobileList(roles)
+              : CustomWebTable<Role>(
+                  items: roles,
+                  columnLabels: [
+                    'Nombre de rol',
+                    'Descripción',
+                    'Permisos',
+                    'Acciones',
+                  ],
+                  columnSpacing: MediaQuery.of(context).size.width * 0.1,
+                  rowBuilder: (role) {
+                    final permissionsText = role.permissions.isEmpty
+                        ? 'Ninguno'
+                        : role.permissions.join(', ');
+                    return [
+                      DataCell(Text(role.displayName)),
+                      DataCell(
+                        SizedBox(
+                          width: 200,
+                          child: Text(
+                            role.description,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _showDelete(context, role);
-                        },
+                      DataCell(
+                        Tooltip(
+                          message: permissionsText,
+                          child: SizedBox(
+                            width: 200,
+                            child: Text(
+                              permissionsText,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                  onTap: () {
-                    _showPermissionsDialog(context, role);
+                      DataCell(_buildActions(context, role)),
+                    ];
                   },
                 ),
-              );
-            },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileList(List<Role> roles) {
+    return ListView.separated(
+      padding: const EdgeInsets.all(10),
+      itemCount: roles.length,
+      separatorBuilder: (context, index) => const Divider(),
+      itemBuilder: (context, index) {
+        final role = roles[index];
+        return ListTile(
+          title: Text(
+            role.displayName,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
+          subtitle: Text('${role.permissions.length} permisos asignados'),
+          onTap: () => _showPermissionsDialog(context, role),
+          trailing: _buildActions(context, role),
+        );
+      },
+    );
+  }
+
+  Widget _buildActions(BuildContext context, Role role) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
+          onPressed: () => Navigator.push(
+            context,
+            createFadeRoute(CreateRole(roleToEdit: role)),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+          onPressed: () => _showDelete(context, role),
         ),
       ],
     );
   }
 
-  Widget _buildWebLayout(BuildContext context, List<Role> roles) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              AddButton(
-                onPressed: () {
-                  Navigator.push(context, createFadeRoute(const CreateRole()));
-                },
-              ),
-              const SizedBox(width: 35),
-            ],
+  void _showPermissionsDialog(BuildContext context, Role role) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Permisos de "${role.displayName}"'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: role.permissions.isEmpty
+                ? [const Text('Sin permisos asignados.')]
+                : role.permissions.map((p) => Text('• $p')).toList(),
           ),
-          SizedBox(height: 20),
-          Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: 1500),
-              child: Card(
-                elevation: 5,
-                color: Colors.white,
-                child: DataTable(
-                  columnSpacing: MediaQuery.of(context).size.width * 0.1,
-                  columns: [
-                    DataColumn(
-                      label: SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.15,
-                        child: Text('Nombre de rol', style: _headerStyle()),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text('Descripción', style: _headerStyle()),
-                    ),
-
-                    DataColumn(label: Text('Permisos', style: _headerStyle())),
-                    DataColumn(label: Text('Acciones', style: _headerStyle())),
-                  ],
-                  rows: roles.map((role) {
-                    final permissionsText = role.permissions.isEmpty
-                        ? 'Ninguno'
-                        : role.permissions.join(', ');
-
-                    return DataRow(
-                      cells: [
-                        DataCell(Text(role.displayName)),
-                        DataCell(
-                          Text(
-                            role.description,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        DataCell(
-                          Tooltip(
-                            message: permissionsText,
-                            child: Text(
-                              maxLines: 2,
-                              permissionsText,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.edit,
-                                  size: 20,
-                                  color: Colors.blue,
-                                ),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    createFadeRoute(
-                                      CreateRole(roleToEdit: role),
-                                    ),
-                                  );
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  size: 20,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () {
-                                  _showDelete(context, role);
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('CERRAR'),
           ),
         ],
       ),
     );
   }
 
-  void _showPermissionsDialog(BuildContext context, Role role) {
-    // Este diálogo ya estaba correcto, no se necesita ningún cambio aquí.
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Permisos de "${role.displayName}"'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: role.permissions.isEmpty
-                  ? [const Text('Este rol no tiene permisos asignados.')]
-                  : role.permissions.map((String permission) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                        child: Text('• $permission'),
-                      );
-                    }).toList(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              child: const Text('CERRAR'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _handleDelete(BuildContext context, Role role) async {
-    final roleProvider = Provider.of<RoleProvider>(context, listen: false);
-
-    final success = await roleProvider.deleteRole(role.id);
-
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            success
-                ? 'Rol "${role.displayName}" eliminado correctamente.'
-                : roleProvider.error ?? 'Error al eliminar el rol',
-          ),
-          backgroundColor: success ? Colors.green : Colors.red,
-        ),
-      );
-    }
-  }
-
-  Future<void> _showDelete(BuildContext context, Role role) {
-    return showDeleteConfirmationDialog(
+  void _showDelete(BuildContext context, Role role) {
+    showDeleteConfirmationDialog(
       context: context,
       itemName: role.displayName,
-      onConfirm: () => _handleDelete(context, role),
+      onConfirm: () async {
+        final success = await Provider.of<RoleProvider>(
+          context,
+          listen: false,
+        ).deleteRole(role.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(success ? 'Rol eliminado' : 'Error al eliminar'),
+              backgroundColor: success ? Colors.green : Colors.red,
+            ),
+          );
+        }
+      },
     );
-  }
-
-  TextStyle _headerStyle() {
-    return const TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
   }
 }

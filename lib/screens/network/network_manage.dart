@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/custom_web_table.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 
 class NetworkManage extends StatelessWidget {
@@ -70,7 +71,20 @@ class NetworkManage extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: isMobile
               ? _buildMobileList(context, networks)
-              : _buildWebTable(context, networks),
+              : CustomWebTable<NetworkModel>(
+                  items: networks,
+                  columnLabels: ['Red', 'Misión', 'Líderes', 'Acciones'],
+                  rowBuilder: (network) => [
+                    DataCell(Text(network.name)),
+                    DataCell(Text(network.mission ?? 'N/A')),
+                    DataCell(
+                      Text(network.leaders.map((l) => l.name).join(", ")),
+                    ),
+                    DataCell(
+                      _buildActions(context, network),
+                    ), // Tu widget de botones
+                  ],
+                ),
         ),
       ),
     );
@@ -99,52 +113,6 @@ class NetworkManage extends StatelessWidget {
           trailing: _buildActions(context, network),
         );
       },
-    );
-  }
-
-  Widget _buildWebTable(BuildContext context, List<NetworkModel> networks) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(15.0),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: DataTable(
-          //headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-          columnSpacing: MediaQuery.of(context).size.width * 0.1,
-          columns: [
-            DataColumn(label: Text('Red', style: _headerStyle())),
-            DataColumn(label: Text('Misión', style: _headerStyle())),
-            DataColumn(label: Text('Líderes', style: _headerStyle())),
-            DataColumn(label: Text('Acciones', style: _headerStyle())),
-          ],
-          rows: networks.map((network) {
-            final leaderNames = network.leaders.map((l) => l.name).join(", ");
-            return DataRow(
-              cells: [
-                DataCell(
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.1,
-                    child: Text(
-                      network.name,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                      maxLines: 2,
-                    ),
-                  ),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.15,
-                    child: Text(network.mission ?? 'Sin misión'),
-                  ),
-                ),
-                DataCell(
-                  Text(leaderNames.isEmpty ? 'Sin asignar' : leaderNames),
-                ),
-                DataCell(_buildActions(context, network)),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
     );
   }
 
@@ -201,9 +169,6 @@ class NetworkManage extends StatelessWidget {
     );
   }
 
-  TextStyle _headerStyle() => TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 18,
-    color: Colors.blue[900],
-  );
+  TextStyle _headerStyle() =>
+      TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
 }

@@ -455,13 +455,10 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                         title: selectedTitle!,
                         date: selectedDay,
                         time: dialogSelectedTime!,
-                        preacher: predicadorController.text,
-                        worshipMinister: alabanzaController.text,
+                        description: '',
+                        type: '',
                       );
-                      Provider.of<ServiceProvider>(
-                        context,
-                        listen: false,
-                      ).addService(newService);
+
                       Navigator.of(dialogContext).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(

@@ -12,7 +12,7 @@ import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/menu.dart';
-import 'ministry_member.dart';
+import 'ministry_members.dart';
 
 class Ministries extends StatefulWidget {
   const Ministries({super.key});
@@ -63,8 +63,9 @@ class _MinistriesState extends State<Ministries> {
                             shrinkWrap: true,
                             gridDelegate:
                                 SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent:
-                                      350.0, // Ancho máximo de cada elemento
+                                  maxCrossAxisExtent: isMobile
+                                      ? 350.0
+                                      : 400.0, // Ancho máximo de cada elemento
                                   childAspectRatio: 2.5,
                                   crossAxisSpacing:
                                       20, // Espacio entre columnas
@@ -125,12 +126,13 @@ class _MinistriesState extends State<Ministries> {
     required IconData icon,
     required int memberCount,
   }) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     return Card(
       color: Colors.white,
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

@@ -310,15 +310,22 @@ class _CreateUserState extends State<CreateUser> {
                   const SizedBox(height: 32),
                   _isSaving
                       ? const Center(child: CircularProgressIndicator())
-                      : Button(
-                          size: Size(
-                            isMobile
-                                ? MediaQuery.of(context).size.width * 0.8
-                                : 170,
-                            isMobile ? 50 : 45,
-                          ),
-                          text: _isEditing ? 'Guardar' : 'Crear Usuario',
-                          onPressed: _saveUser,
+                      : Row(
+                          mainAxisAlignment: isMobile
+                              ? MainAxisAlignment.center
+                              : MainAxisAlignment.end,
+                          children: [
+                            Button(
+                              size: Size(
+                                isMobile
+                                    ? MediaQuery.of(context).size.width * 0.8
+                                    : 170,
+                                isMobile ? 50 : 45,
+                              ),
+                              text: 'Guardar',
+                              onPressed: _saveUser,
+                            ),
+                          ],
                         ),
                 ],
               ),

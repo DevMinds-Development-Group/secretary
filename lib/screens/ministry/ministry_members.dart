@@ -8,7 +8,9 @@ import '../../models/member_model.dart';
 import '../../models/ministry_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
+import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
 
 class MinistryMembers extends StatefulWidget {
@@ -30,6 +32,87 @@ class _MinistryMembersState extends State<MinistryMembers> {
 
       Provider.of<MemberProvider>(context, listen: false).fetchMembers();
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ministryProvider = context.watch<MinistryProvider>();
+    final memberProvider = context.watch<MemberProvider>();
+    final memberIds = ministryProvider.getMemberIdsForMinistry(
+      widget.ministry.id,
+    );
+    final currentMinistry = ministryProvider.ministries.firstWhere(
+      (m) => m.id == widget.ministry.id,
+      orElse: () => widget.ministry,
+    );
+    //final members = currentMinistry.members;
+    final allMembers = memberProvider.members;
+
+    bool isMobile = MediaQuery.of(context).size.width < 700;
+
+    final List<Member> membersInGroup = memberProvider.members.where((member) {
+      return currentMinistry.members.any((m) => m.id == member.id);
+    }).toList();
+
+    membersInGroup.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: CustomAppBar(
+        title: isMobile
+            ? widget.ministry.name
+            : 'Miembros de ${currentMinistry.name}',
+      ),
+      body: ministryProvider.isLoading
+          ? const Center(child: CircularProgressIndicator()) // Mostrar carga
+          : SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: 1500),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Align(
+                          alignment: isMobile
+                              ? Alignment.center
+                              : Alignment.centerRight,
+                          child: AddButton(
+                            size: isMobile
+                                ? Size(
+                                    MediaQuery.of(context).size.width * 0.9,
+                                    50,
+                                  )
+                                : null,
+                            onPressed: () => _showAddMemberDialog(
+                              context,
+                              allMembers,
+                              isMobile,
+                              currentMinistry,
+                            ),
+                          ),
+                        ),
+                      ),
+                      //const SizedBox(height: 10),
+                      _buildMinistryHeader(currentMinistry, isMobile),
+                      Expanded(
+                        child: membersInGroup.isEmpty
+                            ? _buildEmptyState(isMobile)
+                            : _buildMemberList(
+                                membersInGroup,
+                                isMobile,
+                                currentMinistry,
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
   }
 
   void _showAddMemberDialog(
@@ -118,70 +201,6 @@ class _MinistryMembersState extends State<MinistryMembers> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final ministryProvider = context.watch<MinistryProvider>();
-    final memberProvider = context.watch<MemberProvider>();
-    final memberIds = ministryProvider.getMemberIdsForMinistry(
-      widget.ministry.id,
-    );
-    final currentMinistry = ministryProvider.ministries.firstWhere(
-      (m) => m.id == widget.ministry.id,
-      orElse: () => widget.ministry,
-    );
-    //final members = currentMinistry.members;
-    final allMembers = memberProvider.members;
-
-    bool isMobile = MediaQuery.of(context).size.width < 700;
-
-    final List<Member> membersInGroup = memberProvider.members.where((member) {
-      return currentMinistry.members.any((m) => m.id == member.id);
-    }).toList();
-
-    membersInGroup.sort(
-      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-    );
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: isMobile
-            ? widget.ministry.name
-            : 'Miembros de ${currentMinistry.name}',
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryColor,
-        onPressed: () => _showAddMemberDialog(
-          context,
-          allMembers,
-          isMobile,
-          currentMinistry,
-        ),
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      body: ministryProvider.isLoading
-          ? const Center(child: CircularProgressIndicator()) // Mostrar carga
-          : SafeArea(
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 1500),
-                  child: Column(
-                    children: [
-                      SizedBox(height: 20),
-                      _buildMinistryHeader(currentMinistry, isMobile),
-                      Expanded(
-                        child: membersInGroup.isEmpty
-                            ? _buildEmptyState(isMobile)
-                            : _buildMemberList(membersInGroup, isMobile),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-    );
-  }
-
   Widget _buildMinistryHeader(MinistryModel ministry, bool isMobile) {
     return Container(
       width: double.infinity,
@@ -220,7 +239,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
               ),
               SizedBox(width: 10),
               Text(
-                ministry.description ?? 'Sin descripción',
+                ministry.description,
                 style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
             ],
@@ -274,40 +293,71 @@ class _MinistryMembersState extends State<MinistryMembers> {
     ];
   }
 
-  Widget _buildMemberList(List<Member> members, bool isMobile) {
+  Widget _buildMemberList(
+    List<Member> members,
+    bool isMobile,
+    MinistryModel currentMinistry,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              color: Colors.grey.withOpacity(0.5),
+              blurRadius: 5,
               spreadRadius: 2,
             ),
           ],
         ),
         child: ListView.separated(
           shrinkWrap: true,
+          padding: EdgeInsets.all(isMobile ? 10 : 15),
           itemCount: members.length,
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final member = members[index];
             return ListTile(
               leading: CircleAvatar(
-                backgroundColor: primaryColor.withOpacity(0.1),
+                backgroundColor: Colors.blue[400],
                 child: Text(
                   member.name[0].toUpperCase(),
                   style: const TextStyle(
-                    color: primaryColor,
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
               title: Text('${member.name} ${member.lastName}'),
-              subtitle: Text(member.phone),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [Text(member.address), Text(member.phone)],
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  showDeleteConfirmationDialog(
+                    context: context,
+                    itemName: '${member.name} ${member.lastName}',
+                    onConfirm: () async {
+                      try {
+                        await Provider.of<MinistryProvider>(
+                          context,
+                          listen: false,
+                        ).removeMemberFromMinistry(currentMinistry.id, member);
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Error al eliminar miembro'),
+                          ),
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
             );
           },
         ),

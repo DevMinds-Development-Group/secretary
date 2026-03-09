@@ -66,16 +66,24 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          SizedBox(
-            width: MediaQuery.of(context).size.width * 0.4,
-            child: Text(
-              title,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: isMobile ? 16 : 18,
-              ),
-            ),
-          ),
+          isMobile
+              ? SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.4,
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 16 : 18,
+                    ),
+                  ),
+                )
+              : Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMobile ? 16 : 18,
+                  ),
+                ),
           SizedBox(width: isMobile ? 5 : 20),
           IconButton(
             tooltip: 'Página principal',

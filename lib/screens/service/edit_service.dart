@@ -33,12 +33,6 @@ class _EditServiceState extends State<EditService> {
   void initState() {
     super.initState();
     _selectedTitle = widget.serviceToEdit.title;
-    _preacherController = TextEditingController(
-      text: widget.serviceToEdit.preacher,
-    );
-    _worshipMinisterController = TextEditingController(
-      text: widget.serviceToEdit.worshipMinister,
-    );
     _selectedDate = widget.serviceToEdit.date;
     _selectedTime = widget.serviceToEdit.time;
   }
@@ -53,12 +47,12 @@ class _EditServiceState extends State<EditService> {
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       final updatedService = ServiceModel(
+        type: '',
+        description: '',
         id: widget.serviceToEdit.id,
         title: _selectedTitle,
         date: _selectedDate,
         time: _selectedTime,
-        preacher: _preacherController.text,
-        worshipMinister: _worshipMinisterController.text,
       );
       Provider.of<ServiceProvider>(
         context,

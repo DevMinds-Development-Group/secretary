@@ -23,7 +23,9 @@ class _HomeState extends State<Home> {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(isMobile ? 'assets/01.jpg' : 'assets/03.png'),
+                image: AssetImage(
+                  isMobile ? 'assets/01.jpg' : 'assets/03a.png',
+                ),
                 fit: BoxFit.cover,
               ),
             ),

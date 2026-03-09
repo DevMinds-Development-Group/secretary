@@ -12,7 +12,7 @@ import '../../models/network_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../widgets/menu.dart';
-import 'network_detail.dart';
+import 'network_members.dart';
 
 class Networks extends StatefulWidget {
   const Networks({super.key});
@@ -64,7 +64,7 @@ class _NetworksState extends State<Networks> {
                           child: GridView.builder(
                             gridDelegate:
                                 SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 350.0,
+                                  maxCrossAxisExtent: isMobile ? 350.0 : 400.0,
                                   childAspectRatio: 2.5,
                                   crossAxisSpacing: 20,
                                   mainAxisSpacing: isMobile ? 10 : 20,
@@ -89,7 +89,7 @@ class _NetworksState extends State<Networks> {
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
-                                          NetworkDetail(network: network),
+                                          NetworkMembers(network: network),
                                     ),
                                   );
                                 },
@@ -105,7 +105,7 @@ class _NetworksState extends State<Networks> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            NetworkDetail(network: network),
+                                            NetworkMembers(network: network),
                                       ),
                                     );
                                   },
@@ -182,12 +182,13 @@ class _NetworksState extends State<Networks> {
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     return Card(
       color: Colors.white,
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Row(
           children: [
             Icon(icon, size: 36, color: primaryColor),

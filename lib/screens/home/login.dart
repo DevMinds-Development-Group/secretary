@@ -68,7 +68,7 @@ class _LoginState extends State<Login> {
         decoration: BoxDecoration(
           //color: isMobile ? Colors.grey.shade400 : Colors.transparent,
           image: DecorationImage(
-            image: AssetImage(isMobile ? 'assets/01.jpg' : 'assets/05.png'),
+            image: AssetImage(isMobile ? 'assets/01.jpg' : 'assets/03a.png'),
             fit: BoxFit.cover,
             //opacity: 0.25,
           ),
