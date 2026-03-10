@@ -138,6 +138,7 @@ class _LogsState extends State<Logs> {
           constraints: BoxConstraints(maxWidth: 1500),
           child: Card(
             elevation: 5,
+
             color: Colors.white,
             child: DataTable(
               columnSpacing: MediaQuery.of(context).size.width * 0.1,

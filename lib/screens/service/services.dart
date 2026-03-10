@@ -1,19 +1,15 @@
 import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/create/create_other_service.dart';
 import 'package:app/screens/create/create_service.dart';
 import 'package:app/widgets/add_button.dart';
-import 'package:app/widgets/button.dart';
 import 'package:app/widgets/custom_appbar.dart';
 import 'package:app/widgets/menu.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
 import '../../providers/service_provider.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import 'edit_service.dart';
-import 'manage_service_types.dart';
 
 class Services extends StatefulWidget {
   const Services({super.key});
@@ -120,16 +116,15 @@ class _ServicesState extends State<Services> {
                     ),
                     Row(
                       children: [
-                        Button(
-                          size: const Size(220, 45),
-                          text: 'Gestionar Servicios',
-                          onPressed: () => Navigator.push(
-                            context,
-                            createFadeRoute(const ManageServiceTypesScreen()),
-                          ),
-                        ),
                         const SizedBox(width: 16),
-                        AddButton(onPressed: () => _showAddOptions(context)),
+                        AddButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              createFadeRoute(const CreateService()),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ],
@@ -286,64 +281,14 @@ class _ServicesState extends State<Services> {
   Widget _buildMobileButtons() {
     return Column(
       children: [
-        Button(
-          size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-          text: 'Gestionar Servicios',
-          onPressed: () => Navigator.push(
-            context,
-            createFadeRoute(const ManageServiceTypesScreen()),
-          ),
-        ),
         const SizedBox(height: 15),
         AddButton(
           size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-          onPressed: () => _showAddOptions(context),
+          onPressed: () {
+            Navigator.push(context, createFadeRoute(const CreateService()));
+          },
         ),
       ],
-    );
-  }
-
-  void _showAddOptions(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: const Text('¿Qué deseas crear?', textAlign: TextAlign.center),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.church, color: Colors.blue),
-                title: const Text('Servicio'),
-                subtitle: const Text('Cultos, reuniones, etc.'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    createFadeRoute(const CreateService()),
-                  );
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.event_note, color: Colors.orange),
-                title: const Text('Otro'),
-                subtitle: const Text('Eventos especiales, ensayos, etc.'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    createFadeRoute(const CreateOtherService()),
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }
