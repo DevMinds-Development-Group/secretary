@@ -136,10 +136,21 @@ class _LogsState extends State<Logs> {
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 1500),
-          child: Card(
-            elevation: 5,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  spreadRadius: 2,
+                  blurRadius: 5,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
 
-            color: Colors.white,
             child: DataTable(
               columnSpacing: MediaQuery.of(context).size.width * 0.1,
               columns: [

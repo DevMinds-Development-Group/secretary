@@ -204,7 +204,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
                         size: Size(
                           isMobile
                               ? MediaQuery.of(context).size.width * 0.88
-                              : 130,
+                              : 140,
                           isMobile ? 50 : 45,
                         ),
                         text: widget.ministryToEdit != null

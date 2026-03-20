@@ -156,6 +156,7 @@ class _CreateUserState extends State<CreateUser> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
+    final userProvider = context.watch<UserProvider>();
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -308,25 +309,26 @@ class _CreateUserState extends State<CreateUser> {
                   ),
 
                   const SizedBox(height: 32),
-                  _isSaving
-                      ? const Center(child: CircularProgressIndicator())
-                      : Row(
-                          mainAxisAlignment: isMobile
-                              ? MainAxisAlignment.center
-                              : MainAxisAlignment.end,
-                          children: [
-                            Button(
-                              size: Size(
-                                isMobile
-                                    ? MediaQuery.of(context).size.width * 0.8
-                                    : 170,
-                                isMobile ? 50 : 45,
-                              ),
-                              text: 'Guardar',
-                              onPressed: _saveUser,
-                            ),
-                          ],
+                  Row(
+                    mainAxisAlignment: isMobile
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.end,
+                    children: [
+                      Button(
+                        size: Size(
+                          isMobile
+                              ? MediaQuery.of(context).size.width * 0.8
+                              : 140,
+                          isMobile ? 50 : 45,
                         ),
+                        text: widget.userToEdit != null
+                            ? 'Actualizar'
+                            : 'Guardar',
+                        isLoading: userProvider.isLoading,
+                        onPressed: _saveUser,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

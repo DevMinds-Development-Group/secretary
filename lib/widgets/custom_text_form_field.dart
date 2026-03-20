@@ -22,10 +22,7 @@ class CustomTextFormField extends StatefulWidget {
   final VoidCallback? onTap;
   final List<TextInputFormatter>? inputFormatters;
   final String? prefixText;
-
-  // Parámetros de tamaño opcionales (pero no usados para layout aquí)
-  final double? h;
-  final double? w;
+  final Size? size;
 
   const CustomTextFormField({
     super.key,
@@ -47,8 +44,7 @@ class CustomTextFormField extends StatefulWidget {
     this.onTap,
     this.inputFormatters,
     this.prefixText,
-    this.h, // Opcional
-    this.w, // Opcional
+    this.size,
   });
 
   @override
@@ -75,6 +71,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
     final iconColor = Colors.grey[600];
 
     return InputDecoration(
+
       labelText: widget.labelText,
       hintText: widget.hintText,
       prefixText: widget.prefixText,
@@ -109,6 +106,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       prefixIconColor: iconColor,
       suffixIcon: effectiveSuffixIcon,
       suffixIconColor: iconColor,
+      alignLabelWithHint: true,
     );
   }
 

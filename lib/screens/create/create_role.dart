@@ -128,6 +128,8 @@ class _CreateRoleState extends State<CreateRole> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
+    final roleProvider = context.watch<RoleProvider>();
+
     return Scaffold(
       appBar: CustomAppBar(title: _isEditing ? 'Editar Rol' : 'Crear Rol'),
       body: SingleChildScrollView(
@@ -203,25 +205,26 @@ class _CreateRoleState extends State<CreateRole> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  _isSaving
-                      ? const Center(child: CircularProgressIndicator())
-                      : Row(
-                          mainAxisAlignment: isMobile
-                              ? MainAxisAlignment.center
-                              : MainAxisAlignment.end,
-                          children: [
-                            Button(
-                              size: Size(
-                                isMobile
-                                    ? MediaQuery.of(context).size.width * 0.8
-                                    : 170,
-                                isMobile ? 50 : 45,
-                              ),
-                              text: 'Guardar',
-                              onPressed: _saveRole,
-                            ),
-                          ],
+                  Row(
+                    mainAxisAlignment: isMobile
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.end,
+                    children: [
+                      Button(
+                        size: Size(
+                          isMobile
+                              ? MediaQuery.of(context).size.width * 0.8
+                              : 140,
+                          isMobile ? 50 : 45,
                         ),
+                        text: widget.roleToEdit != null
+                            ? 'Actualizar'
+                            : 'Guardar',
+                        isLoading: roleProvider.isLoading,
+                        onPressed: _saveRole,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
+import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
-import 'edit_service.dart';
 
 class Services extends StatefulWidget {
   const Services({super.key});
@@ -26,6 +26,27 @@ class _ServicesState extends State<Services> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ServiceProvider>(context, listen: false).fetchServices();
     });
+  }
+
+  String _getDisplayDay(ServiceModel service) {
+    final Map<String, String> daysMap = {
+      '1': 'Lunes',
+      '2': 'Martes',
+      '3': 'Miércoles',
+      '4': 'Jueves',
+      '5': 'Viernes',
+      '6': 'Sábado',
+      '7': 'Domingo',
+    };
+
+    if (service.recurring) {
+      // Si es recurrente, usamos el campo weekDay (que es 1, 2, 3...)
+      return daysMap[service.weekDay.toString()] ?? service.weekDay;
+    } else {
+      // Si no es recurrente, obtenemos el nombre del día a partir de la fecha
+      final int dayNumber = service.date.weekday; // 1 = Lunes, 7 = Domingo
+      return daysMap[dayNumber.toString()] ?? '';
+    }
   }
 
   @override
@@ -53,7 +74,7 @@ class _ServicesState extends State<Services> {
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.all(25.0),
+                      padding: const EdgeInsets.all(24.0),
                       child: _buildServicesContent(isMobile),
                     ),
                   ),
@@ -63,9 +84,25 @@ class _ServicesState extends State<Services> {
     );
   }
 
+  String _formatTime12h(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+
+    return '$hour:$minute $period';
+  }
+
   Widget _buildServicesContent(bool isMobile) {
-    final servicesProvider = Provider.of<ServiceProvider>(context);
-    final upcomingServices = servicesProvider.services;
+    final servicesProvider = context.watch<ServiceProvider>();
+    final services = servicesProvider.services;
+
+    if (servicesProvider.isLoading && services.isEmpty) {
+      return const Center(
+        child: Column(
+          children: [SizedBox(height: 200), CircularProgressIndicator()],
+        ),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,11 +121,10 @@ class _ServicesState extends State<Services> {
               ),
             ],
           ),
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(32.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ENCABEZADO
               if (isMobile)
                 Column(
                   children: [
@@ -100,11 +136,23 @@ class _ServicesState extends State<Services> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    _buildMobileButtons(),
+                    AddButton(
+                      size: Size(MediaQuery.of(context).size.width * 0.9, 50),
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          createFadeRoute(const CreateService()),
+                        );
+                        if (mounted) {
+                          context.read<ServiceProvider>().fetchServices();
+                        }
+                      },
+                    ),
                   ],
                 )
               else
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
@@ -118,11 +166,14 @@ class _ServicesState extends State<Services> {
                       children: [
                         const SizedBox(width: 16),
                         AddButton(
-                          onPressed: () {
-                            Navigator.push(
+                          onPressed: () async {
+                            await Navigator.push(
                               context,
                               createFadeRoute(const CreateService()),
                             );
+                            if (mounted) {
+                              context.read<ServiceProvider>().fetchServices();
+                            }
                           },
                         ),
                       ],
@@ -130,10 +181,9 @@ class _ServicesState extends State<Services> {
                   ],
                 ),
 
-              const SizedBox(height: 16),
-              const Divider(color: Colors.black12),
+              //const SizedBox(height: 16),
+              const Divider(color: Colors.black, thickness: 0.3),
 
-              // LÓGICA DE ESTADOS (Cargando / Error / Lista)
               if (servicesProvider.isLoading)
                 const Center(
                   child: Padding(
@@ -165,7 +215,7 @@ class _ServicesState extends State<Services> {
                     ),
                   ),
                 )
-              else if (upcomingServices.isEmpty)
+              else if (services.isEmpty)
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(40),
@@ -179,23 +229,14 @@ class _ServicesState extends State<Services> {
                 ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: upcomingServices.length,
+                  itemCount: services.length,
                   separatorBuilder: (context, index) => const Divider(
-                    color: Colors.grey,
+                    color: Colors.black,
                     height: 1,
-                    thickness: 0.2,
+                    thickness: 0.3,
                   ),
                   itemBuilder: (context, index) {
-                    final service = upcomingServices[index];
-
-                    final DateFormat dateFormatter = DateFormat(
-                      'EEEE, dd \'de\' MMMM \'de\' yyyy',
-                      'es',
-                    );
-                    final String formattedDate = dateFormatter.format(
-                      service.date,
-                    );
-                    final String formattedTime = service.time.format(context);
+                    final service = services[index];
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -214,21 +255,107 @@ class _ServicesState extends State<Services> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Text(
-                                  '$formattedDate a las $formattedTime',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.grey[600],
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_month_outlined,
+                                      color: Colors.deepOrange.withOpacity(0.5),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      '${_getDisplayDay(service)} a las ${_formatTime12h(service.time)}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (service.type != 'REUNION' &&
+                                    service.type != 'OTRO') ...[
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.menu_book_outlined,
+                                        color: Colors.cyan.withOpacity(0.5),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Predica: ',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      Wrap(
+                                        spacing: 5,
+                                        runSpacing: isMobile ? 0 : 5,
+                                        children: service.preachers.map((
+                                          preacher,
+                                        ) {
+                                          return Chip(
+                                            elevation: 5,
+                                            padding: const EdgeInsets.all(4),
+                                            backgroundColor: primaryColor
+                                                .withOpacity(0.1),
+                                            label: Text(
+                                              '${service.preachers.isEmpty ? "" : service.preachers.join(", ")}',
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                Text(
-                                  'Predica: ${service.preachers.isEmpty ? "Por asignar" : service.preachers.join(", ")}',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                                Text(
-                                  'Ministra: ${service.worshipMinistries.isEmpty ? "Por asignar" : service.worshipMinistries.join(", ")}',
-                                  style: const TextStyle(fontSize: 15),
-                                ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.music_note,
+                                        color: Colors.deepPurpleAccent
+                                            .withOpacity(0.5),
+                                      ),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'Ministra: ',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      Wrap(
+                                        spacing: 5,
+                                        runSpacing: isMobile ? 0 : 5,
+                                        children: service.worshipMinistries.map((
+                                          worship,
+                                        ) {
+                                          return Chip(
+                                            elevation: 5,
+                                            padding: const EdgeInsets.all(4),
+                                            backgroundColor: primaryColor
+                                                .withOpacity(0.1),
+                                            label: Text(
+                                              '${service.worshipMinistries.isEmpty ? "" : service.worshipMinistries.join(", ")}',
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                const SizedBox(height: 5),
+                                if (service.description.isNotEmpty)
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.description,
+                                        color: Colors.blue,
+                                      ),
+                                      SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          'Descripción:  ${service.description}',
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),
@@ -241,12 +368,20 @@ class _ServicesState extends State<Services> {
                                   size: 22,
                                 ),
                                 tooltip: 'Editar servicio',
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  createFadeRoute(
-                                    EditService(serviceToEdit: service),
-                                  ),
-                                ),
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    context,
+                                    createFadeRoute(
+                                      CreateService(serviceToEdit: service),
+                                    ),
+                                  );
+
+                                  if (mounted) {
+                                    await context
+                                        .read<ServiceProvider>()
+                                        .fetchServices();
+                                  }
+                                },
                               ),
                               IconButton(
                                 icon: Icon(
@@ -273,20 +408,6 @@ class _ServicesState extends State<Services> {
                 ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileButtons() {
-    return Column(
-      children: [
-        const SizedBox(height: 15),
-        AddButton(
-          size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-          onPressed: () {
-            Navigator.push(context, createFadeRoute(const CreateService()));
-          },
         ),
       ],
     );

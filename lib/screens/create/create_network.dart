@@ -8,6 +8,7 @@ import '../../providers/leader_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/multi_select_dialog.dart';
 
 class CreateNetwork extends StatefulWidget {
@@ -117,25 +118,18 @@ class _CreateNetworkState extends State<CreateNetwork> {
                     ),
                   ),
                   SizedBox(height: isMobile ? 30 : 20),
-                  TextFormField(
+                  CustomTextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre de la Red',
-                      border: OutlineInputBorder(),
-                    ),
+                    labelText: 'Nombre de la Red',
                     validator: (v) => (v == null || v.isEmpty)
                         ? 'El nombre es obligatorio'
                         : null,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  CustomTextFormField(
+                    labelText: 'Misión/Descripción',
                     controller: _missionController,
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Misión / Descripción',
-                      border: OutlineInputBorder(),
-                      alignLabelWithHint: true,
-                    ),
                   ),
                   const SizedBox(height: 16),
                   InkWell(
@@ -203,7 +197,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                         size: Size(
                           isMobile
                               ? MediaQuery.of(context).size.width * 0.88
-                              : 150,
+                              : 140,
                           isMobile ? 50 : 45,
                         ),
                         text: widget.networkToEdit != null

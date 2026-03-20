@@ -201,11 +201,13 @@ class _MembersState extends State<Members> {
             ),
           ],
         ),
-        child: ListView.builder(
+        child: ListView.separated(
+          separatorBuilder: (context, index) => const Divider(height: 1),
           padding: EdgeInsets.all(isMobile ? 5.0 : 25),
           itemCount: members.length,
           itemBuilder: (context, index) {
             final member = members[index];
+
             return ListTile(
               leading: isMobile
                   ? null
@@ -234,7 +236,7 @@ class _MembersState extends State<Members> {
               ),
 
               subtitle: Text(
-                member.networkName ?? 'Sin red asignada',
+                member.networkName ?? '',
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 overflow: TextOverflow.ellipsis,
               ),

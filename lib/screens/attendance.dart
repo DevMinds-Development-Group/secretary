@@ -122,7 +122,7 @@ class _AttendanceState extends State<Attendance> {
 
                 const SizedBox(height: 10),
                 // --- LISTA DE MIEMBROS ---
-                Expanded(child: _buildMemberList(members)),
+                Expanded(child: _buildMemberList(members, isMobile)),
               ],
             ),
           ),
@@ -130,8 +130,6 @@ class _AttendanceState extends State<Attendance> {
       ),
     );
   }
-
-  // --- MÉTODOS BUILD REFACTORIZADOS ---
 
   Widget _buildMobileControls(memberProvider) {
     return Column(
@@ -156,6 +154,7 @@ class _AttendanceState extends State<Attendance> {
               initialValue: _guestCount,
               onCountChanged: (count) => _guestCount = count,
             ),
+            SizedBox(width: 10),
             Counter(
               label: 'Visitas Pastorales',
               initialValue: _pastoralVisitCount,
@@ -164,20 +163,14 @@ class _AttendanceState extends State<Attendance> {
           ],
         ),
         const SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            DateWidget(
-              selectedDate: _selectedDate,
-              onDateSelected: _onDateSelected,
-            ),
-            const SizedBox(width: 20),
-            Button(
-              text: 'Guardar',
-              onPressed: _saveAttendance,
-              size: const Size(160, 45),
-            ),
-          ],
+        DateWidget(
+          selectedDate: _selectedDate,
+          onDateSelected: _onDateSelected,
+        ),
+        Button(
+          text: 'Guardar',
+          onPressed: _saveAttendance,
+          size: const Size(160, 45),
         ),
       ],
     );
@@ -219,12 +212,17 @@ class _AttendanceState extends State<Attendance> {
     );
   }
 
-  Widget _buildMemberList(List<Member> members) {
+  Widget _buildMemberList(List<Member> members, isMobile) {
+    final provider = Provider.of<MemberProvider>(context, listen: false);
+
+    if (provider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     if (members.isEmpty) {
       return const Center(child: Text('No se encontraron miembros.'));
     }
     return Padding(
-      padding: const EdgeInsets.all(25),
+      padding: const EdgeInsets.all(20),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -238,28 +236,33 @@ class _AttendanceState extends State<Attendance> {
             ),
           ],
         ),
-        child: ListView.builder(
-          padding: const EdgeInsets.all(16),
+        child: ListView.separated(
+          separatorBuilder: (context, index) => const Divider(height: 10),
+          padding: EdgeInsets.all(isMobile ? 5.0 : 25),
           itemCount: members.length,
           itemBuilder: (context, index) {
             final member = members[index];
             final bool isPresent = _presentMemberIds.contains(member.id);
 
             return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: isPresent
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
-                child: Text(
-                  member.name.isNotEmpty
-                      ? member.name.substring(0, 1).toUpperCase()
-                      : '?',
-                  style: TextStyle(
-                    color: isPresent ? Colors.green : Colors.redAccent[200],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              leading: isMobile
+                  ? null
+                  : CircleAvatar(
+                      backgroundColor: isPresent
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      child: Text(
+                        member.name.isNotEmpty
+                            ? member.name.substring(0, 1).toUpperCase()
+                            : '?',
+                        style: TextStyle(
+                          color: isPresent
+                              ? Colors.green
+                              : Colors.redAccent[200],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
               title: Text('${member.name} ${member.lastName}'),
               trailing: Checkbox(
                 value: isPresent,

@@ -15,32 +15,89 @@ class ServiceProvider with ChangeNotifier {
   String? get error => _error;
 
   Future<void> fetchServices() async {
-    if (_isLoading) return;
+    _isLoading = true;
+    _services = [];
+    _error = null;
+    notifyListeners();
 
+    try {
+      final response = await _apiClient.dio.get(
+        '/event-definitions/weekly',
+        queryParameters: {'t': DateTime.now().millisecondsSinceEpoch},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+
+        final List<ServiceModel> loadedServices = data
+            .map((s) => ServiceModel.fromJson(s))
+            .toList();
+
+        loadedServices.sort((a, b) {
+          int dateCompare = a.date.compareTo(b.date);
+          if (dateCompare != 0) return dateCompare;
+          return a.time.hour.compareTo(b.time.hour);
+        });
+
+        _services = loadedServices;
+
+        print(
+          "DEBUG: Lista sincronizada con el servidor. Total: ${_services.length}",
+        );
+      }
+    } catch (e) {
+      _error = "Error al cargar servicios: $e";
+      print("DEBUG ERROR FETCH: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> addService(ServiceModel service) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await _apiClient.dio.get('/event-definitions/weekly');
+      final response = await _apiClient.dio.post(
+        '/event-definitions',
+        data: service.toJson(),
+      );
 
-      // El backend devuelve una lista directa de objetos
-      final List<dynamic> serviceData = response.data;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await fetchServices();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = "Error al guardar";
+      print("DEBUG ERROR: $e");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
-      _services = serviceData
-          .map((data) => ServiceModel.fromJson(data))
-          .toList();
+  Future<bool> updateService(ServiceModel service) async {
+    _isLoading = true;
+    notifyListeners();
 
-      // Ordenar por fecha y hora
-      _services.sort((a, b) {
-        int dateCompare = a.date.compareTo(b.date);
-        if (dateCompare != 0) return dateCompare;
-        return a.time.hour.compareTo(b.time.hour);
-      });
-    } on DioException catch (e) {
-      _error =
-          'Error al cargar servicios: ${e.response?.data['message'] ?? e.message}';
-      print(_error);
+    try {
+      final response = await _apiClient.dio.put(
+        '/event-definitions',
+        data: service.toJson(),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        await fetchServices();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _error = "Error al actualizar";
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -61,14 +118,6 @@ class ServiceProvider with ChangeNotifier {
       print(_error);
       notifyListeners();
       return false;
-    }
-  }
-
-  void updateService(ServiceModel updatedService) {
-    final serviceIndex = _services.indexWhere((s) => s.id == updatedService.id);
-    if (serviceIndex >= 0) {
-      _services[serviceIndex] = updatedService;
-      notifyListeners();
     }
   }
 

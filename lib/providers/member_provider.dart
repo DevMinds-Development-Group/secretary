@@ -34,12 +34,20 @@ class MemberProvider with ChangeNotifier {
   }
 
   Future<void> fetchMembers() async {
+    if (_isLoading) return;
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final response = await _apiClient.dio.get('/members');
+
+      // Log para saber qué está llegando exactamente
+      print(
+        "DEBUG: Respuesta de /members recibida. Status: ${response.statusCode}",
+      );
+
       final List<dynamic> data = response.data is List
           ? response.data
           : (response.data['content'] ?? []);

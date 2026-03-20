@@ -133,20 +133,21 @@ class _CreateMemberState extends State<CreateMember> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
+    final memberProvider = context.watch<MemberProvider>();
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: CustomAppBar(title: 'Crear miembro'),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return isMobile
-              ? _buildMobileLayout(isMobile)
-              : _buildWebLayout(isMobile);
+              ? _buildMobileLayout(isMobile, memberProvider)
+              : _buildWebLayout(isMobile, memberProvider);
         },
       ),
     );
   }
 
-  Widget _buildMobileLayout(isMobile) {
+  Widget _buildMobileLayout(isMobile, memberProvider) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -154,26 +155,26 @@ class _CreateMemberState extends State<CreateMember> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: 24.0),
-            _buildFormFields(context, isMobile),
+            _buildFormFields(context, isMobile, memberProvider),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWebLayout(isMobile) {
+  Widget _buildWebLayout(isMobile, memberProvider) {
     return SingleChildScrollView(
       child: Center(
         child: Container(
           width: 600,
           padding: EdgeInsets.all(30.0),
-          child: _buildFormFields(context, isMobile),
+          child: _buildFormFields(context, isMobile, memberProvider),
         ),
       ),
     );
   }
 
-  Widget _buildFormFields(BuildContext context, isMobile) {
+  Widget _buildFormFields(BuildContext context, isMobile, memberProvider) {
     return Form(
       key: _formKey,
       child: Column(
@@ -264,10 +265,11 @@ class _CreateMemberState extends State<CreateMember> {
           const SizedBox(height: 30.0),
           Button(
             size: Size(
-              isMobile ? MediaQuery.of(context).size.width * 0.9 : 150,
+              isMobile ? MediaQuery.of(context).size.width * 0.9 : 140,
               45,
             ),
-            text: 'Guardar',
+            text: widget.memberToEdit != null ? 'Actualizar' : 'Guardar',
+            isLoading: memberProvider.isLoading,
             onPressed: _saveMember,
           ),
         ],

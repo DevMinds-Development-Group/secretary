@@ -1,16 +1,14 @@
-// lib/widgets/member_autocomplete_field.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/member_model.dart'; // Asegúrate de que la ruta a tu modelo de miembro sea correcta
-import '../providers/member_provider.dart'; // Asegúrate de que la ruta a tu provider de miembro sea correcta
+import '../models/member_model.dart';
+import '../providers/member_provider.dart';
+import 'custom_text_form_field.dart';
 
-class MemberAutocompleteField extends StatelessWidget {
+class MemberAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
   final String labelText;
-  final Function(Member?)
-  onMemberSelected; // Callback para saber si se eligió un miembro
+  final Function(Member?) onMemberSelected;
 
   const MemberAutocompleteField({
     Key? key,
@@ -20,108 +18,112 @@ class MemberAutocompleteField extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<MemberAutocompleteField> createState() =>
+      _MemberAutocompleteFieldState();
+}
+
+class _MemberAutocompleteFieldState extends State<MemberAutocompleteField> {
+  @override
   Widget build(BuildContext context) {
-    // Obtenemos la lista completa de miembros una sola vez
-    final List<Member> allMembers = Provider.of<MemberProvider>(
-      context,
-      listen: false,
-    ).members;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final memberProvider = context.watch<MemberProvider>();
+        final List<Member> allMembers = memberProvider.allMembers;
 
-    return Autocomplete<Member>(
-      // 1. Define cómo se muestra la opción en la lista desplegable
-      displayStringForOption: (Member option) =>
-          '${option.name} ${option.lastName}',
+        return Consumer<MemberProvider>(
+          builder: (context, memberProvider, child) {
+            print(
+              "Autocomplete '${widget.labelText}' - Miembros cargados: ${allMembers.length}",
+            );
 
-      // 2. La función que filtra las opciones a medida que el usuario escribe
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text == '') {
-          return const Iterable<
-            Member
-          >.empty(); // No mostrar nada si el campo está vacío
-        }
-        // Filtra la lista de miembros basándose en el texto introducido (ignorando mayúsculas/minúsculas)
-        return allMembers.where((Member member) {
-          final fullName = '${member.name} ${member.lastName}'.toLowerCase();
-          return fullName.contains(textEditingValue.text.toLowerCase());
-        });
-      },
+            return Autocomplete<Member>(
+              displayStringForOption: (Member option) =>
+                  '${option.name} ${option.lastName}'.trim(),
 
-      // 3. Lo que sucede cuando el usuario selecciona una opción de la lista
-      onSelected: (Member selection) {
-        // Actualiza el texto del controlador con el nombre completo del miembro seleccionado
-        controller.text = '${selection.name} ${selection.lastName}';
-        // Llama al callback para notificar que se ha seleccionado un miembro real
-        onMemberSelected(selection);
-      },
-
-      // 4. El constructor del campo de texto que el usuario ve
-      fieldViewBuilder:
-          (
-            BuildContext context,
-            TextEditingController fieldController,
-            FocusNode fieldFocusNode,
-            VoidCallback onFieldSubmitted,
-          ) {
-            // Asignamos nuestro controlador externo al del Autocomplete
-            // Esto es un pequeño truco para que funcione con nuestro `TextEditingController`
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (fieldController.text != controller.text) {
-                fieldController.text = controller.text;
-              }
-            });
-
-            return TextFormField(
-              controller: fieldController,
-              focusNode: fieldFocusNode,
-              decoration: InputDecoration(
-                labelText: labelText,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: (text) {
-                // Si el usuario modifica el texto, asumimos que ya no es un miembro seleccionado
-                // y pasamos null al callback.
-                controller.text = text;
-                onMemberSelected(null);
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Este campo no puede estar vacío.';
+              optionsBuilder: (TextEditingValue textEditingValue) {
+                if (textEditingValue.text.isEmpty || allMembers.isEmpty) {
+                  return const Iterable<Member>.empty();
                 }
-                return null;
+                return allMembers.where((Member member) {
+                  final fullName = '${member.name} ${member.lastName}'
+                      .toLowerCase();
+                  return fullName.contains(textEditingValue.text.toLowerCase());
+                });
+              },
+
+              onSelected: (Member selection) {
+                final String fullName =
+                    '${selection.name} ${selection.lastName}'.trim();
+                widget.controller.text = fullName;
+                widget.onMemberSelected(selection);
+              },
+
+              // DENTRO de MemberAutocompleteField -> fieldViewBuilder
+              fieldViewBuilder:
+                  (context, fieldController, focusNode, onFieldSubmitted) {
+                    // Sincronización inmediata: Si el controlador externo cambia (desde el padre),
+                    // actualizamos el interno del Autocomplete.
+                    if (widget.controller.text != fieldController.text) {
+                      Future.microtask(() {
+                        if (mounted)
+                          fieldController.text = widget.controller.text;
+                      });
+                    }
+
+                    return CustomTextFormField(
+                      labelText: widget.labelText,
+                      controller: fieldController,
+                      focusNode: focusNode,
+                      onChanged: (text) {
+                        // Actualizamos el controlador del padre para que no se pierda el dato
+                        widget.controller.text = text;
+                        if (text.isEmpty) {
+                          widget.onMemberSelected(null);
+                        }
+                      },
+                    );
+                  },
+
+              optionsViewBuilder: (context, onSelected, options) {
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    borderRadius: BorderRadius.circular(5),
+                    color: Colors.white,
+                    child: Container(
+                      width: constraints.maxWidth,
+                      constraints: const BoxConstraints(maxHeight: 250),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final Member option = options.elementAt(index);
+                          return ListTile(
+                            title: Text(
+                              '${option.name} ${option.lastName}',
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              option.phone,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            onTap: () => onSelected(option),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                );
               },
             );
           },
-
-      // 5. El constructor para cada opción en la lista desplegable
-      optionsViewBuilder:
-          (
-            BuildContext context,
-            AutocompleteOnSelected<Member> onSelected,
-            Iterable<Member> options,
-          ) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                child: SizedBox(
-                  width: 300, // Ajusta el ancho según tu diseño
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final Member option = options.elementAt(index);
-                      return InkWell(
-                        onTap: () => onSelected(option),
-                        child: ListTile(
-                          title: Text('${option.name} ${option.lastName}'),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            );
-          },
+        );
+      },
     );
   }
 }

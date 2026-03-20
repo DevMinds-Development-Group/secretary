@@ -23,6 +23,12 @@ class Member {
     this.networkName,
   });
 
+  @override
+  String toString() {
+    // Si Flutter intenta imprimir el objeto, imprimirá esto:
+    return '$name $lastName'.trim();
+  }
+
   // Getter para nombre completo
   String get fullName =>
       '$name ?? '
