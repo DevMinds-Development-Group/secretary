@@ -1,15 +1,14 @@
 import 'package:app/routes/page_route_builder.dart';
 import 'package:app/screens/admin/admin.dart';
-import 'package:app/screens/attendance.dart';
 import 'package:app/screens/members.dart';
 import 'package:app/screens/ministry/ministries.dart';
 import 'package:app/screens/service/services.dart';
 import 'package:flutter/material.dart';
 
 import '../colors.dart';
+import '../screens/attendance/attendance_history.dart';
 import '../screens/home/dashboard.dart';
 import '../screens/network/networks.dart';
-import '../screens/reports.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -111,7 +110,10 @@ class _MenuState extends State<Menu> {
               if (isMobile) {
                 Navigator.pop(context);
               }
-              Navigator.pushReplacement(context, createFadeRoute(Attendance()));
+              Navigator.pushReplacement(
+                context,
+                createFadeRoute(AttendanceHistory()),
+              );
               setState(() {
                 _selectedIndex = 3;
               });
@@ -160,7 +162,7 @@ class _MenuState extends State<Menu> {
               if (isMobile) {
                 Navigator.pop(context);
               }
-              Navigator.pushReplacement(context, createFadeRoute(Reports()));
+              //Navigator.pushReplacement(context, createFadeRoute(Reports()));
               setState(() {
                 _selectedIndex = 6;
               });

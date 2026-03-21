@@ -25,6 +25,7 @@ class _ButtonState extends State<AddButton> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         backgroundColor: Colors.green,
         fixedSize: buttonSize,
+        elevation: 5,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,

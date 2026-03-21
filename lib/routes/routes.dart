@@ -1,6 +1,6 @@
 import 'package:app/screens/admin/admin.dart';
 import 'package:app/screens/admin/profile.dart';
-import 'package:app/screens/attendance.dart';
+import 'package:app/screens/attendance/attendance.dart';
 import 'package:app/screens/auth/auth_wrapper.dart';
 import 'package:app/screens/create/create_member.dart';
 import 'package:app/screens/create/create_network.dart';
@@ -9,11 +9,11 @@ import 'package:app/screens/create/create_service.dart';
 import 'package:app/screens/members.dart';
 import 'package:app/screens/ministry/ministries.dart';
 import 'package:app/screens/network/network_manage.dart';
-import 'package:app/screens/reports.dart';
 import 'package:app/screens/service/services.dart';
 import 'package:flutter/material.dart';
 
 import '../screens/admin/users.dart';
+import '../screens/attendance/attendance_history.dart';
 import '../screens/create/create_ministry.dart';
 import '../screens/home/dashboard.dart';
 import '../screens/home/home.dart';
@@ -40,6 +40,7 @@ class AppRoutes {
   static const String users = 'users';
   static const String network_manage = 'network_manage';
   static const String create_other_service = 'create_other_service';
+  static const String attendance_history = 'attendance_history';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return <String, WidgetBuilder>{
@@ -54,7 +55,7 @@ class AppRoutes {
       create_network: (context) => CreateNetwork(),
       ministries: (context) => Ministries(),
       create_ministry: (context) => CreateMinistry(),
-      reports: (context) => Reports(),
+      //reports: (context) => Reports(),
       create_service: (context) => CreateService(),
       create_member: (context) => CreateMember(),
       admin: (context) => Admin(),
@@ -62,6 +63,7 @@ class AppRoutes {
       network_manage: (context) => NetworkManage(),
       auth_wrapper: (context) => AuthWrapper(),
       create_other_service: (context) => CreateOtherService(),
+      attendance_history: (context) => AttendanceHistory(),
     };
   }
 }

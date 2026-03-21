@@ -4,25 +4,52 @@ import 'package:flutter/material.dart';
 import '../models/attendance_record_model.dart';
 
 class AttendanceProvider with ChangeNotifier {
-  // "Base de datos" en memoria de todos los registros de asistencia
   final Map<String, AttendanceRecord> _records = {};
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
-  // Getter para acceder a los registros
   Map<String, AttendanceRecord> get records => _records;
 
-  // Método para guardar o actualizar un registro de asistencia
-  void saveRecord(AttendanceRecord record) {
-    _records[record.id] = record;
+  List<AttendanceRecord> get recordsList {
+    final list = _records.values.toList();
+    list.sort((a, b) => b.date.compareTo(a.date)); // Orden descendente
+    return list;
+  }
+
+  String _generateId(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+  }
+
+  Future<void> saveRecord(AttendanceRecord record) async {
+    _isLoading = true;
     notifyListeners();
-    print("Registro guardado para la fecha: ${record.id}");
-    print("Miembros presentes: ${record.presentMemberIds.length}");
-    print("Visitas: ${record.guestCount}");
+
+    // Simulamos un pequeño delay como si fuera una API
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    _records[record.id] = record;
+
+    _isLoading = false;
+    notifyListeners();
+    print("Registro guardado: ${record.id}");
   }
 
   // Método para obtener un registro para una fecha específica
   AttendanceRecord? getRecordForDate(DateTime date) {
-    final String id =
-        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-    return _records[id];
+    return _records[_generateId(date)];
+  }
+
+  void deleteRecord(String id) {
+    if (_records.containsKey(id)) {
+      _records.remove(id);
+      notifyListeners();
+    }
+  }
+
+  List<AttendanceRecord> searchRecords(String query) {
+    if (query.isEmpty) return recordsList;
+    return recordsList.where((record) {
+      return record.id.contains(query);
+    }).toList();
   }
 }

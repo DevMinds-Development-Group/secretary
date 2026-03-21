@@ -1,33 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../colors.dart';
-import '../models/attendance_record_model.dart';
-import '../models/member_model.dart';
-import '../providers/attendance_provider.dart';
-import '../providers/log_provider.dart';
-import '../providers/member_provider.dart';
-import '../widgets/button.dart';
-import '../widgets/counter.dart';
-import '../widgets/custom_appbar.dart';
-import '../widgets/date.dart';
-import '../widgets/menu.dart';
-import '../widgets/search_text_field.dart';
+import '../../colors.dart';
+import '../../models/attendance_record_model.dart';
+import '../../models/member_model.dart';
+import '../../providers/attendance_provider.dart';
+import '../../providers/log_provider.dart';
+import '../../providers/member_provider.dart';
+import '../../widgets/button.dart';
+import '../../widgets/counter.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/date.dart';
+import '../../widgets/menu.dart';
+import '../../widgets/search_text_field.dart';
 
 class Attendance extends StatefulWidget {
-  const Attendance({super.key});
+  final AttendanceRecord? existingRecord;
+
+  const Attendance({super.key, this.existingRecord});
 
   @override
   State<Attendance> createState() => _AttendanceState();
 }
 
 class _AttendanceState extends State<Attendance> {
-  // --- ESTADO DE LA PANTALLA ---
   DateTime _selectedDate = DateTime.now();
   int _guestCount = 0;
   int _pastoralVisitCount = 0;
   // Set para almacenar los IDs de los miembros marcados como presentes
   final Set<String> _presentMemberIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.existingRecord != null) {
+      _selectedDate = widget.existingRecord!.date;
+      _guestCount = widget.existingRecord!.guestCount;
+      _pastoralVisitCount = widget.existingRecord!.pastoralVisitCount;
+      _presentMemberIds.addAll(widget.existingRecord!.presentMemberIds);
+    }
+  }
 
   @override
   void didChangeDependencies() {
