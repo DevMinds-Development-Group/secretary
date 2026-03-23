@@ -1,13 +1,20 @@
+import 'package:app/widgets/action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Asegúrate de tener intl en pubspec.yaml
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
+import '../../models/attendance_model.dart';
 import '../../providers/attendance_provider.dart';
+import '../../providers/member_provider.dart';
+import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/date.dart';
 import '../../widgets/menu.dart';
 import '../../widgets/search_text_field.dart';
+import '../../widgets/showDeleteConfirmationDialog.dart';
 import 'attendance.dart';
+import 'attendance_details.dart';
 
 class AttendanceHistory extends StatefulWidget {
   const AttendanceHistory({super.key});
@@ -17,12 +24,19 @@ class AttendanceHistory extends StatefulWidget {
 }
 
 class _AttendanceHistoryState extends State<AttendanceHistory> {
-  DateTime? _filterDate;
+  DateTime _filterDate = DateTime.now();
   String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<AttendanceProvider>(
+        context,
+        listen: false,
+      ).fetchAttendanceHistory();
+      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+    });
   }
 
   @override
@@ -30,16 +44,15 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final attendanceProvider = Provider.of<AttendanceProvider>(context);
 
-    // Filtrado local (puedes mover esto al provider luego)
     final records = attendanceProvider.recordsList.where((r) {
       final matchesName = r.id.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
+
       final matchesDate =
-          _filterDate == null ||
           (r.date.year == _filterDate!.year &&
-              r.date.month == _filterDate!.month &&
-              r.date.day == _filterDate!.day);
+          r.date.month == _filterDate!.month &&
+          r.date.day == _filterDate!.day);
       return matchesName && matchesDate;
     }).toList();
 
@@ -75,11 +88,6 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
   Widget _buildHeader(bool isMobile) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
-      ),
       child: isMobile
           ? Column(
               children: [
@@ -87,9 +95,27 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                   onChanged: (val) => setState(() => _searchQuery = val),
                 ),
                 const SizedBox(height: 10),
-                _buildDateFilter(),
+                _dateWidget(),
                 const SizedBox(height: 10),
-                _buildAddButton(),
+                Button(
+                  text: 'Tomar Asistencia',
+                  size: Size(220, isMobile ? 50 : 45),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Attendance(),
+                      ),
+                    );
+                    if (mounted) {
+                      Provider.of<AttendanceProvider>(
+                        context,
+                        listen: false,
+                      ).fetchAttendanceHistory();
+                    }
+                  },
+                  icon: Icons.how_to_reg,
+                ),
               ],
             )
           : Row(
@@ -100,51 +126,57 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                   ),
                 ),
                 const SizedBox(width: 15),
-                _buildDateFilter(),
+                _dateWidget(),
                 const SizedBox(width: 15),
-                _buildAddButton(),
+                Button(
+                  text: 'Tomar Asistencia',
+                  size: Size(220, isMobile ? 50 : 45),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const Attendance(),
+                      ),
+                    );
+                    if (mounted) {
+                      Provider.of<AttendanceProvider>(
+                        context,
+                        listen: false,
+                      ).fetchAttendanceHistory();
+                    }
+                  },
+                  icon: Icons.how_to_reg,
+                ),
               ],
             ),
     );
   }
 
-  Widget _buildDateFilter() {
-    return OutlinedButton.icon(
-      icon: const Icon(Icons.calendar_today, size: 18),
-      label: Text(
-        _filterDate == null
-            ? 'Filtrar Fecha'
-            : DateFormat('dd/MM/yyyy').format(_filterDate!),
-      ),
-      onPressed: () async {
-        final date = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2020),
-          lastDate: DateTime.now(),
-        );
-        setState(() => _filterDate = date);
+  DateWidget _dateWidget() {
+    return DateWidget(
+      initialDate: _filterDate,
+      onDateSelected: (newDate) {
+        setState(() => _filterDate = newDate);
       },
     );
   }
 
-  Widget _buildAddButton() {
-    return ElevatedButton.icon(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      ),
-      icon: const Icon(Icons.how_to_reg),
-      label: const Text('Tomar Asistencia'),
-      onPressed: () => Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const Attendance()),
-      ),
-    );
+  void _handleDelete(BuildContext context, AttendanceModel record) async {
+    final provider = Provider.of<AttendanceProvider>(context, listen: false);
+
+    final success = await provider.deleteRecord(record.id);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success ? 'Registro eliminado' : 'Error al eliminar'),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+    }
   }
 
-  Widget _buildRecordsList(List records, bool isLoading) {
+  Widget _buildRecordsList(List<AttendanceModel> records, bool isLoading) {
     if (isLoading) return const Center(child: CircularProgressIndicator());
     if (records.isEmpty)
       return const Center(child: Text("No hay registros encontrados"));
@@ -155,6 +187,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListView.separated(
+        padding: EdgeInsets.all(5),
         itemCount: records.length,
         separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
@@ -164,17 +197,62 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
               Icons.assignment_turned_in,
               color: Colors.green,
             ),
-            title: Text(
-              DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
+            title: Row(
+              children: [
+                Text(
+                  '${record.definitionName ?? 'Evento sin nombre'} |',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                VerticalDivider(width: 5),
+                Text(
+                  record.networkName ?? 'Evento sin nombre',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ],
             ),
-            subtitle: Text(
-              'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.guestCount}',
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
+                  style: TextStyle(fontSize: 16),
+                ),
+                Text(
+                  'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount}',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: ActionButtons(
+              onEdit: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Attendance(existingRecord: record),
+                  ),
+                );
+                if (mounted) {
+                  Provider.of<AttendanceProvider>(
+                    context,
+                    listen: false,
+                  ).fetchAttendanceHistory();
+                }
+              },
+              onDelete: () {
+                showDeleteConfirmationDialog(
+                  context: context,
+                  itemName:
+                      'Asistencia del ${DateFormat('d/MM').format(record.date)}',
+                  onConfirm: () => _handleDelete(context, record),
+                );
+              },
+            ),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => Attendance()),
+                MaterialPageRoute(
+                  builder: (context) => AttendanceDetail(record: record),
+                ),
               );
             },
           );

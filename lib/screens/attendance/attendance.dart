@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
-import '../../models/attendance_record_model.dart';
+import '../../models/attendance_model.dart';
 import '../../models/member_model.dart';
 import '../../providers/attendance_provider.dart';
-import '../../providers/log_provider.dart';
 import '../../providers/member_provider.dart';
+import '../../providers/network_provider.dart';
+import '../../providers/service_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/counter.dart';
 import '../../widgets/custom_appbar.dart';
@@ -15,7 +16,7 @@ import '../../widgets/menu.dart';
 import '../../widgets/search_text_field.dart';
 
 class Attendance extends StatefulWidget {
-  final AttendanceRecord? existingRecord;
+  final AttendanceModel? existingRecord;
 
   const Attendance({super.key, this.existingRecord});
 
@@ -25,28 +26,113 @@ class Attendance extends StatefulWidget {
 
 class _AttendanceState extends State<Attendance> {
   DateTime _selectedDate = DateTime.now();
-  int _guestCount = 0;
-  int _pastoralVisitCount = 0;
-  // Set para almacenar los IDs de los miembros marcados como presentes
+  String? _selectedEventId;
+  String? _selectedNetworkId;
+  int _visitorsCount = 0;
+  int _pastoralVisitsCount = 0;
+  String _observations = "";
   final Set<String> _presentMemberIds = {};
+  Set<String> _selectedMemberIds = {};
 
   @override
   void initState() {
     super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ServiceProvider>(context, listen: false).fetchServices();
+      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
+    });
+
     if (widget.existingRecord != null) {
-      _selectedDate = widget.existingRecord!.date;
-      _guestCount = widget.existingRecord!.guestCount;
-      _pastoralVisitCount = widget.existingRecord!.pastoralVisitCount;
-      _presentMemberIds.addAll(widget.existingRecord!.presentMemberIds);
+      final record = widget.existingRecord!;
+      _selectedEventId = record.definitionId;
+      _selectedNetworkId = record.networkId;
+      _selectedDate = record.date;
+      _visitorsCount = record.visitorsCount;
+      _pastoralVisitsCount = record.pastoralVisitsCount;
+      _observations = record.observations;
+
+      _presentMemberIds.clear();
+      _presentMemberIds.addAll(record.presentMemberIds);
+
+      print("DEBUG: Cargados ${_presentMemberIds.length} miembros para editar");
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Cargar datos existentes si hay para la fecha seleccionada
-    _loadRecordForDate(_selectedDate);
+  Widget _buildNetworkDropdown() {
+    final networkProvider = Provider.of<NetworkProvider>(context);
+    final networks = networkProvider.networks;
+
+    if (_selectedNetworkId != null &&
+        !networks.any((net) => net.id == _selectedNetworkId)) {
+      _selectedNetworkId = null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade400, width: 1.5),
+        color: Colors.white,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedNetworkId,
+          hint: const Text("Seleccionar Red"),
+          isExpanded: false,
+          items: [
+            const DropdownMenuItem(value: null, child: Text("Todas las Redes")),
+            ...networks.map(
+              (net) => DropdownMenuItem(value: net.id, child: Text(net.name)),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedNetworkId = value;
+            });
+          },
+        ),
+      ),
+    );
   }
+
+  Widget _buildEventDropdown() {
+    final serviceProvider = Provider.of<ServiceProvider>(context);
+    final services = serviceProvider.services;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade400, width: 1.5),
+        color: Colors.white,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedEventId,
+          hint: const Text("Seleccionar Evento"),
+          isExpanded: false,
+          items: services.map((service) {
+            return DropdownMenuItem<String>(
+              value: service.id,
+              child: Text(service.title),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() => _selectedEventId = value);
+          },
+        ),
+      ),
+    );
+  }
+
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //
+  //   _loadRecordForDate(_selectedDate);
+  // }
 
   void _loadRecordForDate(DateTime date) {
     final attendanceProvider = Provider.of<AttendanceProvider>(
@@ -57,15 +143,13 @@ class _AttendanceState extends State<Attendance> {
 
     setState(() {
       if (record != null) {
-        // Si existe un registro, cargamos sus datos en el estado de la UI
-        _guestCount = record.guestCount;
-        _pastoralVisitCount = record.pastoralVisitCount;
+        _visitorsCount = record.visitorsCount;
+        _pastoralVisitsCount = record.pastoralVisitsCount;
         _presentMemberIds.clear();
         _presentMemberIds.addAll(record.presentMemberIds);
       } else {
-        // Si no hay registro, reseteamos el estado
-        _guestCount = 0;
-        _pastoralVisitCount = 0;
+        _visitorsCount = 0;
+        _pastoralVisitsCount = 0;
         _presentMemberIds.clear();
       }
     });
@@ -78,24 +162,54 @@ class _AttendanceState extends State<Attendance> {
     _loadRecordForDate(date);
   }
 
-  void _saveAttendance() {
+  void _saveAttendance() async {
+    if (_selectedEventId == null || _selectedNetworkId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona Evento y Red obligatoriamente'),
+        ),
+      );
+      return;
+    }
+
     final attendanceProvider = Provider.of<AttendanceProvider>(
       context,
       listen: false,
     );
-    final logProvider = Provider.of<LogProvider>(context, listen: false);
-    final dateId =
-        "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}";
+    //final logProvider = Provider.of<LogProvider>(context, listen: false);
 
-    final newRecord = AttendanceRecord(
-      id: dateId,
+    final newRecord = AttendanceModel(
+      id: widget.existingRecord?.id ?? "",
+      definitionId: _selectedEventId!,
+      networkId: _selectedNetworkId!,
       date: _selectedDate,
-      guestCount: _guestCount,
-      pastoralVisitCount: _pastoralVisitCount,
-      presentMemberIds: Set.from(
-        _presentMemberIds,
-      ), // Creamos una copia del Set
+      visitorsCount: _visitorsCount,
+      pastoralVisitsCount: _pastoralVisitsCount,
+      presentMemberIds: _presentMemberIds,
     );
+
+    bool success = await attendanceProvider.saveRecord(newRecord);
+
+    if (!mounted) return;
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Asistencia guardada correctamente'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            attendanceProvider.error ?? 'Error al guardar asistencia',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
 
     attendanceProvider.saveRecord(newRecord);
 
@@ -110,9 +224,14 @@ class _AttendanceState extends State<Attendance> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-    // Obtenemos los miembros del MemberProvider
     final memberProvider = Provider.of<MemberProvider>(context);
-    final List<Member> members = memberProvider.filteredMembers;
+    List<Member> members = memberProvider.filteredMembers;
+
+    if (_selectedNetworkId != null) {
+      members = members
+          .where((m) => m.networkId == _selectedNetworkId)
+          .toList();
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -133,7 +252,7 @@ class _AttendanceState extends State<Attendance> {
                 ),
 
                 const SizedBox(height: 10),
-                // --- LISTA DE MIEMBROS ---
+
                 Expanded(child: _buildMemberList(members, isMobile)),
               ],
             ),
@@ -161,24 +280,23 @@ class _AttendanceState extends State<Attendance> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
+            Expanded(child: _buildEventDropdown()),
+            Expanded(child: _buildNetworkDropdown()),
             Counter(
               label: 'Visitas',
-              initialValue: _guestCount,
-              onCountChanged: (count) => _guestCount = count,
+              initialValue: _visitorsCount,
+              onCountChanged: (count) => _visitorsCount = count,
             ),
             SizedBox(width: 10),
             Counter(
               label: 'Visitas Pastorales',
-              initialValue: _pastoralVisitCount,
-              onCountChanged: (count) => _pastoralVisitCount = count,
+              initialValue: _pastoralVisitsCount,
+              onCountChanged: (count) => _pastoralVisitsCount = count,
             ),
           ],
         ),
         const SizedBox(height: 20),
-        DateWidget(
-          selectedDate: _selectedDate,
-          onDateSelected: _onDateSelected,
-        ),
+        DateWidget(initialDate: _selectedDate, onDateSelected: _onDateSelected),
         Button(
           text: 'Guardar',
           onPressed: _saveAttendance,
@@ -195,25 +313,17 @@ class _AttendanceState extends State<Attendance> {
       crossAxisAlignment: WrapCrossAlignment.center,
       alignment: WrapAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-          child: SearchTextField(
-            onChanged: (query) => memberProvider.search(query),
-          ),
-        ),
-        DateWidget(
-          selectedDate: _selectedDate,
-          onDateSelected: _onDateSelected,
-        ),
+        _buildEventDropdown(),
+        _buildNetworkDropdown(),
         Counter(
           label: 'Visitas',
-          initialValue: _guestCount,
-          onCountChanged: (count) => _guestCount = count,
+          initialValue: _visitorsCount,
+          onCountChanged: (count) => _visitorsCount = count,
         ),
         Counter(
           label: 'Visitas Pastorales',
-          initialValue: _pastoralVisitCount,
-          onCountChanged: (count) => _pastoralVisitCount = count,
+          initialValue: _pastoralVisitsCount,
+          onCountChanged: (count) => _pastoralVisitsCount = count,
         ),
         Button(
           text: 'Guardar',
@@ -225,9 +335,9 @@ class _AttendanceState extends State<Attendance> {
   }
 
   Widget _buildMemberList(List<Member> members, isMobile) {
-    final provider = Provider.of<MemberProvider>(context, listen: false);
+    final memberProvider = context.watch<MemberProvider>();
 
-    if (provider.isLoading) {
+    if (memberProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (members.isEmpty) {

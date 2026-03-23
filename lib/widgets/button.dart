@@ -8,6 +8,7 @@ class Button extends StatelessWidget {
   final Color? textColor;
   final bool isLoading;
   final Size? size;
+  final IconData? icon;
 
   const Button({
     super.key,
@@ -17,11 +18,13 @@ class Button extends StatelessWidget {
     this.textColor,
     this.isLoading = false,
     this.size,
+    this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
+
     return SizedBox(
       child: ElevatedButton(
         onPressed: isLoading ? () {} : onPressed,
@@ -39,17 +42,29 @@ class Button extends StatelessWidget {
                 height: 20,
                 width: 20,
                 child: CircularProgressIndicator(
-                  color: Colors.white, // Círculo blanco sobre tu botón de color
+                  color: Colors.white,
                   strokeWidth: 2,
                 ),
               )
-            : Text(
-                text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 20, color: textColor ?? Colors.white),
+                    const SizedBox(
+                      width: 8,
+                    ), // Espacio entre el icono y el texto
+                  ],
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
       ),
     );

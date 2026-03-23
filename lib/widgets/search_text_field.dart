@@ -17,21 +17,15 @@ class _SearchTextFieldState extends State<SearchTextField> {
   @override
   void initState() {
     super.initState();
-    // 3. Decidimos qué controller usar.
-    // Si el widget padre nos da uno, lo usamos. Si no, usamos el nuestro.
     _internalController = widget.controller ?? TextEditingController();
 
-    // 4. Añadimos el listener para notificar los cambios a través de onChanged.
     _internalController.addListener(() {
-      // Si el callback onChanged existe, lo llamamos con el texto actual.
       widget.onChanged?.call(_internalController.text);
     });
   }
 
   @override
   void dispose() {
-    // 5. Solo hacemos dispose del controller si lo creamos nosotros.
-    // Si vino de afuera, la pantalla padre es responsable de él.
     if (widget.controller == null) {
       _internalController.dispose();
     }
@@ -51,12 +45,12 @@ class _SearchTextFieldState extends State<SearchTextField> {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withOpacity(0.3),
                 spreadRadius: 1,
-                blurRadius: 3,
+                blurRadius: 1,
                 offset: const Offset(0, 2),
               ),
             ],

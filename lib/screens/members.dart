@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../colors.dart';
 import '../models/member_model.dart';
 import '../providers/member_provider.dart';
+import '../widgets/action_buttons.dart';
 import '../widgets/menu.dart';
 import '../widgets/search_text_field.dart';
 
@@ -240,27 +241,16 @@ class _MembersState extends State<Members> {
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 overflow: TextOverflow.ellipsis,
               ),
-              trailing: Row(
-                spacing: 0.3,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.edit, color: Colors.blue[600]),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        createFadeRoute(CreateMember(memberToEdit: member)),
-                      );
-                    },
-                  ),
-
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red[600]),
-                    onPressed: () {
-                      _showDelete(context, member);
-                    },
-                  ),
-                ],
+              trailing: ActionButtons(
+                onEdit: () {
+                  Navigator.push(
+                    context,
+                    createFadeRoute(CreateMember(memberToEdit: member)),
+                  );
+                },
+                onDelete: () {
+                  _showDelete(context, member); // Tu función que ya tienes
+                },
               ),
             );
           },
