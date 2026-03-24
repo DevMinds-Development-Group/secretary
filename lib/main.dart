@@ -18,12 +18,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final authService = AuthService();
+  await authService.loadUserData();
+
   runApp(
-    // 2. Reemplaza ChangeNotifierProvider por MultiProvider
     MultiProvider(
       providers: [
-        // 3. Registra aquí todos tus proveedores
         ChangeNotifierProvider(create: (context) => ServiceProvider()),
         ChangeNotifierProvider(create: (context) => UserProvider()),
         ChangeNotifierProvider(create: (context) => RoleProvider()),
@@ -34,7 +36,7 @@ void main() {
         ChangeNotifierProvider(create: (context) => MinistryProvider()),
         ChangeNotifierProvider(create: (context) => ServiceTypeProvider()),
         ChangeNotifierProvider(create: (context) => LeaderProvider()),
-        ChangeNotifierProvider(create: (context) => AuthService()),
+        ChangeNotifierProvider.value(value: authService),
       ],
       child: const MyApp(),
     ),

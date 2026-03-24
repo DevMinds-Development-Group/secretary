@@ -1,12 +1,23 @@
+import 'dart:io' show File;
+import 'dart:io';
+
 import 'package:app/widgets/action_buttons.dart';
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart'; // Asegúrate de tener intl en pubspec.yaml
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
 import '../../models/attendance_model.dart';
 import '../../providers/attendance_provider.dart';
 import '../../providers/member_provider.dart';
+import '../../utils/download_stub.dart'
+    if (dart.library.html) '../../utils/download_web.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/date.dart';
@@ -24,7 +35,7 @@ class AttendanceHistory extends StatefulWidget {
 }
 
 class _AttendanceHistoryState extends State<AttendanceHistory> {
-  DateTime _filterDate = DateTime.now();
+  DateTime? _filterDate;
   String _searchQuery = "";
 
   @override
@@ -39,21 +50,87 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     });
   }
 
+  Future<void> _downloadPdf(String recordId) async {
+    const FlutterSecureStorage secureStorage = FlutterSecureStorage();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Preparando descarga...'),
+        duration: Duration(minutes: 1),
+      ),
+    );
+
+    try {
+      final token = await secureStorage.read(key: 'auth_token');
+      final url =
+          'https://vri-secretary-backend-production.up.railway.app/api/v1/event-attendances/$recordId/pdf';
+      final dio = Dio();
+
+      final response = await dio.get(
+        url,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          responseType: ResponseType.bytes,
+        ),
+      );
+
+      if (mounted) ScaffoldMessenger.of(context).removeCurrentSnackBar();
+
+      if (kIsWeb) {
+        WebDownloadHelper.downloadWebFile(
+          response.data,
+          "asistencia_$recordId.pdf",
+        );
+      } else {
+        // LÓGICA PARA MÓVIL (Android)
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/asistencia_$recordId.pdf';
+        final file = File(filePath);
+        await file.writeAsBytes(response.data);
+        await OpenFilex.open(filePath);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Descarga completada!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final attendanceProvider = Provider.of<AttendanceProvider>(context);
 
     final records = attendanceProvider.recordsList.where((r) {
-      final matchesName = r.id.toLowerCase().contains(
-        _searchQuery.toLowerCase(),
-      );
+      final matchesSearch =
+          (r.definitionName?.toLowerCase().contains(
+                _searchQuery.toLowerCase(),
+              ) ??
+              false) ||
+          (r.networkName?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
+              false);
 
       final matchesDate =
+          _filterDate == null ||
           (r.date.year == _filterDate!.year &&
-          r.date.month == _filterDate!.month &&
-          r.date.day == _filterDate!.day);
-      return matchesName && matchesDate;
+              r.date.month == _filterDate!.month &&
+              r.date.day == _filterDate!.day);
+
+      return matchesSearch && matchesDate;
     }).toList();
 
     return Scaffold(
@@ -154,7 +231,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
 
   DateWidget _dateWidget() {
     return DateWidget(
-      initialDate: _filterDate,
+      initialDate: _filterDate ?? DateTime.now(),
       onDateSelected: (newDate) {
         setState(() => _filterDate = newDate);
       },
@@ -197,16 +274,23 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
               Icons.assignment_turned_in,
               color: Colors.green,
             ),
-            title: Row(
+            title: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  '${record.definitionName ?? 'Evento sin nombre'} |',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  record.definitionName ?? 'Evento sin nombre',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-                VerticalDivider(width: 5),
+                const Text(' | ', style: TextStyle(fontSize: 16)),
                 Text(
-                  record.networkName ?? 'Evento sin nombre',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  record.networkName ?? 'Sin Red',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
@@ -218,34 +302,48 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                   style: TextStyle(fontSize: 16),
                 ),
                 Text(
-                  'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount}',
+                  'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} | Visitas Pastorales: ${record.pastoralVisitsCount}',
                   style: TextStyle(fontSize: 16),
                 ),
               ],
             ),
-            trailing: ActionButtons(
-              onEdit: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Attendance(existingRecord: record),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.picture_as_pdf,
+                    color: Colors.redAccent,
                   ),
-                );
-                if (mounted) {
-                  Provider.of<AttendanceProvider>(
-                    context,
-                    listen: false,
-                  ).fetchAttendanceHistory();
-                }
-              },
-              onDelete: () {
-                showDeleteConfirmationDialog(
-                  context: context,
-                  itemName:
-                      'Asistencia del ${DateFormat('d/MM').format(record.date)}',
-                  onConfirm: () => _handleDelete(context, record),
-                );
-              },
+                  tooltip: 'Descargar PDF',
+                  onPressed: () => _downloadPdf(record.id),
+                ),
+                ActionButtons(
+                  onEdit: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            Attendance(existingRecord: record),
+                      ),
+                    );
+                    if (mounted) {
+                      Provider.of<AttendanceProvider>(
+                        context,
+                        listen: false,
+                      ).fetchAttendanceHistory();
+                    }
+                  },
+                  onDelete: () {
+                    showDeleteConfirmationDialog(
+                      context: context,
+                      itemName:
+                          'Asistencia del ${DateFormat('d/MM').format(record.date)}',
+                      onConfirm: () => _handleDelete(context, record),
+                    );
+                  },
+                ),
+              ],
             ),
             onTap: () {
               Navigator.push(

@@ -1,15 +1,16 @@
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/create/create_service.dart';
-import 'package:app/widgets/add_button.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/menu.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
 import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
+import '../../routes/page_route_builder.dart';
+import '../../widgets/action_buttons.dart';
+import '../../widgets/add_button.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/menu.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../create/create_service.dart';
 
 class Services extends StatefulWidget {
   const Services({super.key});
@@ -22,12 +23,12 @@ class _ServicesState extends State<Services> {
   @override
   void initState() {
     super.initState();
-    // Carga real desde el backend al iniciar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ServiceProvider>(context, listen: false).fetchServices();
     });
   }
 
+  // --- MÉTODOS DE FORMATO ---
   String _getDisplayDay(ServiceModel service) {
     final Map<String, String> daysMap = {
       '1': 'Lunes',
@@ -38,15 +39,70 @@ class _ServicesState extends State<Services> {
       '6': 'Sábado',
       '7': 'Domingo',
     };
-
     if (service.recurring) {
-      // Si es recurrente, usamos el campo weekDay (que es 1, 2, 3...)
       return daysMap[service.weekDay.toString()] ?? service.weekDay;
     } else {
-      // Si no es recurrente, obtenemos el nombre del día a partir de la fecha
-      final int dayNumber = service.date.weekday; // 1 = Lunes, 7 = Domingo
-      return daysMap[dayNumber.toString()] ?? '';
+      return daysMap[service.date.weekday.toString()] ?? '';
     }
+  }
+
+  String _formatTime12h(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  Widget _buildServiceInfoRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required List<String> items,
+    required bool isMobile,
+  }) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    final List<Widget> children = [
+      Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: iconColor.withOpacity(0.7), size: 20),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      if (!isMobile) const SizedBox(width: 8) else const SizedBox(height: 4),
+      Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: items
+            .map(
+              (item) => Chip(
+                visualDensity: VisualDensity.compact,
+                backgroundColor: primaryColor.withOpacity(0.1),
+                side: BorderSide.none,
+                label: Text(item, style: const TextStyle(fontSize: 13)),
+              ),
+            )
+            .toList(),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: children,
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: children,
+            ),
+    );
   }
 
   @override
@@ -60,356 +116,221 @@ class _ServicesState extends State<Services> {
         showBackButton: true,
       ),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: isMobile
-          ? SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildServicesContent(isMobile),
-              ),
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Menu(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: _buildServicesContent(isMobile),
-                    ),
-                  ),
-                ),
-              ],
+      body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isMobile) Menu(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isMobile ? 16 : 24),
+              child: _buildServicesContent(isMobile),
             ),
+          ),
+        ],
+      ),
     );
-  }
-
-  String _formatTime12h(TimeOfDay time) {
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-
-    return '$hour:$minute $period';
   }
 
   Widget _buildServicesContent(bool isMobile) {
     final servicesProvider = context.watch<ServiceProvider>();
     final services = servicesProvider.services;
 
-    if (servicesProvider.isLoading && services.isEmpty) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(isMobile ? 16 : 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(isMobile),
+          const Divider(height: 32),
+          _buildListState(servicesProvider, services, isMobile),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isMobile) {
+    final title = const Text(
+      'Servicios de la semana',
+      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+    );
+
+    final addButton = AddButton(
+      onPressed: () async {
+        await Navigator.push(context, createFadeRoute(const CreateService()));
+        if (mounted) context.read<ServiceProvider>().fetchServices();
+      },
+    );
+
+    return isMobile
+        ? Column(
+            children: [
+              title,
+              const SizedBox(height: 16),
+              SizedBox(width: double.infinity, child: addButton),
+            ],
+          )
+        : Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [title, addButton],
+          );
+  }
+
+  Widget _buildListState(
+    ServiceProvider provider,
+    List<ServiceModel> services,
+    bool isMobile,
+  ) {
+    if (provider.isLoading)
       return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+    if (provider.error != null) {
+      return Center(
         child: Column(
-          children: [SizedBox(height: 200), CircularProgressIndicator()],
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 40),
+            Text(provider.error!),
+            TextButton(
+              onPressed: () => provider.fetchServices(),
+              child: const Text('Reintentar'),
+            ),
+          ],
         ),
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 20),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2.5,
-                blurRadius: 5,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (isMobile)
-                Column(
-                  children: [
-                    const Text(
-                      'Servicios de la semana',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+    if (services.isEmpty)
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Text('No hay servicios programados.'),
+        ),
+      );
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: services.length,
+      separatorBuilder: (_, __) => const Divider(height: 24),
+      itemBuilder: (context, index) {
+        final service = services[index];
+        return Row(
+          //crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    service.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Fecha y Hora
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: Colors.orange.shade700,
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    AddButton(
-                      size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-                      onPressed: () async {
-                        await Navigator.push(
-                          context,
-                          createFadeRoute(const CreateService()),
-                        );
-                        if (mounted) {
-                          context.read<ServiceProvider>().fetchServices();
-                        }
-                      },
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Servicios de la semana',
-                      style: TextStyle(
-                        fontSize: isMobile ? 22 : 24,
-                        fontWeight: FontWeight.bold,
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_getDisplayDay(service)} - ${_formatTime12h(service.time)}',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    Row(
-                      children: [
-                        const SizedBox(width: 16),
-                        AddButton(
-                          onPressed: () async {
-                            await Navigator.push(
-                              context,
-                              createFadeRoute(const CreateService()),
-                            );
-                            if (mounted) {
-                              context.read<ServiceProvider>().fetchServices();
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
 
-              //const SizedBox(height: 16),
-              const Divider(color: Colors.black, thickness: 0.3),
-
-              if (servicesProvider.isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (servicesProvider.error != null)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 40,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          servicesProvider.error!,
-                          textAlign: TextAlign.center,
-                        ),
-                        TextButton(
-                          onPressed: () => servicesProvider.fetchServices(),
-                          child: const Text('Reintentar'),
-                        ),
-                      ],
+                  // Predicadores (Dinámico Row/Column)
+                  if (service.type != 'REUNION' && service.type != 'OTRO')
+                    _buildServiceInfoRow(
+                      icon: Icons.menu_book_outlined,
+                      iconColor: Colors.cyan,
+                      label: 'Predica:',
+                      items: service.preachers.map((m) => m.name).toList(),
+                      isMobile: isMobile,
                     ),
-                  ),
-                )
-              else if (services.isEmpty)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(40),
-                    child: Text(
-                      'No hay servicios programados para esta semana.',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: services.length,
-                  separatorBuilder: (context, index) => const Divider(
-                    color: Colors.black,
-                    height: 1,
-                    thickness: 0.3,
-                  ),
-                  itemBuilder: (context, index) {
-                    final service = services[index];
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  // Alabanza (Dinámico Row/Column)
+                  _buildServiceInfoRow(
+                    icon: Icons.music_note,
+                    iconColor: Colors.deepPurpleAccent,
+                    label: 'Ministra:',
+                    items: service.worshipMinistries
+                        .map((m) => m.name)
+                        .toList(),
+                    isMobile: isMobile,
+                  ),
+
+                  // Descripción
+                  if (service.description.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 10),
-                                Text(
-                                  service.title,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_month_outlined,
-                                      color: Colors.deepOrange.withOpacity(0.5),
-                                    ),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      '${_getDisplayDay(service)} a las ${_formatTime12h(service.time)}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey[700],
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (service.type != 'REUNION' &&
-                                    service.type != 'OTRO') ...[
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.menu_book_outlined,
-                                        color: Colors.cyan.withOpacity(0.5),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Predica: ',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      Wrap(
-                                        spacing: 5,
-                                        runSpacing: isMobile ? 0 : 5,
-                                        children: service.preachers.map((
-                                          preacher,
-                                        ) {
-                                          return Chip(
-                                            elevation: 5,
-                                            padding: const EdgeInsets.all(4),
-                                            backgroundColor: primaryColor
-                                                .withOpacity(0.1),
-                                            label: Text(
-                                              '${service.preachers.isEmpty ? "" : service.preachers.join(", ")}',
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.music_note,
-                                        color: Colors.deepPurpleAccent
-                                            .withOpacity(0.5),
-                                      ),
-                                      SizedBox(width: 4),
-                                      Text(
-                                        'Ministra: ',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      Wrap(
-                                        spacing: 5,
-                                        runSpacing: isMobile ? 0 : 5,
-                                        children: service.worshipMinistries.map((
-                                          worship,
-                                        ) {
-                                          return Chip(
-                                            elevation: 5,
-                                            padding: const EdgeInsets.all(4),
-                                            backgroundColor: primaryColor
-                                                .withOpacity(0.1),
-                                            label: Text(
-                                              '${service.worshipMinistries.isEmpty ? "" : service.worshipMinistries.join(", ")}',
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                const SizedBox(height: 5),
-                                if (service.description.isNotEmpty)
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.description,
-                                        color: Colors.blue,
-                                      ),
-                                      SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          'Descripción:  ${service.description}',
-                                          style: const TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                              ],
-                            ),
+                          const Icon(
+                            Icons.description_outlined,
+                            size: 18,
+                            color: Colors.blue,
                           ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  Icons.edit,
-                                  color: Colors.blue.shade700,
-                                  size: 22,
-                                ),
-                                tooltip: 'Editar servicio',
-                                onPressed: () async {
-                                  await Navigator.push(
-                                    context,
-                                    createFadeRoute(
-                                      CreateService(serviceToEdit: service),
-                                    ),
-                                  );
-
-                                  if (mounted) {
-                                    await context
-                                        .read<ServiceProvider>()
-                                        .fetchServices();
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.delete,
-                                  color: Colors.red.shade700,
-                                  size: 22,
-                                ),
-                                tooltip: 'Eliminar servicio',
-                                onPressed: () {
-                                  showDeleteConfirmationDialog(
-                                    context: context,
-                                    itemName: service.title,
-                                    onConfirm: () => servicesProvider
-                                        .deleteService(service.id),
-                                  );
-                                },
-                              ),
-                            ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              service.description,
+                              style: const TextStyle(fontSize: 15),
+                            ),
                           ),
                         ],
                       ),
-                    );
-                  },
-                ),
-            ],
-          ),
-        ),
-      ],
+                    ),
+                ],
+              ),
+            ),
+            ActionButtons(
+              onEdit: () async {
+                await Navigator.push(
+                  context,
+                  createFadeRoute(CreateService(serviceToEdit: service)),
+                );
+                if (mounted) context.read<ServiceProvider>().fetchServices();
+              },
+              onDelete: () {
+                showDeleteConfirmationDialog(
+                  context: context,
+                  itemName: service.title,
+                  onConfirm: () => provider.deleteService(service.id),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

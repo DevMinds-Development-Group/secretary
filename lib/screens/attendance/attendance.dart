@@ -212,13 +212,6 @@ class _AttendanceState extends State<Attendance> {
     }
 
     attendanceProvider.saveRecord(newRecord);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Asistencia guardada correctamente.'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   @override

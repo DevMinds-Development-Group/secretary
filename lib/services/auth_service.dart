@@ -5,6 +5,54 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AuthService with ChangeNotifier {
+  String? _userName;
+  String? _userRoleDescription;
+  String? _rawRole;
+
+  String? get userName => _userName;
+  String? get userRole => _userRoleDescription;
+  String? get rawRole => _rawRole;
+
+  Future<void> fetchUserProfile(String username) async {
+    try {
+      final token = await getToken();
+      print("TOKEN ACTUAL: $token");
+
+      final response = await _dio.get(
+        '/users/$username',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      print("RESPUESTA PERFIL: ${response.data}");
+
+      if (response.statusCode == 200) {
+        final userData = response.data;
+
+        _userName = userData['username'];
+
+        final roles = userData['roles'] as List?;
+        if (roles != null && roles.isNotEmpty) {
+          _userRoleDescription = roles[0]['description'] ?? 'Usuario';
+          _rawRole = roles[0]['name'];
+          print(
+            "DATOS ASIGNADOS: $_userName, $_userRoleDescription, $_rawRole",
+          );
+        }
+
+        await _secureStorage.write(key: 'user_name', value: _userName ?? "");
+        await _secureStorage.write(
+          key: 'user_role_desc',
+          value: _userRoleDescription ?? "",
+        );
+        await _secureStorage.write(key: 'raw_role', value: _rawRole ?? "");
+
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Error obteniendo perfil: $e");
+    }
+  }
+
   final Dio _dio = Dio(
     BaseOptions(
       baseUrl: 'https://vri-secretary-backend-production.up.railway.app/api/v1',
@@ -12,23 +60,18 @@ class AuthService with ChangeNotifier {
   );
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  // Método para guardar el token
   Future<void> _saveToken(String token) async {
     await _secureStorage.write(key: 'auth_token', value: token);
   }
 
-  // Método para obtener el token
   Future<String?> getToken() async {
     return await _secureStorage.read(key: 'auth_token');
   }
 
-  // Método para borrar el token (al cerrar sesión)
   Future<void> deleteToken() async {
     await _secureStorage.delete(key: 'auth_token');
   }
 
-  // Método para Iniciar Sesión
-  // Devuelve null si fue exitoso, o un mensaje de error si falló.
   Future<String?> signIn({
     required String username,
     required String password,
@@ -41,24 +84,62 @@ class AuthService with ChangeNotifier {
 
       if (response.statusCode == 200 && response.data['jwtToken'] != null) {
         final token = response.data['jwtToken'];
-        await _saveToken(token); // Guardamos el token
-        return null; // Éxito
+
+        await _saveToken(token);
+
+        await fetchUserProfile(username);
+
+        return null;
       }
-      return 'Respuesta inesperada del servidor.';
-    } on DioException catch (e) {
-      // Manejo de errores de Dio (ej. 403 Forbidden si las credenciales son incorrectas)
-      if (e.response?.statusCode == 403) {
-        return 'Usuario o contraseña incorrectos.';
-      }
-      return 'Error de conexión. Inténtalo de nuevo.';
+      return 'Error de credenciales';
     } catch (e) {
-      return 'Ocurrió un error inesperado.';
+      return 'Error de conexión';
     }
   }
 
-  // Método para Cerrar Sesión
+  Future<void> loadUserData() async {
+    try {
+      final savedName = await _secureStorage.read(key: 'user_name');
+      final savedRoleDesc = await _secureStorage.read(key: 'user_role_desc');
+      final savedRawRole = await _secureStorage.read(key: 'raw_role');
+
+      print("CARGANDO DE DISCO: $savedName, $savedRoleDesc");
+
+      if (savedName != null) {
+        _userName = savedName;
+        _userRoleDescription = savedRoleDesc;
+        _rawRole = savedRawRole;
+        print("DATOS CARGADOS DEL DISCO: $_userName");
+        notifyListeners();
+      } else {
+        print("NO HAY DATOS GUARDADOS EN DISCO");
+      }
+    } catch (e) {
+      print("Error leyendo SecureStorage: $e");
+    }
+  }
+
   Future<void> signOut() async {
-    await deleteToken();
-    notifyListeners();
+    try {
+      // 1. Borrar el token
+      await deleteToken();
+
+      // 2. Borrar los datos del usuario del disco
+      await _secureStorage.delete(key: 'user_name');
+      await _secureStorage.read(key: 'user_role_desc'); // O delete
+      await _secureStorage.delete(key: 'raw_role');
+
+      // 3. Limpiar las variables en memoria RAM
+      _userName = null;
+      _userRoleDescription = null;
+      _rawRole = null;
+
+      print("SESIÓN CERRADA: Token y datos eliminados.");
+
+      // 4. Notificar a los widgets (como el Menú) para que se actualicen a null
+      notifyListeners();
+    } catch (e) {
+      print("Error al cerrar sesión: $e");
+    }
   }
 }

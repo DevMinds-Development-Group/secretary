@@ -1,9 +1,11 @@
 import 'package:app/screens/home/dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../routes/page_route_builder.dart';
 import '../screens/admin/profile.dart';
 import '../screens/home/home.dart';
+import '../services/auth_service.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -99,18 +101,28 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           //SizedBox(width: isMobile ? 10 : 20),
           PopupMenuButton<String>(
-            onSelected: (value) {
+            onSelected: (value) async {
               if (value == 'profile') {
                 Navigator.push(
                   context,
                   createFadeRoute(Profile()),
                 ); // Navegar a editar perfil
               } else if (value == 'logout') {
-                Navigator.pushAndRemoveUntil(
+                final authService = Provider.of<AuthService>(
                   context,
-                  createFadeRoute(Home()),
-                  (route) => false,
+                  listen: false,
                 );
+
+                // 2. Ejecutar la limpieza de token y datos
+                await authService.signOut();
+
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    createFadeRoute(Home()),
+                    (route) => false,
+                  );
+                }
               }
             },
             itemBuilder: (context) => [

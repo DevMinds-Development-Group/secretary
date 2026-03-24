@@ -36,7 +36,7 @@ class AttendanceDetail extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildInfoCard(),
                 const SizedBox(height: 24),

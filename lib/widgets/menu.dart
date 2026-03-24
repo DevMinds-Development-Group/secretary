@@ -4,11 +4,13 @@ import 'package:app/screens/members.dart';
 import 'package:app/screens/ministry/ministries.dart';
 import 'package:app/screens/service/services.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../colors.dart';
 import '../screens/attendance/attendance_history.dart';
 import '../screens/home/dashboard.dart';
 import '../screens/network/networks.dart';
+import '../services/auth_service.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -26,6 +28,12 @@ class _MenuState extends State<Menu> {
     final isMobile = screenWidth < 700;
     final isInsideDrawer = Scaffold.of(context).hasDrawer && isMobile;
 
+    final authService = Provider.of<AuthService>(context);
+
+    print(
+      "MENU RE-DIBUJADO. Usuario: ${authService.userName}, Rol: ${authService.userRole}",
+    );
+
     return Container(
       width: isMobile ? screenWidth * 0.5 : screenWidth * 0.2,
       color: Colors.white,
@@ -40,16 +48,25 @@ class _MenuState extends State<Menu> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.red.shade200,
-                  child: Icon(Icons.person, size: 40, color: Colors.white),
+                  child: Text(
+                    (authService.userName?.isNotEmpty == true)
+                        ? authService.userName![0].toUpperCase()
+                        : "U",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    ),
+                  ),
                 ),
                 SizedBox(height: 10),
                 Text(
-                  'Usuario',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  authService.userName ?? 'Cargando usuario...',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Lider de celula',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  authService.userRole ?? 'Obteniendo rol...',
+                  style: TextStyle(color: Colors.black87),
                 ),
               ],
             ),
@@ -168,20 +185,21 @@ class _MenuState extends State<Menu> {
               });
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.settings),
-            title: const Text('Administración'),
-            selected: _selectedIndex == 7,
-            onTap: () {
-              if (isMobile) {
-                Navigator.pop(context);
-              }
-              Navigator.pushReplacement(context, createFadeRoute(Admin()));
-              setState(() {
-                _selectedIndex = 7;
-              });
-            },
-          ),
+          if (authService.rawRole == 'ROLE_ADMIN')
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Administración'),
+              selected: _selectedIndex == 7,
+              onTap: () {
+                if (isMobile) {
+                  Navigator.pop(context);
+                }
+                Navigator.pushReplacement(context, createFadeRoute(Admin()));
+                setState(() {
+                  _selectedIndex = 7;
+                });
+              },
+            ),
         ],
       ),
     );
