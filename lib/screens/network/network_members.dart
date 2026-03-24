@@ -45,6 +45,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
                   children: [
                     SizedBox(height: 20),
                     _buildNetworkHeader(widget.network, isMobile),
+                    SizedBox(height: 20),
                     Expanded(
                       child: membersInGroup.isEmpty
                           ? _buildEmptyState(isMobile)
@@ -95,11 +96,11 @@ class _NetworkMembersState extends State<NetworkMembers> {
   // Widget para la lista de miembros (Estilo Members.dart)
   Widget _buildMemberList(List<Member> members, bool isMobile) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
+      padding: const EdgeInsets.only(bottom: 20.0),
       child: CustomCardContainer(
+        padding: EdgeInsets.all(10),
         child: ListView.separated(
           shrinkWrap: true,
-          padding: EdgeInsets.all(isMobile ? 10 : 15),
           itemCount: members.length,
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {

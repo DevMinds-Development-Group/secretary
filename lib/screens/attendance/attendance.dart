@@ -340,9 +340,9 @@ class _AttendanceState extends State<Attendance> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: CustomCardContainer(
+        padding: EdgeInsets.all(10),
         child: ListView.separated(
           separatorBuilder: (context, index) => const Divider(height: 10),
-          padding: EdgeInsets.all(isMobile ? 5.0 : 25),
           itemCount: members.length,
           itemBuilder: (context, index) {
             final member = members[index];

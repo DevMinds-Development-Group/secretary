@@ -111,7 +111,7 @@ Widget _buildMainContent(
                   'Miembro asociado',
                   'Acciones',
                 ],
-                columnSpacing: MediaQuery.of(context).size.width * 0.1,
+                columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
                 rowBuilder: (user) {
                   final member = user.member;
                   return [
