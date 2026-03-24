@@ -49,8 +49,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Secretaría Viento Recio',
-      initialRoute: AppRoutes.auth_wrapper,
+      title: 'Viento Recio',
+      initialRoute: '/',
       routes: AppRoutes.getRoutes(),
       debugShowCheckedModeBanner: false,
       localizationsDelegates: const [

@@ -1,10 +1,10 @@
+import 'package:app/routes/route_guard.dart';
 import 'package:app/screens/admin/admin.dart';
 import 'package:app/screens/admin/profile.dart';
 import 'package:app/screens/attendance/attendance.dart';
 import 'package:app/screens/auth/auth_wrapper.dart';
 import 'package:app/screens/create/create_member.dart';
 import 'package:app/screens/create/create_network.dart';
-import 'package:app/screens/create/create_other_service.dart';
 import 'package:app/screens/create/create_service.dart';
 import 'package:app/screens/members.dart';
 import 'package:app/screens/ministry/ministries.dart';
@@ -44,26 +44,34 @@ class AppRoutes {
 
   static Map<String, WidgetBuilder> getRoutes() {
     return <String, WidgetBuilder>{
+      auth_wrapper: (context) => AuthWrapper(),
       home: (context) => Home(),
       login: (context) => Login(),
+
       profile: (context) => Profile(),
-      dashboard: (context) => Dashboard(),
-      services: (context) => Services(),
-      members: (context) => Members(),
-      attendance: (context) => Attendance(),
-      networks: (context) => Networks(),
-      create_network: (context) => CreateNetwork(),
-      ministries: (context) => Ministries(),
-      create_ministry: (context) => CreateMinistry(),
+      dashboard: (context) => RouteGuard.checkAuth(context, const Dashboard()),
+      services: (context) => RouteGuard.checkAuth(context, const Services()),
+      members: (context) => RouteGuard.checkAuth(context, const Members()),
+      attendance: (context) =>
+          RouteGuard.checkAuth(context, const Attendance()),
+      networks: (context) => RouteGuard.checkAuth(context, const Networks()),
+      create_network: (context) =>
+          RouteGuard.checkAuth(context, const CreateNetwork()),
+      ministries: (context) =>
+          RouteGuard.checkAuth(context, const Ministries()),
+      create_ministry: (context) =>
+          RouteGuard.checkAuth(context, const CreateMinistry()),
       //reports: (context) => Reports(),
-      create_service: (context) => CreateService(),
-      create_member: (context) => CreateMember(),
-      admin: (context) => Admin(),
-      users: (context) => Users(),
-      network_manage: (context) => NetworkManage(),
-      auth_wrapper: (context) => AuthWrapper(),
-      create_other_service: (context) => CreateOtherService(),
-      attendance_history: (context) => AttendanceHistory(),
+      create_service: (context) =>
+          RouteGuard.checkAuth(context, const CreateService()),
+      create_member: (context) =>
+          RouteGuard.checkAuth(context, const CreateMember()),
+      admin: (context) => RouteGuard.checkAuth(context, const Admin()),
+      users: (context) => RouteGuard.checkAuth(context, const Users()),
+      network_manage: (context) =>
+          RouteGuard.checkAuth(context, const NetworkManage()),
+      attendance_history: (context) =>
+          RouteGuard.checkAuth(context, const AttendanceHistory()),
     };
   }
 }
