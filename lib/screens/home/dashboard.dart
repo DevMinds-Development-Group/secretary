@@ -22,6 +22,46 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  // 1. LA VARIABLE DE CARGA DEBE ESTAR AQUÍ (FUERA DEL BUILD)
+  bool _isLoading = true;
+  bool _isFirstLoad = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // 2. EL INITSTATE DEBE ESTAR AQUÍ
+    _loadDashboardData();
+  }
+
+  // 3. EL MÉTODO DE CARGA DEBE ESTAR AQUÍ
+  Future<void> _loadDashboardData() async {
+    if (!mounted || !_isFirstLoad) return;
+
+    setState(() {
+      _isLoading = true;
+      _isFirstLoad = false;
+    });
+
+    try {
+      // Usamos microtask para separar la carga del ciclo de renderizado inicial
+      Future.microtask(() async {
+        await Future.wait([
+          context.read<MemberProvider>().fetchMembers(),
+          context.read<ServiceProvider>().fetchServices(),
+          context.read<AttendanceProvider>().fetchAttendanceHistory(),
+          context.read<NetworkProvider>().fetchNetworks(),
+          context.read<MinistryProvider>().fetchMinistries(),
+        ]);
+
+        if (mounted) setState(() => _isLoading = false);
+      });
+    } catch (e) {
+      debugPrint("Error cargando datos del dashboard: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
@@ -33,14 +73,16 @@ class _DashboardState extends State<Dashboard> {
     final networkProvider = context.watch<NetworkProvider>();
     final ministryProvider = context.watch<MinistryProvider>();
 
-    // --- LÓGICA DE MIEMBROS Y CRECIMIENTO ---
+    // --- LÓGICA DE MIEMBROS ---
     final allMembers = memberProvider.allMembers;
     final totalMembers = allMembers.length;
 
     // --- LÓGICA DE ACTIVOS (30 días) ---
     final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
     final Set<String> recentAttendees = {};
-    for (var record in attendanceProvider.records.values) {
+
+    // IMPORTANTE: Usamos recordsList que es lo que carga tu fetchAttendanceHistory
+    for (var record in attendanceProvider.recordsList) {
       if (record.date.isAfter(thirtyDaysAgo)) {
         recentAttendees.addAll(record.presentMemberIds);
       }
@@ -51,7 +93,7 @@ class _DashboardState extends State<Dashboard> {
         .length;
     final int inactiveMembers = totalMembers - activeMembers;
 
-    // 1. Creamos la lista de los 3 items base
+    // --- LISTA DE WIDGETS DE MÉTRICAS ---
     final List<Widget> metricItems = [
       _buildMetricItem(
         "Total Miembros",
@@ -73,7 +115,7 @@ class _DashboardState extends State<Dashboard> {
       ),
     ];
 
-    // Ordenar miembros por fecha de registro (Manejo de nulos corregido)
+    // --- LÓGICA DE CRECIMIENTO ---
     final sortedMembers = List<Member>.from(allMembers)
       ..sort(
         (a, b) => (a.createdDate ?? DateTime.now()).compareTo(
@@ -87,12 +129,11 @@ class _DashboardState extends State<Dashboard> {
 
     // --- LÓGICA DE SERVICIOS SEMANALES ---
     final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeekDate = DateTime(
-      startOfWeek.year,
-      startOfWeek.month,
-      startOfWeek.day,
-    );
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
     final endOfWeekDate = startOfWeekDate.add(
       const Duration(days: 7, hours: 23),
     );
@@ -101,7 +142,6 @@ class _DashboardState extends State<Dashboard> {
       return s.date.isAfter(startOfWeekDate) && s.date.isBefore(endOfWeekDate);
     }).toList()..sort((a, b) => a.date.compareTo(b.date));
 
-    // --- CONTENIDO PRINCIPAL ---
     final Widget mainContent = CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
@@ -110,14 +150,19 @@ class _DashboardState extends State<Dashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 1. CARD DE MEMBRESÍA
                 CustomCardContainer(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 25,
+                    horizontal: 15,
+                  ),
                   child: isMobile
                       ? Column(
                           children: metricItems
                               .expand(
-                                (widget) => [
-                                  widget,
-                                  if (widget != metricItems.last)
+                                (w) => [
+                                  w,
+                                  if (w != metricItems.last)
                                     const Divider(
                                       height: 40,
                                       indent: 30,
@@ -130,25 +175,19 @@ class _DashboardState extends State<Dashboard> {
                       : Row(
                           children: metricItems
                               .expand(
-                                (widget) => [
-                                  Expanded(child: widget),
-                                  if (widget != metricItems.last)
+                                (w) => [
+                                  Expanded(child: w),
+                                  if (w != metricItems.last)
                                     _buildVerticalDivider(),
                                 ],
                               )
                               .toList(),
                         ),
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 25,
-                    horizontal: 15,
-                  ),
                 ),
-
                 const SizedBox(height: 20),
 
-                // 2. OTRAS MÉTRICAS (Redes y Ministerios)
+                // 2. REDES Y MINISTERIOS
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: _buildSmallInfoCard(
@@ -159,7 +198,7 @@ class _DashboardState extends State<Dashboard> {
                         isMobile,
                       ),
                     ),
-                    SizedBox(width: 20),
+                    const SizedBox(width: 20),
                     Expanded(
                       child: _buildSmallInfoCard(
                         'Ministerios',
@@ -171,18 +210,16 @@ class _DashboardState extends State<Dashboard> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 20),
 
-                // 3. GRÁFICO DE CRECIMIENTO HISTÓRICO
+                // 3. GRÁFICO DE CRECIMIENTO
                 _buildSection(
                   "Comportamiento de la Membresía",
                   _buildGrowthChart(growthSpots, sortedMembers, isMobile),
                 ),
-
                 const SizedBox(height: 25),
 
-                // 4. ACTIVIDAD Y SERVICIOS (Fila o Columna según dispositivo)
+                // 4. ACTIVIDAD Y SERVICIOS
                 if (!isMobile)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +270,9 @@ class _DashboardState extends State<Dashboard> {
           showBackButton: false,
         ),
         drawer: isMobile ? const Drawer(child: Menu()) : null,
-        body: isMobile
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : isMobile
             ? mainContent
             : Row(
                 children: [
@@ -254,7 +293,6 @@ class _DashboardState extends State<Dashboard> {
     Color color,
   ) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(icon, color: color, size: 32),
         const SizedBox(height: 10),
@@ -262,7 +300,7 @@ class _DashboardState extends State<Dashboard> {
           title,
           style: const TextStyle(
             color: Colors.blueGrey,
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -278,9 +316,8 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  Widget _buildVerticalDivider() {
-    return Container(height: 60, width: 1, color: Colors.grey.withOpacity(0.7));
-  }
+  Widget _buildVerticalDivider() =>
+      Container(height: 60, width: 1, color: Colors.grey.withOpacity(0.3));
 
   Widget _buildSmallInfoCard(
     String title,
@@ -290,32 +327,32 @@ class _DashboardState extends State<Dashboard> {
     bool isMobile,
   ) {
     return CustomCardContainer(
-      width: isMobile
-          ? (MediaQuery.of(context).size.width / 2) - 30
-          : MediaQuery.of(context).size.width * 0.35,
       child: Row(
         children: [
           Icon(icon, color: color, size: 26),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.blueGrey,
-                  fontWeight: FontWeight.w500,
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.blueGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -329,7 +366,7 @@ class _DashboardState extends State<Dashboard> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const Divider(height: 25),
           content,
@@ -358,25 +395,51 @@ class _DashboardState extends State<Dashboard> {
           titlesData: FlTitlesData(
             rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                getTitlesWidget: (value, meta) => Text(
+                  value.toInt().toString(),
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+              ),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
+                reservedSize: 35, // Espacio para que no se amontonen
+                // ESTO ES LA CLAVE: Solo muestra una etiqueta cada X cantidad de puntos
+                interval: (spots.length / (isMobile ? 3 : 6)).clamp(
+                  1,
+                  double.infinity,
+                ),
                 getTitlesWidget: (value, meta) {
                   final int index = value.toInt();
-                  if (index == 0 ||
-                      index == spots.length - 1 ||
-                      index == (spots.length ~/ 2)) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        DateFormat('MMM yy', 'es').format(
-                          sortedMembers[index].createdDate ?? DateTime.now(),
-                        ),
-                        style: const TextStyle(fontSize: 10),
-                      ),
-                    );
+
+                  // Verificamos que el índice sea válido
+                  if (index < 0 || index >= sortedMembers.length) {
+                    return const SizedBox();
                   }
-                  return const Text('');
+
+                  final date =
+                      sortedMembers[index].createdDate ?? DateTime.now();
+
+                  return SideTitleWidget(
+                    axisSide: meta.axisSide,
+                    space: 10,
+                    child: Text(
+                      DateFormat(
+                        'dd/MM/yy',
+                        'es',
+                      ).format(date), // Formato más corto
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Colors.blueGrey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
@@ -387,12 +450,15 @@ class _DashboardState extends State<Dashboard> {
               spots: spots,
               isCurved: true,
               color: primaryColor,
-              barWidth: 4,
+              barWidth: 3,
+              isStrokeCapRound: true,
+              dotData: FlDotData(
+                show: spots.length < 10,
+              ), // Solo muestra puntos si hay pocos datos
               belowBarData: BarAreaData(
                 show: true,
                 color: primaryColor.withOpacity(0.1),
               ),
-              dotData: FlDotData(show: false),
             ),
           ],
         ),
@@ -402,7 +468,7 @@ class _DashboardState extends State<Dashboard> {
 
   Widget _buildPieChart(int active, int inactive) {
     return SizedBox(
-      height: 220,
+      height: 200,
       child: PieChart(
         PieChartData(
           sectionsSpace: 2,
@@ -412,22 +478,22 @@ class _DashboardState extends State<Dashboard> {
               value: active.toDouble(),
               color: Colors.green,
               title: 'Activos',
-              radius: 70,
+              radius: 60,
               titleStyle: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
             PieChartSectionData(
               value: inactive.toDouble(),
               color: Colors.orange,
               title: 'Inactivos',
-              radius: 70,
+              radius: 60,
               titleStyle: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: 12,
               ),
             ),
           ],
@@ -437,30 +503,34 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildServicesList(List services) {
-    if (services.isEmpty) {
+    if (services.isEmpty)
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
-        child: Text("No hay servicios programados para esta semana."),
+        child: Text("No hay servicios esta semana."),
       );
-    }
     return Column(
-      children: services.map<Widget>((s) {
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const CircleAvatar(
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.event, color: Colors.white, size: 20),
-          ),
-          title: Text(
-            s.title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-          ),
-          subtitle: Text(
-            DateFormat("EEEE dd 'de' MMMM", 'es').format(s.date),
-            style: const TextStyle(fontSize: 12),
-          ),
-        );
-      }).toList(),
+      children: services
+          .map<Widget>(
+            (s) => ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.event, color: Colors.white, size: 20),
+              ),
+              title: Text(
+                s.title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+              subtitle: Text(
+                DateFormat("EEEE dd 'de' MMMM", 'es').format(s.date),
+                style: const TextStyle(fontSize: 16),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }

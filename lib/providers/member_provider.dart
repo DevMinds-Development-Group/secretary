@@ -33,7 +33,7 @@ class MemberProvider with ChangeNotifier {
     }).toList();
   }
 
-  Future<void> fetchMembers() async {
+  Future<void> fetchMembers({bool force = false}) async {
     if (_isLoading) return;
 
     _isLoading = true;

@@ -51,6 +51,9 @@ class Member {
       enabled: json['enabled'] ?? true,
       networkId: json['networkId'],
       networkName: json['networkName'],
+      createdDate: json['createdDate'] != null
+          ? DateTime.parse(json['createdDate'])
+          : null,
     );
   }
 }
