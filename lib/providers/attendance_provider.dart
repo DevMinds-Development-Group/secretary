@@ -15,6 +15,9 @@ class AttendanceProvider with ChangeNotifier {
   String? get error => _error;
   List<AttendanceModel> get recordsList => _recordsList;
 
+  Map<String, AttendanceModel> _records = {};
+  Map<String, AttendanceModel> get records => _records;
+
   // --- MÉTODO PARA CARGAR EL HISTORIAL ---
   Future<void> fetchAttendanceHistory() async {
     _isLoading = true;

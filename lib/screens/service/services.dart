@@ -1,3 +1,4 @@
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -135,19 +136,7 @@ class _ServicesState extends State<Services> {
     final servicesProvider = context.watch<ServiceProvider>();
     final services = servicesProvider.services;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: EdgeInsets.all(isMobile ? 16 : 32),
+    return CustomCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -272,7 +261,9 @@ class _ServicesState extends State<Services> {
                       icon: Icons.menu_book_outlined,
                       iconColor: Colors.cyan,
                       label: 'Predica:',
-                      items: service.preachers.map((m) => m.name).toList(),
+                      items: service.preachers
+                          .map((m) => '${m.name} ${m.lastName}'.trim())
+                          .toList(),
                       isMobile: isMobile,
                     ),
 
@@ -282,7 +273,7 @@ class _ServicesState extends State<Services> {
                     iconColor: Colors.deepPurpleAccent,
                     label: 'Ministra:',
                     items: service.worshipMinistries
-                        .map((m) => m.name)
+                        .map((m) => '${m.name} ${m.lastName}'.trim())
                         .toList(),
                     isMobile: isMobile,
                   ),

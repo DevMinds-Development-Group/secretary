@@ -11,6 +11,7 @@ import '../../providers/service_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/counter.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_card_container.dart';
 import '../../widgets/date.dart';
 import '../../widgets/menu.dart';
 import '../../widgets/search_text_field.dart';
@@ -338,19 +339,7 @@ class _AttendanceState extends State<Attendance> {
     }
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 2.5,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ListView.separated(
           separatorBuilder: (context, index) => const Divider(height: 10),
           padding: EdgeInsets.all(isMobile ? 5.0 : 25),

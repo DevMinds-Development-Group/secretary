@@ -7,6 +7,7 @@ import '../../../providers/member_provider.dart';
 import '../../../widgets/custom_appbar.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
+import '../../widgets/custom_card_container.dart';
 
 class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
@@ -57,21 +58,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
   }
 
   Widget _buildNetworkHeader(NetworkModel network, bool isMobile) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(16.0),
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
+    return CustomCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -109,18 +96,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
   Widget _buildMemberList(List<Member> members, bool isMobile) {
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              blurRadius: 5,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ListView.separated(
           shrinkWrap: true,
           padding: EdgeInsets.all(isMobile ? 10 : 15),

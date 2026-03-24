@@ -2,6 +2,7 @@ import 'package:app/colors.dart';
 import 'package:app/providers/ministry_provider.dart';
 import 'package:app/screens/create/create_ministry.dart';
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:app/widgets/custom_web_table.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -69,19 +70,7 @@ class _MinistryManageState extends State<MinistryManage> {
   ) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2.5,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: isMobile

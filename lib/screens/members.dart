@@ -2,6 +2,7 @@ import 'package:app/routes/page_route_builder.dart';
 import 'package:app/screens/create/create_member.dart';
 import 'package:app/widgets/add_button.dart';
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:app/widgets/showDeleteConfirmationDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -189,22 +190,9 @@ class _MembersState extends State<Members> {
 
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              spreadRadius: 2.5,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ListView.separated(
           separatorBuilder: (context, index) => const Divider(height: 1),
-          padding: EdgeInsets.all(isMobile ? 5.0 : 25),
           itemCount: members.length,
           itemBuilder: (context, index) {
             final member = members[index];

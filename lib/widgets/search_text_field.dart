@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'custom_card_container.dart';
+
 class SearchTextField extends StatefulWidget {
   final Function(String)? onChanged;
   final TextEditingController? controller;
@@ -42,19 +44,7 @@ class _SearchTextFieldState extends State<SearchTextField> {
           : MediaQuery.of(context).size.width * 0.2,
       child: Padding(
         padding: const EdgeInsets.all(0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 1,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+        child: CustomCardContainer(
           child: TextField(
             controller: _internalController,
             decoration: InputDecoration(

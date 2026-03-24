@@ -1,5 +1,6 @@
 // lib/screens/ministry_members_screen.dart
 
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -202,21 +203,8 @@ class _MinistryMembersState extends State<MinistryMembers> {
   }
 
   Widget _buildMinistryHeader(MinistryModel ministry, bool isMobile) {
-    return Container(
-      width: double.infinity,
+    return CustomCardContainer(
       margin: const EdgeInsets.all(16.0),
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -300,18 +288,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
   ) {
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              blurRadius: 5,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ListView.separated(
           shrinkWrap: true,
           padding: EdgeInsets.all(isMobile ? 10 : 15),

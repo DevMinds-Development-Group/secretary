@@ -2,6 +2,7 @@
 
 import 'package:app/colors.dart';
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -136,21 +137,7 @@ class _LogsState extends State<Logs> {
       child: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 1500),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-
+          child: CustomCardContainer(
             child: DataTable(
               columnSpacing: MediaQuery.of(context).size.width * 0.1,
               columns: [

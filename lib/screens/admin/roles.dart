@@ -1,5 +1,6 @@
 import 'package:app/colors.dart';
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:app/widgets/custom_web_table.dart';
 import 'package:app/widgets/showDeleteConfirmationDialog.dart';
 import 'package:flutter/material.dart';
@@ -86,19 +87,7 @@ class _RolesState extends State<Roles> {
   ) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              spreadRadius: 2,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: isMobile

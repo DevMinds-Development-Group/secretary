@@ -1,112 +1,18 @@
 import 'package:app/widgets/custom_appbar.dart';
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:app/widgets/menu.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
+import '../../models/member_model.dart';
+import '../../providers/attendance_provider.dart';
 import '../../providers/member_provider.dart';
+import '../../providers/ministry_provider.dart';
+import '../../providers/network_provider.dart';
 import '../../providers/service_provider.dart';
-
-class MetricCard extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const MetricCard({super.key, required this.title, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    bool isMobile = MediaQuery.of(context).size.width < 700;
-    return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.0)),
-      color: cardColor,
-      child: Padding(
-        padding: isMobile
-            ? EdgeInsets.fromLTRB(40, 25, 40, 10)
-            : EdgeInsets.fromLTRB(60, 50, 60, 30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.group, color: Colors.red, size: 30),
-                SizedBox(width: 10),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: isMobile ? 20 : 24,
-                    fontWeight: FontWeight.w600,
-                    color: secondaryColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 15),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 35,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DashboardListItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const DashboardListItem({
-    super.key,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: primaryColor, size: 28),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(fontSize: 14, color: secondaryColor),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -120,134 +26,192 @@ class _DashboardState extends State<Dashboard> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
 
+    // Providers
     final memberProvider = context.watch<MemberProvider>();
     final serviceProvider = context.watch<ServiceProvider>();
-    final totalMembers = memberProvider.members.length;
+    final attendanceProvider = context.watch<AttendanceProvider>();
+    final networkProvider = context.watch<NetworkProvider>();
+    final ministryProvider = context.watch<MinistryProvider>();
 
-    final upcomingServices = serviceProvider.services
-        .where(
-          (s) =>
-              s.date.isAfter(DateTime.now().subtract(const Duration(days: 1))),
-        )
-        .toList();
-    upcomingServices.sort((a, b) => a.date.compareTo(b.date));
+    // --- LÓGICA DE MIEMBROS Y CRECIMIENTO ---
+    final allMembers = memberProvider.allMembers;
+    final totalMembers = allMembers.length;
 
+    // --- LÓGICA DE ACTIVOS (30 días) ---
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+    final Set<String> recentAttendees = {};
+    for (var record in attendanceProvider.records.values) {
+      if (record.date.isAfter(thirtyDaysAgo)) {
+        recentAttendees.addAll(record.presentMemberIds);
+      }
+    }
+
+    final int activeMembers = allMembers
+        .where((m) => recentAttendees.contains(m.id))
+        .length;
+    final int inactiveMembers = totalMembers - activeMembers;
+
+    // 1. Creamos la lista de los 3 items base
+    final List<Widget> metricItems = [
+      _buildMetricItem(
+        "Total Miembros",
+        totalMembers.toString(),
+        Icons.groups,
+        Colors.blue,
+      ),
+      _buildMetricItem(
+        "Activos (30d)",
+        activeMembers.toString(),
+        Icons.bolt,
+        Colors.green,
+      ),
+      _buildMetricItem(
+        "Inactivos",
+        inactiveMembers.toString(),
+        Icons.person_off,
+        Colors.orange,
+      ),
+    ];
+
+    // Ordenar miembros por fecha de registro (Manejo de nulos corregido)
+    final sortedMembers = List<Member>.from(allMembers)
+      ..sort(
+        (a, b) => (a.createdDate ?? DateTime.now()).compareTo(
+          b.createdDate ?? DateTime.now(),
+        ),
+      );
+
+    final List<FlSpot> growthSpots = sortedMembers.asMap().entries.map((e) {
+      return FlSpot(e.key.toDouble(), (e.key + 1).toDouble());
+    }).toList();
+
+    // --- LÓGICA DE SERVICIOS SEMANALES ---
     final now = DateTime.now();
-    // 2. Calculamos el inicio de la semana (Lunes).
-    //    now.weekday devuelve 1 para Lunes, 2 para Martes, ..., 7 para Domingo.
-    //    Restamos (now.weekday - 1) días a la fecha actual para llegar al Lunes.
     final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-    // Normalizamos a las 00:00:00 para evitar problemas con la hora.
     final startOfWeekDate = DateTime(
       startOfWeek.year,
       startOfWeek.month,
       startOfWeek.day,
     );
-    // 3. Calculamos el fin de la semana (Domingo).
-    //    Sumamos (7 - now.weekday) días a la fecha actual para llegar al Domingo.
-    final endOfWeek = now.add(
-      Duration(days: DateTime.daysPerWeek - now.weekday),
-    );
-    // Normalizamos a las 23:59:59 para incluir todo el día Domingo.
-    final endOfWeekDate = DateTime(
-      endOfWeek.year,
-      endOfWeek.month,
-      endOfWeek.day,
-      23,
-      59,
-      59,
+    final endOfWeekDate = startOfWeekDate.add(
+      const Duration(days: 7, hours: 23),
     );
 
-    // 4. Filtramos los servicios del provider que están dentro de este rango.
-    final servicesThisWeek = serviceProvider.services.where((service) {
-      return service.date.isAfter(startOfWeekDate) &&
-          service.date.isBefore(endOfWeekDate);
-    }).toList();
+    final servicesThisWeek = serviceProvider.services.where((s) {
+      return s.date.isAfter(startOfWeekDate) && s.date.isBefore(endOfWeekDate);
+    }).toList()..sort((a, b) => a.date.compareTo(b.date));
 
-    // 5. Ordenamos los servicios de la semana cronológicamente.
-    servicesThisWeek.sort((a, b) => a.date.compareTo(b.date));
-
-    // Contenido principal del dashboard (tarjetas y listas)
+    // --- CONTENIDO PRINCIPAL ---
     final Widget mainContent = CustomScrollView(
       slivers: [
-        //constraints: BoxConstraints(maxWidth: 1200),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(30),
+            padding: const EdgeInsets.all(20),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Wrap(
-                  spacing: 25.0,
-                  runSpacing: 16.0,
-                  children: [
-                    MetricCard(
-                      title: 'Total de miembros',
-                      value: totalMembers.toString(),
-                    ),
-
-                    // MetricCard(
-                    //   title: 'Miembros nuevos',
-                    //   value: newMembers.toString(),
-                    // ),
-                    //
-                    // MetricCard(
-                    //   title: 'Miembros activos',
-                    //   value: activeMembers.toString(),
-                    // ),
-                  ],
-                ),
-
-                SizedBox(height: 40),
-
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Servicios de esta semana:',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                    ),
-                    Divider(height: 20),
-                    const SizedBox(height: 16),
-                    if (servicesThisWeek.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          'No hay servicios programados para esta semana.',
+                CustomCardContainer(
+                  child: isMobile
+                      ? Column(
+                          children: metricItems
+                              .expand(
+                                (widget) => [
+                                  widget,
+                                  if (widget != metricItems.last)
+                                    const Divider(
+                                      height: 40,
+                                      indent: 30,
+                                      endIndent: 30,
+                                    ),
+                                ],
+                              )
+                              .toList(),
+                        )
+                      : Row(
+                          children: metricItems
+                              .expand(
+                                (widget) => [
+                                  Expanded(child: widget),
+                                  if (widget != metricItems.last)
+                                    _buildVerticalDivider(),
+                                ],
+                              )
+                              .toList(),
                         ),
-                      )
-                    else
-                      // Usamos un Column para generar los widgets de la lista
-                      Column(
-                        children: servicesThisWeek.map((service) {
-                          final formattedDate = DateFormat(
-                            "EEEE, dd 'de' MMMM",
-                            'es',
-                          ).format(service.date);
-                          final formattedTime = service.time.format(context);
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: 16.0,
-                            ), // Espacio entre elementos
-                            child: DashboardListItem(
-                              icon: Icons.calendar_month_outlined,
-                              title: service.title,
-                              subtitle:
-                                  '$formattedDate a las $formattedTime', // DATO REAL
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 25,
+                    horizontal: 15,
+                  ),
+                ),
 
-                    const SizedBox(height: 32),
+                const SizedBox(height: 20),
+
+                // 2. OTRAS MÉTRICAS (Redes y Ministerios)
+                Wrap(
+                  spacing: 15,
+                  runSpacing: 15,
+                  children: [
+                    _buildSmallInfoCard(
+                      'Redes',
+                      networkProvider.networks.length.toString(),
+                      Icons.hub,
+                      Colors.redAccent,
+                      isMobile,
+                    ),
+                    _buildSmallInfoCard(
+                      'Ministerios',
+                      ministryProvider.ministries.length.toString(),
+                      Icons.account_tree,
+                      Colors.indigo,
+                      isMobile,
+                    ),
                   ],
                 ),
+
+                const SizedBox(height: 30),
+
+                // 3. GRÁFICO DE CRECIMIENTO HISTÓRICO
+                _buildSection(
+                  "Crecimiento de la Membresía",
+                  _buildGrowthChart(growthSpots, sortedMembers, isMobile),
+                ),
+
+                const SizedBox(height: 25),
+
+                // 4. ACTIVIDAD Y SERVICIOS (Fila o Columna según dispositivo)
+                if (!isMobile)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: _buildSection(
+                          "Actividad (30 días)",
+                          _buildPieChart(activeMembers, inactiveMembers),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        flex: 5,
+                        child: _buildSection(
+                          "Servicios de la Semana",
+                          _buildServicesList(servicesThisWeek),
+                        ),
+                      ),
+                    ],
+                  )
+                else ...[
+                  _buildSection(
+                    "Actividad (30 días)",
+                    _buildPieChart(activeMembers, inactiveMembers),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSection(
+                    "Servicios de la Semana",
+                    _buildServicesList(servicesThisWeek),
+                  ),
+                ],
+                const SizedBox(height: 40),
               ],
             ),
           ),
@@ -255,33 +219,238 @@ class _DashboardState extends State<Dashboard> {
       ],
     );
 
-    // Menú lateral para vista web
-
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-      },
       child: Scaffold(
         backgroundColor: backgroundColor,
-        //extendBodyBehindAppBar: true,
         appBar: CustomAppBar(
           title: 'Inicio',
           isDrawerEnabled: isMobile,
           showBackButton: false,
         ),
+        drawer: isMobile ? const Drawer(child: Menu()) : null,
         body: isMobile
             ? mainContent
             : Row(
                 children: [
-                  Menu(),
+                  const Menu(),
                   Expanded(child: mainContent),
                 ],
               ),
-        drawer: isMobile
-            ? Drawer(child: Menu())
-            : null, // El Drawer solo en móvil
       ),
+    );
+  }
+
+  // --- WIDGETS DE APOYO ---
+
+  Widget _buildMetricItem(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: color, size: 32),
+        const SizedBox(height: 10),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.grey,
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerticalDivider() {
+    return Container(height: 60, width: 1, color: Colors.grey.withOpacity(0.2));
+  }
+
+  Widget _buildSmallInfoCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    bool isMobile,
+  ) {
+    return CustomCardContainer(
+      width: isMobile ? (MediaQuery.of(context).size.width / 2) - 30 : 220,
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 26),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSection(String title, Widget content) {
+    return CustomCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const Divider(height: 25),
+          content,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGrowthChart(
+    List<FlSpot> spots,
+    List<Member> sortedMembers,
+    bool isMobile,
+  ) {
+    if (spots.length < 2) {
+      return const SizedBox(
+        height: 100,
+        child: Center(child: Text("No hay suficientes datos de registro.")),
+      );
+    }
+
+    return AspectRatio(
+      aspectRatio: isMobile ? 1.5 : 4.0,
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final int index = value.toInt();
+                  if (index == 0 ||
+                      index == spots.length - 1 ||
+                      index == (spots.length ~/ 2)) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        DateFormat('MMM yy', 'es').format(
+                          sortedMembers[index].createdDate ?? DateTime.now(),
+                        ),
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                    );
+                  }
+                  return const Text('');
+                },
+              ),
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: primaryColor,
+              barWidth: 4,
+              belowBarData: BarAreaData(
+                show: true,
+                color: primaryColor.withOpacity(0.1),
+              ),
+              dotData: FlDotData(show: false),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPieChart(int active, int inactive) {
+    return SizedBox(
+      height: 160,
+      child: PieChart(
+        PieChartData(
+          sectionsSpace: 2,
+          centerSpaceRadius: 35,
+          sections: [
+            PieChartSectionData(
+              value: active.toDouble(),
+              color: Colors.green,
+              title: 'Activos',
+              radius: 45,
+              titleStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            ),
+            PieChartSectionData(
+              value: inactive.toDouble(),
+              color: Colors.orange,
+              title: 'Inactivos',
+              radius: 45,
+              titleStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServicesList(List services) {
+    if (services.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Text("No hay servicios programados para esta semana."),
+      );
+    }
+    return Column(
+      children: services.map<Widget>((s) {
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const CircleAvatar(
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.event, color: Colors.white, size: 20),
+          ),
+          title: Text(
+            s.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
+          subtitle: Text(
+            DateFormat("EEEE dd 'de' MMMM", 'es').format(s.date),
+            style: const TextStyle(fontSize: 12),
+          ),
+        );
+      }).toList(),
     );
   }
 }

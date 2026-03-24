@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/custom_card_container.dart';
 import '../../widgets/custom_web_table.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 
@@ -54,19 +55,7 @@ class NetworkManage extends StatelessWidget {
   ) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2.5,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
+      child: CustomCardContainer(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: isMobile

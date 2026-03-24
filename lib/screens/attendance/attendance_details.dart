@@ -6,6 +6,7 @@ import '../../colors.dart';
 import '../../models/attendance_model.dart';
 import '../../providers/member_provider.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_card_container.dart';
 
 class AttendanceDetail extends StatelessWidget {
   final AttendanceModel record;
@@ -51,19 +52,7 @@ class AttendanceDetail extends StatelessWidget {
                     ),
                   )
                 else
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 5,
-                        ),
-                      ],
-                    ),
+                  CustomCardContainer(
                     child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
@@ -98,16 +87,7 @@ class AttendanceDetail extends StatelessWidget {
   Widget _buildInfoCard() {
     final int total = record.presentMemberIds.length + record.visitorsCount;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 5),
-        ],
-      ),
+    return CustomCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

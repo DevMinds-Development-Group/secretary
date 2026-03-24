@@ -1,3 +1,4 @@
+import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 
 import '../colors.dart';
@@ -214,19 +215,8 @@ class PublicAnnouncements extends StatelessWidget {
   }
 
   Widget _buildTodayEvent(Color color) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(colors: [color, color.withOpacity(0.8)]),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+    return CustomCardContainer(
+      gradient: LinearGradient(colors: [color, color.withOpacity(0.8)]),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(30),
         child: Stack(
@@ -300,21 +290,8 @@ class PublicAnnouncements extends StatelessWidget {
     required String location,
     required Color color,
   }) {
-    return Container(
+    return CustomCardContainer(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
       child: Row(
         children: [
           // Indicador de Fecha Circular

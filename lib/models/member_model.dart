@@ -10,7 +10,8 @@ class Member {
   final bool enabled;
   final String? networkId;
   final String? networkName;
-
+  final DateTime? createdDate;
+  final String? profilePictureUrl;
   Member({
     required this.id,
     required this.name,
@@ -21,6 +22,8 @@ class Member {
     required this.enabled,
     this.networkId,
     this.networkName,
+    this.createdDate,
+    this.profilePictureUrl,
   });
 
   @override
