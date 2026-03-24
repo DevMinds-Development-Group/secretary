@@ -60,9 +60,9 @@ class _DashboardState extends State<Dashboard> {
         Colors.blue,
       ),
       _buildMetricItem(
-        "Activos (30d)",
+        "Activos (30 días)",
         activeMembers.toString(),
-        Icons.bolt,
+        Icons.person,
         Colors.green,
       ),
       _buildMetricItem(
@@ -147,32 +147,36 @@ class _DashboardState extends State<Dashboard> {
                 const SizedBox(height: 20),
 
                 // 2. OTRAS MÉTRICAS (Redes y Ministerios)
-                Wrap(
-                  spacing: 15,
-                  runSpacing: 15,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSmallInfoCard(
-                      'Redes',
-                      networkProvider.networks.length.toString(),
-                      Icons.hub,
-                      Colors.redAccent,
-                      isMobile,
+                    Expanded(
+                      child: _buildSmallInfoCard(
+                        'Redes',
+                        networkProvider.networks.length.toString(),
+                        Icons.group,
+                        Colors.redAccent,
+                        isMobile,
+                      ),
                     ),
-                    _buildSmallInfoCard(
-                      'Ministerios',
-                      ministryProvider.ministries.length.toString(),
-                      Icons.account_tree,
-                      Colors.indigo,
-                      isMobile,
+                    SizedBox(width: 20),
+                    Expanded(
+                      child: _buildSmallInfoCard(
+                        'Ministerios',
+                        ministryProvider.ministries.length.toString(),
+                        Icons.description_outlined,
+                        Colors.indigo,
+                        isMobile,
+                      ),
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
 
                 // 3. GRÁFICO DE CRECIMIENTO HISTÓRICO
                 _buildSection(
-                  "Crecimiento de la Membresía",
+                  "Comportamiento de la Membresía",
                   _buildGrowthChart(growthSpots, sortedMembers, isMobile),
                 ),
 
@@ -184,7 +188,7 @@ class _DashboardState extends State<Dashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        flex: 4,
+                        flex: 2,
                         child: _buildSection(
                           "Actividad (30 días)",
                           _buildPieChart(activeMembers, inactiveMembers),
@@ -257,9 +261,9 @@ class _DashboardState extends State<Dashboard> {
         Text(
           title,
           style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+            color: Colors.blueGrey,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
         ),
         Text(
@@ -275,7 +279,7 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildVerticalDivider() {
-    return Container(height: 60, width: 1, color: Colors.grey.withOpacity(0.2));
+    return Container(height: 60, width: 1, color: Colors.grey.withOpacity(0.7));
   }
 
   Widget _buildSmallInfoCard(
@@ -286,7 +290,9 @@ class _DashboardState extends State<Dashboard> {
     bool isMobile,
   ) {
     return CustomCardContainer(
-      width: isMobile ? (MediaQuery.of(context).size.width / 2) - 30 : 220,
+      width: isMobile
+          ? (MediaQuery.of(context).size.width / 2) - 30
+          : MediaQuery.of(context).size.width * 0.35,
       child: Row(
         children: [
           Icon(icon, color: color, size: 26),
@@ -296,7 +302,11 @@ class _DashboardState extends State<Dashboard> {
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(
+                  fontSize: 18,
+                  color: Colors.blueGrey,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               Text(
                 value,
@@ -392,7 +402,7 @@ class _DashboardState extends State<Dashboard> {
 
   Widget _buildPieChart(int active, int inactive) {
     return SizedBox(
-      height: 160,
+      height: 220,
       child: PieChart(
         PieChartData(
           sectionsSpace: 2,
@@ -402,22 +412,22 @@ class _DashboardState extends State<Dashboard> {
               value: active.toDouble(),
               color: Colors.green,
               title: 'Activos',
-              radius: 45,
+              radius: 70,
               titleStyle: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 11,
+                fontSize: 14,
               ),
             ),
             PieChartSectionData(
               value: inactive.toDouble(),
               color: Colors.orange,
               title: 'Inactivos',
-              radius: 45,
+              radius: 70,
               titleStyle: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
-                fontSize: 11,
+                fontSize: 14,
               ),
             ),
           ],
