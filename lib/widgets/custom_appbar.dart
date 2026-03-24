@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../routes/page_route_builder.dart';
 import '../screens/admin/profile.dart';
-import '../screens/home/home.dart';
 import '../services/auth_service.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -113,13 +112,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   listen: false,
                 );
 
-                // 2. Ejecutar la limpieza de token y datos
                 await authService.signOut();
 
                 if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
+                  Navigator.pushNamedAndRemoveUntil(
                     context,
-                    createFadeRoute(Home()),
+                    '/',
                     (route) => false,
                   );
                 }

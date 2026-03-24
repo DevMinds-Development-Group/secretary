@@ -120,26 +120,16 @@ class AuthService with ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    try {
-      // 1. Borrar el token
-      await deleteToken();
+    await _secureStorage.delete(key: 'auth_token');
 
-      // 2. Borrar los datos del usuario del disco
-      await _secureStorage.delete(key: 'user_name');
-      await _secureStorage.read(key: 'user_role_desc'); // O delete
-      await _secureStorage.delete(key: 'raw_role');
+    await _secureStorage.delete(key: 'user_name');
+    await _secureStorage.delete(key: 'user_role_desc');
+    await _secureStorage.delete(key: 'raw_role');
 
-      // 3. Limpiar las variables en memoria RAM
-      _userName = null;
-      _userRoleDescription = null;
-      _rawRole = null;
+    _userName = null;
+    _userRoleDescription = null;
+    _rawRole = null;
 
-      print("SESIÓN CERRADA: Token y datos eliminados.");
-
-      // 4. Notificar a los widgets (como el Menú) para que se actualicen a null
-      notifyListeners();
-    } catch (e) {
-      print("Error al cerrar sesión: $e");
-    }
+    notifyListeners();
   }
 }
