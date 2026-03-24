@@ -120,16 +120,25 @@ class AuthService with ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    await _secureStorage.delete(key: 'auth_token');
+    try {
+      // 1. Destruir token y datos del disco (Funciona en Móvil y Web)
+      await _secureStorage.delete(key: 'auth_token');
+      await _secureStorage.delete(key: 'user_name');
+      await _secureStorage.delete(key: 'user_role_desc');
+      await _secureStorage.delete(key: 'raw_role');
 
-    await _secureStorage.delete(key: 'user_name');
-    await _secureStorage.delete(key: 'user_role_desc');
-    await _secureStorage.delete(key: 'raw_role');
+      // 2. Limpiar variables en memoria
+      _userName = null;
+      _userRoleDescription = null;
+      _rawRole = null;
 
-    _userName = null;
-    _userRoleDescription = null;
-    _rawRole = null;
+      // 3. NOTIFICAR: Esto hace que el AuthWrapper detecte que el token es null
+      // y cambie la pantalla de Dashboard a Home automáticamente.
+      notifyListeners();
 
-    notifyListeners();
+      print("Sesión destruida correctamente.");
+    } catch (e) {
+      print("Error al cerrar sesión: $e");
+    }
   }
 }

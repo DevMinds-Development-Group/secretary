@@ -102,10 +102,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           PopupMenuButton<String>(
             onSelected: (value) async {
               if (value == 'profile') {
-                Navigator.push(
-                  context,
-                  createFadeRoute(Profile()),
-                ); // Navegar a editar perfil
+                Navigator.push(context, createFadeRoute(Profile()));
               } else if (value == 'logout') {
                 final authService = Provider.of<AuthService>(
                   context,

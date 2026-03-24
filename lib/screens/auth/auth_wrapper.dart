@@ -10,11 +10,9 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Escuchamos al AuthService global
-    final authService = Provider.of<AuthService>(context);
+    final authService = context.watch<AuthService>();
 
     return FutureBuilder<String?>(
-      // Usamos el método del servicio que ya está en el Provider
       future: authService.getToken(),
       builder: (context, snapshot) {
         // 1. Mientras carga el token del disco
@@ -24,16 +22,15 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // 2. Si hay un token válido, mostramos el Dashboard
-        // Nota: También verificamos que userName no sea null para asegurar que el perfil cargó
-        if (snapshot.hasData &&
-            snapshot.data != null &&
-            snapshot.data!.isNotEmpty) {
-          return const Dashboard();
-        }
+        final String? token = snapshot.data;
 
-        // 3. Si el token es null o está vacío, mostramos el Login (Home)
-        return const Home();
+        if (token != null && token.isNotEmpty) {
+          // SI HAY TOKEN: El usuario está autenticado, va al Dashboard
+          return const Dashboard();
+        } else {
+          // NO HAY TOKEN: Obligatoriamente al Home (Login)
+          return const Home();
+        }
       },
     );
   }
