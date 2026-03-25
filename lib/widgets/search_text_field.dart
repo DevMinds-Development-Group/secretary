@@ -4,24 +4,27 @@ class SearchTextField extends StatefulWidget {
   final Function(String)? onChanged;
   final TextEditingController? controller;
   final String? Function(String?)? validator;
+  final String hintText;
 
-  SearchTextField({super.key, this.onChanged, this.controller, this.validator});
+  const SearchTextField({
+    super.key,
+    this.onChanged,
+    this.controller,
+    this.validator,
+    this.hintText = 'Buscar...',
+  });
 
   @override
   State<SearchTextField> createState() => _SearchTextFieldState();
 }
 
 class _SearchTextFieldState extends State<SearchTextField> {
-  late final TextEditingController _internalController;
+  late TextEditingController _internalController;
 
   @override
   void initState() {
     super.initState();
     _internalController = widget.controller ?? TextEditingController();
-
-    _internalController.addListener(() {
-      widget.onChanged?.call(_internalController.text);
-    });
   }
 
   @override
@@ -34,39 +37,45 @@ class _SearchTextFieldState extends State<SearchTextField> {
 
   @override
   Widget build(BuildContext context) {
-    bool isMobile = MediaQuery.of(context).size.width < 700;
-    return SizedBox(
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    return Container(
       height: isMobile ? 50 : 45,
-      width: isMobile
-          ? MediaQuery.of(context).size.width * 0.5
-          : MediaQuery.of(context).size.width * 0.2,
-      child: Padding(
-        padding: const EdgeInsets.all(0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 1,
-                offset: const Offset(0, 2),
-              ),
-            ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 2),
           ),
-          child: TextField(
-            controller: _internalController,
-            decoration: InputDecoration(
-              hintText: 'Buscar',
-              hintStyle: TextStyle(color: Colors.grey[600], fontSize: 18),
-              prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
-            ),
-            style: const TextStyle(color: Colors.black87),
-          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: _internalController,
+        validator: widget.validator,
+        onChanged: widget.onChanged,
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          hintText: widget.hintText,
+          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 18),
+          prefixIcon: Icon(Icons.search, color: Colors.grey[600], size: 25),
+          suffixIcon: _internalController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () {
+                    _internalController.clear();
+                    if (widget.onChanged != null) widget.onChanged!("");
+                    setState(() {});
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 15),
         ),
+        style: const TextStyle(color: Colors.black87, fontSize: 16),
       ),
     );
   }

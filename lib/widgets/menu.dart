@@ -10,6 +10,7 @@ import '../colors.dart';
 import '../screens/attendance/attendance_history.dart';
 import '../screens/home/dashboard.dart';
 import '../screens/network/networks.dart';
+import '../screens/reports/reports.dart';
 import '../services/auth_service.dart';
 
 class Menu extends StatefulWidget {
@@ -179,7 +180,7 @@ class _MenuState extends State<Menu> {
               if (isMobile) {
                 Navigator.pop(context);
               }
-              //Navigator.pushReplacement(context, createFadeRoute(Reports()));
+              Navigator.pushReplacement(context, createFadeRoute(Reports()));
               setState(() {
                 _selectedIndex = 6;
               });

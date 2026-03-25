@@ -1,15 +1,12 @@
 import 'package:app/colors.dart';
 import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/admin/roles.dart';
-import 'package:app/screens/admin/users.dart';
+import 'package:app/screens/reports/total_attendances.dart';
 import 'package:app/widgets/custom_appbar.dart';
 import 'package:app/widgets/menu.dart';
 import 'package:flutter/material.dart';
 
-import 'logs.dart';
-
-class Admin extends StatelessWidget {
-  const Admin({super.key});
+class Reports extends StatelessWidget {
+  const Reports({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +44,9 @@ class Admin extends StatelessWidget {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          _buildCard(context, Icons.people, 'Usuarios'),
-          _buildCard(context, Icons.admin_panel_settings, 'Roles'),
-          _buildCard(context, Icons.history, 'Logs'),
+          _buildCard(context, Icons.how_to_reg_rounded, 'Asistencias'),
+          _buildCard(context, Icons.groups_rounded, 'Membresía'),
+          //_buildCard(context, Icons.history, ''),
         ],
       ),
     );
@@ -65,14 +62,17 @@ class Admin extends StatelessWidget {
         onTap: () {
           // Lógica para la navegación
           switch (title) {
-            case 'Usuarios':
-              Navigator.push(context, createFadeRoute(const Users()));
+            case 'Asistencias':
+              Navigator.push(
+                context,
+                createFadeRoute(const TotalAttendances()),
+              );
               break;
-            case 'Roles':
-              Navigator.push(context, createFadeRoute(const Roles()));
+            case 'Membresía':
+              //Navigator.push(context, createFadeRoute(const Roles()));
               break;
-            case 'Logs':
-              Navigator.push(context, createFadeRoute(const Logs()));
+            case '':
+              //Navigator.push(context, createFadeRoute();
               break;
           }
         },

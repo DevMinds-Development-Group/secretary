@@ -16,6 +16,7 @@ class DateWidget extends StatelessWidget {
   Future<void> _selectDate(BuildContext context) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    final navigator = Navigator.of(context);
 
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -30,7 +31,13 @@ class DateWidget extends StatelessWidget {
     );
 
     if (picked != null && picked != initialDate) {
-      onDateSelected(picked);
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      if (navigator.mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          onDateSelected(picked);
+        });
+      }
     }
   }
 

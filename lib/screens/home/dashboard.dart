@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../../colors.dart';
 import '../../models/member_model.dart';
+import '../../models/service_model.dart';
 import '../../providers/attendance_provider.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
@@ -129,18 +130,40 @@ class _DashboardState extends State<Dashboard> {
 
     // --- LÓGICA DE SERVICIOS SEMANALES ---
     final now = DateTime.now();
-    final startOfWeekDate = DateTime(
+
+    final startOfWeek = DateTime(
       now.year,
       now.month,
       now.day,
     ).subtract(Duration(days: now.weekday - 1));
-    final endOfWeekDate = startOfWeekDate.add(
-      const Duration(days: 7, hours: 23),
+
+    final endOfWeek = startOfWeek.add(
+      const Duration(days: 6, hours: 23, minutes: 59),
     );
 
     final servicesThisWeek = serviceProvider.services.where((s) {
-      return s.date.isAfter(startOfWeekDate) && s.date.isBefore(endOfWeekDate);
-    }).toList()..sort((a, b) => a.date.compareTo(b.date));
+      if (s.recurring) {
+        // Si es recurrente, sucede todas las semanas, por lo tanto está en "esta semana"
+        return true;
+      } else {
+        // Si no es recurrente, verificamos si su fecha cae entre lunes y domingo
+        return s.date.isAfter(
+              startOfWeek.subtract(const Duration(seconds: 1)),
+            ) &&
+            s.date.isBefore(endOfWeek);
+      }
+    }).toList();
+
+    servicesThisWeek.sort((a, b) {
+      // Obtenemos el día (1-7)
+      int dayA = a.recurring ? int.parse(a.weekDay.toString()) : a.date.weekday;
+      int dayB = b.recurring ? int.parse(b.weekDay.toString()) : b.date.weekday;
+
+      if (dayA != dayB) return dayA.compareTo(dayB);
+
+      // Si es el mismo día, ordenamos por hora
+      return a.time.hour.compareTo(b.time.hour);
+    });
 
     final Widget mainContent = CustomScrollView(
       slivers: [
@@ -150,7 +173,6 @@ class _DashboardState extends State<Dashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. CARD DE MEMBRESÍA
                 CustomCardContainer(
                   padding: const EdgeInsets.symmetric(
                     vertical: 25,
@@ -186,7 +208,6 @@ class _DashboardState extends State<Dashboard> {
                 ),
                 const SizedBox(height: 20),
 
-                // 2. REDES Y MINISTERIOS
                 Row(
                   children: [
                     Expanded(
@@ -212,14 +233,12 @@ class _DashboardState extends State<Dashboard> {
                 ),
                 const SizedBox(height: 20),
 
-                // 3. GRÁFICO DE CRECIMIENTO
                 _buildSection(
                   "Comportamiento de la Membresía",
                   _buildGrowthChart(growthSpots, sortedMembers, isMobile),
                 ),
                 const SizedBox(height: 25),
 
-                // 4. ACTIVIDAD Y SERVICIOS
                 if (!isMobile)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,8 +302,6 @@ class _DashboardState extends State<Dashboard> {
       ),
     );
   }
-
-  // --- WIDGETS DE APOYO ---
 
   Widget _buildMetricItem(
     String title,
@@ -502,35 +519,40 @@ class _DashboardState extends State<Dashboard> {
     );
   }
 
-  Widget _buildServicesList(List services) {
+  String _formatTime12h(TimeOfDay time) {
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  Widget _buildServicesList(List<ServiceModel> services) {
     if (services.isEmpty)
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Text("No hay servicios esta semana."),
       );
     return Column(
-      children: services
-          .map<Widget>(
-            (s) => ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const CircleAvatar(
-                backgroundColor: Colors.blue,
-                child: Icon(Icons.event, color: Colors.white, size: 20),
-              ),
-              title: Text(
-                s.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-              subtitle: Text(
-                DateFormat("EEEE dd 'de' MMMM", 'es').format(s.date),
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          )
-          .toList(),
+      children: services.map<Widget>((s) {
+        final bool isPast =
+            !s.recurring &&
+            s.date.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const CircleAvatar(
+            backgroundColor: Colors.blue,
+            child: Icon(Icons.event, color: Colors.white, size: 20),
+          ),
+          title: Text(
+            s.title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+          subtitle: Text(
+            "${DateFormat("EEEE dd", 'es').format(s.date)} • ${_formatTime12h(s.time)}",
+            style: const TextStyle(fontSize: 15, color: Colors.blueGrey),
+          ),
+        );
+      }).toList(),
     );
   }
 }
