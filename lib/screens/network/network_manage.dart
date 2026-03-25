@@ -1,24 +1,36 @@
-// lib/screens/network_manage.dart
-
-import 'package:app/colors.dart';
-import 'package:app/models/network_model.dart';
-import 'package:app/screens/create/create_network.dart';
-import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
+import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
-import '../../widgets/custom_card_container.dart';
+import '../../widgets/add_button.dart'; // Importante para el botón superior
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../create/create_network.dart';
 
-class NetworkManage extends StatelessWidget {
+class NetworkManage extends StatefulWidget {
   const NetworkManage({Key? key}) : super(key: key);
 
   @override
+  State<NetworkManage> createState() => _NetworkManageState();
+}
+
+class _NetworkManageState extends State<NetworkManage> {
+  @override
+  void initState() {
+    super.initState();
+    // Carga inicial de datos
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final networkProvider = Provider.of<NetworkProvider>(context);
+    final networkProvider = context.watch<NetworkProvider>();
     final List<NetworkModel> networks = networkProvider.networks;
     final isMobile = MediaQuery.of(context).size.width < 700;
 
@@ -28,7 +40,24 @@ class NetworkManage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: isMobile ? 10 : 30),
+            const SizedBox(height: 20),
+            // Botón de agregar alineado a la derecha (Web) o centro (Móvil)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Align(
+                alignment: isMobile ? Alignment.center : Alignment.centerRight,
+                child: AddButton(
+                  size: isMobile
+                      ? Size(MediaQuery.of(context).size.width * 0.9, 50)
+                      : null,
+                  onPressed: () => Navigator.push(
+                    context,
+                    createFadeRoute(const CreateNetwork()),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: isMobile ? 20 : 5),
             Expanded(
               child: networkProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -38,7 +67,7 @@ class NetworkManage extends StatelessWidget {
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1200),
-                        child: _buildMainCard(context, isMobile, networks),
+                        child: _buildMainContent(context, isMobile, networks),
                       ),
                     ),
             ),
@@ -48,34 +77,60 @@ class NetworkManage extends StatelessWidget {
     );
   }
 
-  Widget _buildMainCard(
+  Widget _buildMainContent(
     BuildContext context,
     bool isMobile,
     List<NetworkModel> networks,
   ) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: CustomCardContainer(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: isMobile
-              ? _buildMobileList(context, networks)
-              : CustomWebTable<NetworkModel>(
-                  items: networks,
-                  columnLabels: ['Red', 'Misión', 'Líderes', 'Acciones'],
-                  rowBuilder: (network) => [
-                    DataCell(Text(network.name)),
-                    DataCell(Text(network.mission ?? 'N/A')),
-                    DataCell(
-                      Text(network.leaders.map((l) => l.name).join(", ")),
+      child: isMobile
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: _buildMobileList(context, networks),
+            )
+          : CustomWebTable<NetworkModel>(
+              items: networks,
+              columnLabels: const ['Red', 'Misión', 'Líderes', 'Acciones'],
+              columnSpacing: MediaQuery.of(context).size.width * 0.1,
+              rowBuilder: (network) {
+                final leaderNames = network.leaders
+                    .map((l) => l.name)
+                    .join(", ");
+                return [
+                  DataCell(
+                    Text(network.name, style: const TextStyle(fontSize: 14)),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 200,
+                      child: Text(
+                        network.mission ?? 'N/A',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
-                    DataCell(
-                      _buildActions(context, network),
-                    ), // Tu widget de botones
-                  ],
-                ),
-        ),
-      ),
+                  ),
+                  DataCell(
+                    Tooltip(
+                      message: leaderNames.isEmpty
+                          ? "Sin asignar"
+                          : leaderNames,
+                      child: SizedBox(
+                        width: 250,
+                        child: Text(
+                          leaderNames.isEmpty ? "Sin asignar" : leaderNames,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  DataCell(_buildActions(context, network)),
+                ];
+              },
+            ),
     );
   }
 
@@ -83,8 +138,7 @@ class NetworkManage extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(10),
       itemCount: networks.length,
-      separatorBuilder: (context, index) =>
-          const Divider(height: 1, thickness: 0.7),
+      separatorBuilder: (context, index) => const Divider(),
       itemBuilder: (context, index) {
         final network = networks[index];
         final leaderNames = network.leaders.map((l) => l.name).join(", ");
@@ -95,7 +149,7 @@ class NetworkManage extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           subtitle: Text(
-            'Misión: ${network.mission ?? "Sin misión"}\nLíderes: ${leaderNames.isEmpty ? "Sin asignar" : leaderNames}',
+            'Misión: ${network.mission ?? "N/A"}\nLíderes: ${leaderNames.isEmpty ? "Sin asignar" : leaderNames}',
             style: const TextStyle(fontSize: 13),
           ),
           isThreeLine: true,
@@ -130,12 +184,10 @@ class NetworkManage extends StatelessWidget {
       itemName: network.name,
       onConfirm: () async {
         try {
-          // Llamamos al provider para eliminar
           await Provider.of<NetworkProvider>(
             context,
             listen: false,
           ).deleteNetwork(network.id);
-
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -148,7 +200,7 @@ class NetworkManage extends StatelessWidget {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('No se pudo eliminar la red. Intente de nuevo.'),
+                content: Text('Error al eliminar la red'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -157,7 +209,4 @@ class NetworkManage extends StatelessWidget {
       },
     );
   }
-
-  TextStyle _headerStyle() =>
-      TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
 }

@@ -1,9 +1,10 @@
-import 'package:app/colors.dart';
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/reports/total_attendances.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/menu.dart';
+import 'package:Koinos/screens/reports/total_attendances.dart';
 import 'package:flutter/material.dart';
+
+import '../../colors.dart';
+import '../../routes/page_route_builder.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/menu.dart';
 
 class Reports extends StatelessWidget {
   const Reports({super.key});

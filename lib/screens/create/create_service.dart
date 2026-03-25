@@ -1,13 +1,13 @@
-import 'package:app/colors.dart';
-import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
 import '../../models/member_model.dart';
 import '../../models/service_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/service_provider.dart';
 import '../../widgets/button.dart';
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/member_autocomplete_field.dart';
 

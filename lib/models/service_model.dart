@@ -1,5 +1,6 @@
-import 'package:app/models/member_model.dart';
 import 'package:flutter/material.dart';
+
+import 'member_model.dart';
 
 class ServiceModel {
   final String id;

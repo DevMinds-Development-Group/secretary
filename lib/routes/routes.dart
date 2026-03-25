@@ -1,24 +1,25 @@
-import 'package:app/routes/route_guard.dart';
-import 'package:app/screens/admin/admin.dart';
-import 'package:app/screens/admin/profile.dart';
-import 'package:app/screens/attendance/attendance.dart';
-import 'package:app/screens/auth/auth_wrapper.dart';
-import 'package:app/screens/create/create_member.dart';
-import 'package:app/screens/create/create_network.dart';
-import 'package:app/screens/create/create_service.dart';
-import 'package:app/screens/members.dart';
-import 'package:app/screens/ministry/ministries.dart';
-import 'package:app/screens/network/network_manage.dart';
-import 'package:app/screens/service/services.dart';
+import 'package:Koinos/routes/route_guard.dart';
 import 'package:flutter/material.dart';
 
+import '../screens/UserHelp.dart';
+import '../screens/admin/admin.dart';
+import '../screens/admin/profile.dart';
 import '../screens/admin/users.dart';
+import '../screens/attendance/attendance.dart';
 import '../screens/attendance/attendance_history.dart';
+import '../screens/auth/auth_wrapper.dart';
+import '../screens/create/create_member.dart';
 import '../screens/create/create_ministry.dart';
+import '../screens/create/create_network.dart';
+import '../screens/create/create_service.dart';
 import '../screens/home/dashboard.dart';
 import '../screens/home/home.dart';
 import '../screens/home/login.dart';
+import '../screens/members.dart';
+import '../screens/ministry/ministries.dart';
+import '../screens/network/network_manage.dart';
 import '../screens/network/networks.dart';
+import '../screens/service/services.dart';
 
 class AppRoutes {
   static const String auth_wrapper = '/';
@@ -41,6 +42,7 @@ class AppRoutes {
   static const String network_manage = 'network_manage';
   static const String create_other_service = 'create_other_service';
   static const String attendance_history = 'attendance_history';
+  static const String user_help = 'user_help';
 
   static Map<String, WidgetBuilder> getRoutes() {
     return <String, WidgetBuilder>{
@@ -72,6 +74,7 @@ class AppRoutes {
           RouteGuard.checkAuth(context, const NetworkManage()),
       attendance_history: (context) =>
           RouteGuard.checkAuth(context, const AttendanceHistory()),
+      user_help: (context) => RouteGuard.checkAuth(context, const UserHelp()),
     };
   }
 }

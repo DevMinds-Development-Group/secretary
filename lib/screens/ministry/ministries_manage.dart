@@ -1,15 +1,15 @@
-import 'package:app/colors.dart';
-import 'package:app/providers/ministry_provider.dart';
-import 'package:app/screens/create/create_ministry.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_card_container.dart';
-import 'package:app/widgets/custom_web_table.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
 import '../../models/ministry_model.dart';
+import '../../providers/ministry_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/add_button.dart'; // Asegúrate de importar el AddButton
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_web_table.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../create/create_ministry.dart';
 
 class MinistryManage extends StatefulWidget {
   const MinistryManage({Key? key}) : super(key: key);
@@ -22,7 +22,6 @@ class _MinistryManageState extends State<MinistryManage> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MinistryProvider>(context, listen: false).fetchMinistries();
     });
@@ -32,7 +31,6 @@ class _MinistryManageState extends State<MinistryManage> {
   Widget build(BuildContext context) {
     final ministryProvider = context.watch<MinistryProvider>();
     final List<MinistryModel> ministries = ministryProvider.ministries;
-    // final leaderProvider = context.watch<LeaderProvider>();
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
     return Scaffold(
@@ -41,7 +39,24 @@ class _MinistryManageState extends State<MinistryManage> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: isMobile ? 10 : 30),
+            const SizedBox(height: 20),
+            // Botón de agregar alineado como en Roles
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Align(
+                alignment: isMobile ? Alignment.center : Alignment.centerRight,
+                child: AddButton(
+                  size: isMobile
+                      ? Size(MediaQuery.of(context).size.width * 0.9, 50)
+                      : null,
+                  onPressed: () => Navigator.push(
+                    context,
+                    createFadeRoute(const CreateMinistry()),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: isMobile ? 20 : 5),
             Expanded(
               child: ministryProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -53,7 +68,7 @@ class _MinistryManageState extends State<MinistryManage> {
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1200),
-                        child: _buildMainCard(context, isMobile, ministries),
+                        child: _buildMainContent(context, isMobile, ministries),
                       ),
                     ),
             ),
@@ -63,77 +78,82 @@ class _MinistryManageState extends State<MinistryManage> {
     );
   }
 
-  Widget _buildMainCard(
+  Widget _buildMainContent(
     BuildContext context,
     bool isMobile,
     List<MinistryModel> ministries,
   ) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: CustomCardContainer(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: isMobile
-              ? _buildMobileList(context, ministries)
-              : CustomWebTable(
-                  items: ministries,
-                  columnLabels: [
-                    'Ministerio',
-                    'Detalles',
-                    'Pastores',
-                    'Acciones',
-                  ],
-                  rowBuilder: (ministry) => [
-                    DataCell(Text(ministry.name)),
-                    DataCell(Text(ministry.description)),
-                    DataCell(
-                      Tooltip(
-                        message: 'Pastores',
-                        child: Text(
-                          ministry.leaders.map((l) => l.name).join(', '),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+      child: isMobile
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: _buildMobileList(context, ministries),
+            )
+          : CustomWebTable<MinistryModel>(
+              items: ministries,
+              columnLabels: const [
+                'Ministerio',
+                'Descripción',
+                'Pastores',
+                'Acciones',
+              ],
+              columnSpacing: MediaQuery.of(context).size.width * 0.1,
+              rowBuilder: (ministry) => [
+                DataCell(
+                  Text(ministry.name, style: const TextStyle(fontSize: 14)),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 250,
+                    child: Text(
+                      ministry.description,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  Tooltip(
+                    message: ministry.leaders.map((l) => l.name).join(', '),
+                    child: SizedBox(
+                      width: 200,
+                      child: Text(
+                        ministry.leaders.map((l) => l.name).join(', '),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
-                    DataCell(_buildActions(context, ministry)),
-                  ],
+                  ),
                 ),
-        ),
-      ),
+                DataCell(_buildActions(context, ministry)),
+              ],
+            ),
     );
   }
 
   Widget _buildMobileList(
     BuildContext context,
     List<MinistryModel> ministries,
-    // PastorProvider pastorProvider,
   ) {
     return ListView.separated(
       padding: const EdgeInsets.all(10.0),
       itemCount: ministries.length,
-      separatorBuilder: (context, index) =>
-          const Divider(height: 1, thickness: 0.7),
+      separatorBuilder: (context, index) => const Divider(),
       itemBuilder: (context, index) {
         final ministry = ministries[index];
-
         return ListTile(
           title: Text(
             ministry.name,
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                ministry.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-            ],
+          subtitle: Text(
+            ministry.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
           trailing: _buildActions(context, ministry),
-          //onTap: () {},
         );
       },
     );
@@ -158,8 +178,8 @@ class _MinistryManageState extends State<MinistryManage> {
     );
   }
 
-  Future<void> _showDelete(BuildContext context, MinistryModel ministry) {
-    return showDeleteConfirmationDialog(
+  void _showDelete(BuildContext context, MinistryModel ministry) {
+    showDeleteConfirmationDialog(
       context: context,
       itemName: ministry.name,
       onConfirm: () async {
@@ -168,35 +188,25 @@ class _MinistryManageState extends State<MinistryManage> {
             context,
             listen: false,
           ).deleteMinistry(ministry.id);
-
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  'Ministerio ${ministry.name} eliminado con éxito',
-                ),
+                content: Text('Ministerio ${ministry.name} eliminado'),
                 backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
               ),
             );
           }
         } catch (e) {
-          if (context.mounted) {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('No se pudo eliminar el ministerio.'),
+                content: Text('Error al eliminar el ministerio'),
                 backgroundColor: Colors.red,
               ),
             );
           }
-          ;
         }
-        ;
       },
     );
-  }
-
-  TextStyle _headerStyle() {
-    return TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
   }
 }

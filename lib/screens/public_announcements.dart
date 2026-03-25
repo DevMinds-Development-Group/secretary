@@ -1,7 +1,7 @@
-import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 
 import '../colors.dart';
+import '../widgets/custom_card_container.dart';
 
 class PublicAnnouncements extends StatelessWidget {
   const PublicAnnouncements({super.key});

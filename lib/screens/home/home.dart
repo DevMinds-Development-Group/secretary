@@ -1,9 +1,9 @@
-import 'package:app/colors.dart';
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 
+import '../../colors.dart';
+import '../../routes/page_route_builder.dart';
 import '../../routes/routes.dart';
+import '../../widgets/custom_button.dart';
 import '../public_announcements.dart';
 
 class Home extends StatefulWidget {

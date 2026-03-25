@@ -1,16 +1,16 @@
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/admin/admin.dart';
-import 'package:app/screens/members.dart';
-import 'package:app/screens/ministry/ministries.dart';
-import 'package:app/screens/service/services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../colors.dart';
+import '../routes/page_route_builder.dart';
+import '../screens/admin/admin.dart';
 import '../screens/attendance/attendance_history.dart';
 import '../screens/home/dashboard.dart';
+import '../screens/members.dart';
+import '../screens/ministry/ministries.dart';
 import '../screens/network/networks.dart';
 import '../screens/reports/reports.dart';
+import '../screens/service/services.dart';
 import '../services/auth_service.dart';
 
 class Menu extends StatefulWidget {

@@ -1,6 +1,3 @@
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_card_container.dart';
-import 'package:app/widgets/menu.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +11,9 @@ import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../providers/service_provider.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_card_container.dart';
+import '../../widgets/menu.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});

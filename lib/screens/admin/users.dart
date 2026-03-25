@@ -1,18 +1,16 @@
-// En tu archivo 'users_screen.dart'
-import 'package:app/colors.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_card_container.dart';
-import 'package:app/widgets/custom_web_table.dart';
-import 'package:app/widgets/showDeleteConfirmationDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
 import '../../models/user_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/role_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/add_button.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_web_table.dart';
+import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_user.dart';
 
 class Users extends StatefulWidget {
@@ -97,39 +95,36 @@ Widget _buildMainContent(
 ) {
   return Padding(
     padding: const EdgeInsets.all(0),
-    child: CustomCardContainer(
-      width: MediaQuery.of(context).size.width * 0.65,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
-        child: isMobile
-            ? _buildMobileList(users, memberProvider)
-            : CustomWebTable<User>(
-                items: users,
-                columnLabels: [
-                  'Nombre de usuario',
-                  'Rol',
-                  'Miembro asociado',
-                  'Acciones',
-                ],
-                columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
-                rowBuilder: (user) {
-                  final member = user.member;
-                  return [
-                    DataCell(Text(user.username)),
-                    DataCell(Text(user.role)),
-                    DataCell(
-                      Text(
-                        member != null
-                            ? '${member.name} ${member.lastName}'
-                            : 'Sin miembro',
-                      ),
-                    ),
-                    DataCell(_buildActions(context, user)),
-                  ];
-                },
-              ),
-      ),
-    ),
+    child: isMobile
+        ? ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: _buildMobileList(users, memberProvider),
+          )
+        : CustomWebTable<User>(
+            items: users,
+            columnLabels: [
+              'Nombre de usuario',
+              'Rol',
+              'Miembro asociado',
+              'Acciones',
+            ],
+            columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
+            rowBuilder: (user) {
+              final member = user.member;
+              return [
+                DataCell(Text(user.username)),
+                DataCell(Text(user.role)),
+                DataCell(
+                  Text(
+                    member != null
+                        ? '${member.name} ${member.lastName}'
+                        : 'Sin miembro',
+                  ),
+                ),
+                DataCell(_buildActions(context, user)),
+              ];
+            },
+          ),
   );
 }
 

@@ -1,11 +1,11 @@
-import 'package:app/colors.dart';
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/admin/roles.dart';
-import 'package:app/screens/admin/users.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/menu.dart';
+import 'package:Koinos/screens/admin/roles.dart';
+import 'package:Koinos/screens/admin/users.dart';
 import 'package:flutter/material.dart';
 
+import '../../colors.dart';
+import '../../routes/page_route_builder.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/menu.dart';
 import 'logs.dart';
 
 class Admin extends StatelessWidget {

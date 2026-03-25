@@ -1,4 +1,4 @@
-name: app
+name: Koinos
 description: "Aplicación de Secretaría para Viento Recio."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -52,11 +52,14 @@ dev_dependencies:
   flutter_launcher_icons: ^0.13.1
 
 flutter_launcher_icons:
-  android: true
-  ios: true
-  image_path: "assets/logo0.png"
+  android: "launcher_icons_koinos"
+  ios: false
+  image_path: "assets/logo_koinos.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/logo0.png"
+  adaptive_icon_foreground: "assets/logo_koinos.png"
+  web:
+    generate: true
+    image_path: "assets/logotipo.png"
 
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -109,14 +112,17 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_native_splash:
+
   color: "#FFFFFF" # Color de fondo (puedes poner el de tu app)
-  image: assets/logo0.png # Tu logo
+  image: "assets/logo_splash.png" # Para Android < 12 e iOS
   # branding: assets/logo.png # Opcional: si quieres un logo pequeño abajo
 
+
   android_12:
-    image: assets/logo0.png
+    image: "assets/logo_splash.png"
     icon_background_color: "#FFFFFF"
 
   android: true
   ios: true
   web: false
+  fullscreen: false

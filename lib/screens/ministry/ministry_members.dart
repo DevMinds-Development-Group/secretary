@@ -1,6 +1,3 @@
-// lib/screens/ministry_members_screen.dart
-
-import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +8,7 @@ import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_card_container.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
 

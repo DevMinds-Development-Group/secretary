@@ -1,8 +1,3 @@
-import 'package:app/routes/page_route_builder.dart';
-import 'package:app/screens/create/create_ministry.dart';
-import 'package:app/screens/ministry/ministries_manage.dart';
-import 'package:app/widgets/add_button.dart';
-import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,8 +5,13 @@ import '../../colors.dart';
 import '../../models/ministry_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
+import '../../routes/page_route_builder.dart';
+import '../../widgets/add_button.dart';
 import '../../widgets/button.dart';
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/menu.dart';
+import '../create/create_ministry.dart';
+import 'ministries_manage.dart';
 import 'ministry_members.dart';
 
 class Ministries extends StatefulWidget {

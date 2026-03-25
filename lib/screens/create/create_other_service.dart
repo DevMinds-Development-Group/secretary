@@ -1,16 +1,16 @@
-import 'package:app/models/service_model.dart';
-import 'package:app/providers/service_type_provider.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_text_form_field.dart';
-import 'package:app/widgets/small_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../colors.dart';
 import '../../models/member_model.dart';
+import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
+import '../../providers/service_type_provider.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/small_button.dart';
 
 class CreateOtherService extends StatefulWidget {
   final ServiceModel? serviceToEdit;

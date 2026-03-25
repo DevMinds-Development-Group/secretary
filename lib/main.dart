@@ -1,22 +1,22 @@
 // main.dart
 
-import 'package:app/colors.dart';
-import 'package:app/providers/attendance_provider.dart';
-import 'package:app/providers/leader_provider.dart';
-import 'package:app/providers/log_provider.dart';
-import 'package:app/providers/member_provider.dart';
-import 'package:app/providers/ministry_provider.dart';
-import 'package:app/providers/network_provider.dart';
-import 'package:app/providers/role_provider.dart';
-import 'package:app/providers/service_provider.dart';
-import 'package:app/providers/service_type_provider.dart';
-// 1. Importa el nuevo UserProvider que creamos
-import 'package:app/providers/user_provider.dart';
-import 'package:app/routes/routes.dart';
-import 'package:app/services/auth_service.dart';
+import 'package:Koinos/providers/attendance_provider.dart';
+import 'package:Koinos/providers/leader_provider.dart';
+import 'package:Koinos/providers/log_provider.dart';
+import 'package:Koinos/providers/member_provider.dart';
+import 'package:Koinos/providers/ministry_provider.dart';
+import 'package:Koinos/providers/network_provider.dart';
+import 'package:Koinos/providers/role_provider.dart';
+import 'package:Koinos/providers/service_provider.dart';
+import 'package:Koinos/providers/service_type_provider.dart';
+import 'package:Koinos/providers/user_provider.dart';
+import 'package:Koinos/routes/routes.dart';
+import 'package:Koinos/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+
+import 'colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

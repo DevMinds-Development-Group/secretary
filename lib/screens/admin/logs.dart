@@ -1,14 +1,12 @@
-// lib/screens/admin/logs.dart
-
-import 'package:app/colors.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
 import '../../models/log_model.dart';
 import '../../providers/log_provider.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_web_table.dart';
 import '../../widgets/pagination.dart';
 
 class Logs extends StatefulWidget {
@@ -130,53 +128,63 @@ class _LogsState extends State<Logs> {
     );
   }
 
-  // El layout web ahora es un SingleChildScrollView simple, sin controller
   Widget _buildWebLayout(BuildContext context, List<Log> logs) {
     return SingleChildScrollView(
+      // physics asegura que el RefreshIndicator funcione en Web
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20.0),
       child: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 1500),
-          child: CustomCardContainer(
-            child: DataTable(
-              columnSpacing: MediaQuery.of(context).size.width * 0.1,
-              columns: [
-                DataColumn(label: Text('Fecha', style: _headerStyle())),
+          constraints: const BoxConstraints(maxWidth: 1500),
+          child: CustomWebTable<Log>(
+            items: logs,
+            columnLabels: const [
+              'Fecha',
+              'Usuario',
+              'Módulo',
+              'Acción',
+              'Detalles',
+            ],
 
-                DataColumn(label: Text('Usuario', style: _headerStyle())),
+            columnSpacing: MediaQuery.of(context).size.width * 0.1,
+            rowBuilder: (logEntry) {
+              final formattedDate = DateFormat(
+                'dd/MM/yyyy, HH:mm',
+              ).format(logEntry.timestamp);
 
-                DataColumn(label: Text('Módulo', style: _headerStyle())),
-
-                DataColumn(label: Text('Acción', style: _headerStyle())),
-                DataColumn(label: Text('Detalles', style: _headerStyle())),
-              ],
-              rows: logs.map((logEntry) {
-                final formattedDate = DateFormat(
-                  'dd/MM/yyyy HH:mm:ss',
-                ).format(logEntry.timestamp);
-                return DataRow(
-                  cells: [
-                    DataCell(Text(formattedDate)),
-                    DataCell(Text(logEntry.username)),
-                    DataCell(Text(logEntry.module)),
-                    DataCell(Text(logEntry.action.replaceAll('_', ' '))),
-                    DataCell(
-                      SizedBox(
-                        child: Text(logEntry.details, maxLines: 2),
-                        width: MediaQuery.of(context).size.width * 0.25,
+              return [
+                DataCell(Text(formattedDate, style: _textStyle())),
+                DataCell(Text(logEntry.username, style: _textStyle())),
+                DataCell(Text(logEntry.module, style: _textStyle())),
+                DataCell(
+                  Text(
+                    logEntry.action.replaceAll('_', ' '),
+                    style: _textStyle(),
+                  ),
+                ),
+                DataCell(
+                  Tooltip(
+                    message: logEntry.details,
+                    child: SizedBox(
+                      width: 350,
+                      child: Text(
+                        logEntry.details,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        style: _textStyle(),
                       ),
                     ),
-                  ],
-                );
-              }).toList(),
-            ),
+                  ),
+                ),
+              ];
+            },
           ),
         ),
       ),
     );
   }
 
-  TextStyle _headerStyle() {
-    return const TextStyle(fontWeight: FontWeight.bold, fontSize: 18);
+  TextStyle _textStyle() {
+    return const TextStyle(fontSize: 14);
   }
 }

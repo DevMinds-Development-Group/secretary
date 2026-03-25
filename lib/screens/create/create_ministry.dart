@@ -1,11 +1,11 @@
-import 'package:app/widgets/button.dart';
-import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/ministry_model.dart';
 import '../../providers/leader_provider.dart';
 import '../../providers/ministry_provider.dart';
+import '../../widgets/button.dart';
+import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/multi_select_dialog.dart';
 

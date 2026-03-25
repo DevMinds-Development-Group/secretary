@@ -1,4 +1,4 @@
-import 'package:app/widgets/small_button.dart';
+import 'package:Koinos/widgets/small_button.dart';
 import 'package:flutter/material.dart';
 
 class TimePicker extends StatefulWidget {

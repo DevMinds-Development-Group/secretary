@@ -1,15 +1,14 @@
-import 'package:app/colors.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_card_container.dart';
-import 'package:app/widgets/custom_web_table.dart';
-import 'package:app/widgets/showDeleteConfirmationDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
 import '../../models/role_model.dart';
 import '../../providers/role_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/add_button.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_web_table.dart';
+import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_role.dart';
 
 class Roles extends StatefulWidget {
@@ -40,7 +39,6 @@ class _RolesState extends State<Roles> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Botón de agregar adaptativo
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Align(
@@ -87,54 +85,53 @@ class _RolesState extends State<Roles> {
   ) {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: CustomCardContainer(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: isMobile
-              ? _buildMobileList(roles)
-              : CustomWebTable<Role>(
-                  items: roles,
-                  columnLabels: [
-                    'Nombre de rol',
-                    'Descripción',
-                    'Permisos',
-                    'Acciones',
-                  ],
-                  columnSpacing: MediaQuery.of(context).size.width * 0.1,
-                  rowBuilder: (role) {
-                    final permissionsText = role.permissions.isEmpty
-                        ? 'Ninguno'
-                        : role.permissions.join(', ');
-                    return [
-                      DataCell(Text(role.displayName)),
-                      DataCell(
-                        SizedBox(
-                          width: 200,
-                          child: Text(
-                            role.description,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+      child: isMobile
+          ? ClipRRect(
+              // Solo envuelve al móvil si lo necesitas
+              borderRadius: BorderRadius.circular(12),
+              child: _buildMobileList(roles),
+            )
+          : CustomWebTable<Role>(
+              items: roles,
+              columnLabels: [
+                'Nombre de rol',
+                'Descripción',
+                'Permisos',
+                'Acciones',
+              ],
+              columnSpacing: MediaQuery.of(context).size.width * 0.1,
+              rowBuilder: (role) {
+                final permissionsText = role.permissions.isEmpty
+                    ? 'Ninguno'
+                    : role.permissions.join(', ');
+                return [
+                  DataCell(Text(role.displayName)),
+                  DataCell(
+                    SizedBox(
+                      width: 200,
+                      child: Text(
+                        role.description,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Tooltip(
+                      message: permissionsText,
+                      child: SizedBox(
+                        width: 200,
+                        child: Text(
+                          permissionsText,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
-                      DataCell(
-                        Tooltip(
-                          message: permissionsText,
-                          child: SizedBox(
-                            width: 200,
-                            child: Text(
-                              permissionsText,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                      DataCell(_buildActions(context, role)),
-                    ];
-                  },
-                ),
-        ),
-      ),
+                    ),
+                  ),
+                  DataCell(_buildActions(context, role)),
+                ];
+              },
+            ),
     );
   }
 

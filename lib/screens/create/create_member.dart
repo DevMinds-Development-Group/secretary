@@ -1,8 +1,3 @@
-// En tu archivo 'add_new_member_screen.dart'
-
-import 'package:app/widgets/button.dart';
-import 'package:app/widgets/custom_appbar.dart';
-import 'package:app/widgets/custom_text_form_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -11,6 +6,9 @@ import 'package:provider/provider.dart';
 import '../../models/member_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/network_provider.dart';
+import '../../widgets/button.dart';
+import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_text_form_field.dart';
 
 class CreateMember extends StatefulWidget {
   final Member? memberToEdit;

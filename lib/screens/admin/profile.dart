@@ -1,7 +1,6 @@
-// En tu archivo 'profile_screen.dart'
-
-import 'package:app/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
+
+import '../../widgets/custom_appbar.dart';
 
 class Profile extends StatelessWidget {
   const Profile({Key? key}) : super(key: key);

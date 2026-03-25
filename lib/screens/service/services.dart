@@ -1,4 +1,3 @@
-import 'package:app/widgets/custom_card_container.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,6 +8,7 @@ import '../../routes/page_route_builder.dart';
 import '../../widgets/action_buttons.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/custom_card_container.dart';
 import '../../widgets/menu.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_service.dart';
