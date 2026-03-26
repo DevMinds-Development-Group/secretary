@@ -135,7 +135,7 @@ class _LogsState extends State<Logs> {
       padding: const EdgeInsets.all(20.0),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1500),
+          constraints: const BoxConstraints(),
           child: CustomWebTable<Log>(
             items: logs,
             columnLabels: const [

@@ -63,7 +63,7 @@ class _RolesState extends State<Roles> {
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
+                        constraints: const BoxConstraints(),
                         child: _buildMainContent(
                           context,
                           isMobile,
@@ -84,7 +84,7 @@ class _RolesState extends State<Roles> {
     List<Role> roles,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       child: isMobile
           ? ClipRRect(
               // Solo envuelve al móvil si lo necesitas
@@ -119,7 +119,7 @@ class _RolesState extends State<Roles> {
                     Tooltip(
                       message: permissionsText,
                       child: SizedBox(
-                        width: 200,
+                        width: MediaQuery.of(context).size.width * 0.2,
                         child: Text(
                           permissionsText,
                           overflow: TextOverflow.ellipsis,

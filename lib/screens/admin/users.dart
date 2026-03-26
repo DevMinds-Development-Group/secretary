@@ -70,7 +70,7 @@ class _UsersState extends State<Users> {
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
+                        constraints: const BoxConstraints(),
                         child: _buildMainContent(
                           context,
                           isMobile,
