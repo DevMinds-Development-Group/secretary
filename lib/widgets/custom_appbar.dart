@@ -1,3 +1,4 @@
+import 'package:Koinos/screens/user_help.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -95,7 +96,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           IconButton(
             tooltip: 'Manual de Usuarios',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(context, createFadeRoute(UserHelp()));
+            },
             icon: Icon(Icons.help_outline),
           ),
           //SizedBox(width: isMobile ? 10 : 20),

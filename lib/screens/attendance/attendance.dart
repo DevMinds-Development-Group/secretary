@@ -12,7 +12,6 @@ import '../../widgets/button.dart';
 import '../../widgets/counter.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
-import '../../widgets/date.dart';
 import '../../widgets/menu.dart';
 import '../../widgets/search_text_field.dart';
 
@@ -80,7 +79,7 @@ class _AttendanceState extends State<Attendance> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedNetworkId,
-          hint: const Text("Seleccionar Red"),
+          //hint: const Text("Seleccionar Red"),
           isExpanded: false,
           items: [
             const DropdownMenuItem(value: null, child: Text("Todas las Redes")),
@@ -177,7 +176,6 @@ class _AttendanceState extends State<Attendance> {
       context,
       listen: false,
     );
-    //final logProvider = Provider.of<LogProvider>(context, listen: false);
 
     final newRecord = AttendanceModel(
       id: widget.existingRecord?.id ?? "",
@@ -231,27 +229,29 @@ class _AttendanceState extends State<Attendance> {
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Asistencia', isDrawerEnabled: isMobile),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: Row(
-        children: [
-          if (!isMobile) Menu(),
-          Expanded(
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: isMobile
-                      ? _buildMobileControls(memberProvider)
-                      : _buildWebControls(memberProvider),
-                ),
+      body: SafeArea(
+        child: Row(
+          children: [
+            if (!isMobile) Menu(),
+            Expanded(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: isMobile
+                        ? _buildMobileControls(memberProvider)
+                        : _buildWebControls(memberProvider),
+                  ),
 
-                const SizedBox(height: 10),
+                  const SizedBox(height: 10),
 
-                Expanded(child: _buildMemberList(members, isMobile)),
-              ],
+                  Expanded(child: _buildMemberList(members, isMobile)),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -270,33 +270,56 @@ class _AttendanceState extends State<Attendance> {
           ),
         ),
 
-        SizedBox(height: 20),
-        Row(
+        SizedBox(height: 15),
+        Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Expanded(child: _buildEventDropdown()),
-            Expanded(child: _buildNetworkDropdown()),
-            Counter(
-              label: 'Visitas',
-              initialValue: _visitorsCount,
-              onCountChanged: (count) => _visitorsCount = count,
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.95,
+              child: _buildEventDropdown(),
             ),
-            SizedBox(width: 10),
-            Counter(
-              label: 'Visitas Pastorales',
-              initialValue: _pastoralVisitsCount,
-              onCountChanged: (count) => _pastoralVisitsCount = count,
+            SizedBox(height: 15),
+            SizedBox(
+              child: _buildNetworkDropdown(),
+              width: MediaQuery.of(context).size.width * 0.95,
+            ),
+            SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _counterVisitors(),
+                SizedBox(width: 20),
+                _counterPastoral(),
+              ],
             ),
           ],
         ),
         const SizedBox(height: 20),
-        DateWidget(initialDate: _selectedDate, onDateSelected: _onDateSelected),
-        Button(
-          text: 'Guardar',
-          onPressed: _saveAttendance,
-          size: const Size(160, 45),
+        SizedBox(
+          child: Button(
+            text: 'Guardar',
+            onPressed: _saveAttendance,
+            size: Size(MediaQuery.of(context).size.width * 0.95, 50),
+          ),
         ),
       ],
+    );
+  }
+
+  Counter _counterPastoral() {
+    return Counter(
+      label: 'Visitas Pastorales',
+      initialValue: _pastoralVisitsCount,
+      onCountChanged: (count) => _pastoralVisitsCount = count,
+    );
+  }
+
+  Counter _counterVisitors() {
+    return Counter(
+      label: 'Visitas',
+      initialValue: _visitorsCount,
+      onCountChanged: (count) => _visitorsCount = count,
     );
   }
 
@@ -309,16 +332,8 @@ class _AttendanceState extends State<Attendance> {
       children: [
         _buildEventDropdown(),
         _buildNetworkDropdown(),
-        Counter(
-          label: 'Visitas',
-          initialValue: _visitorsCount,
-          onCountChanged: (count) => _visitorsCount = count,
-        ),
-        Counter(
-          label: 'Visitas Pastorales',
-          initialValue: _pastoralVisitsCount,
-          onCountChanged: (count) => _pastoralVisitsCount = count,
-        ),
+        _counterVisitors(),
+        _counterPastoral(),
         Button(
           text: 'Guardar',
           onPressed: _saveAttendance,

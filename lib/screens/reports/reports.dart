@@ -14,7 +14,7 @@ class Reports extends StatelessWidget {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Administración', isDrawerEnabled: isMobile),
+      appBar: CustomAppBar(title: 'Reportes', isDrawerEnabled: isMobile),
       body: isMobile
           ? _buildLayout(context, isMobile)
           : Row(
@@ -46,7 +46,9 @@ class Reports extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           _buildCard(context, Icons.how_to_reg_rounded, 'Asistencias'),
-          _buildCard(context, Icons.groups_rounded, 'Membresía'),
+          //_buildCard(context, Icons.groups_rounded, 'Membresía'),
+          //_buildCard(context, Icons.waves, 'Bautizos'),
+          //_buildCard(context, Icons.favorite_border, 'Matrimonios'),
           //_buildCard(context, Icons.history, ''),
         ],
       ),
@@ -72,7 +74,7 @@ class Reports extends StatelessWidget {
             case 'Membresía':
               //Navigator.push(context, createFadeRoute(const Roles()));
               break;
-            case '':
+            case 'Bautizos':
               //Navigator.push(context, createFadeRoute();
               break;
           }

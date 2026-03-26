@@ -117,17 +117,19 @@ class _ServicesState extends State<Services> {
         showBackButton: true,
       ),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isMobile) Menu(),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
-              child: _buildServicesContent(isMobile),
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMobile) Menu(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(isMobile ? 16 : 24),
+                child: _buildServicesContent(isMobile),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -255,7 +257,6 @@ class _ServicesState extends State<Services> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Predicadores (Dinámico Row/Column)
                   if (service.type != 'REUNION' && service.type != 'OTRO')
                     _buildServiceInfoRow(
                       icon: Icons.menu_book_outlined,
@@ -267,7 +268,6 @@ class _ServicesState extends State<Services> {
                       isMobile: isMobile,
                     ),
 
-                  // Alabanza (Dinámico Row/Column)
                   _buildServiceInfoRow(
                     icon: Icons.music_note,
                     iconColor: Colors.deepPurpleAccent,
@@ -278,7 +278,6 @@ class _ServicesState extends State<Services> {
                     isMobile: isMobile,
                   ),
 
-                  // Descripción
                   if (service.description.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 8.0),
@@ -300,26 +299,39 @@ class _ServicesState extends State<Services> {
                         ],
                       ),
                     ),
+                  if (isMobile)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: _actionButtons(context, service, provider),
+                    ),
                 ],
               ),
             ),
-            ActionButtons(
-              onEdit: () async {
-                await Navigator.push(
-                  context,
-                  createFadeRoute(CreateService(serviceToEdit: service)),
-                );
-                if (mounted) context.read<ServiceProvider>().fetchServices();
-              },
-              onDelete: () {
-                showDeleteConfirmationDialog(
-                  context: context,
-                  itemName: service.title,
-                  onConfirm: () => provider.deleteService(service.id),
-                );
-              },
-            ),
+            if (!isMobile) _actionButtons(context, service, provider),
           ],
+        );
+      },
+    );
+  }
+
+  ActionButtons _actionButtons(
+    BuildContext context,
+    ServiceModel service,
+    ServiceProvider provider,
+  ) {
+    return ActionButtons(
+      onEdit: () async {
+        await Navigator.push(
+          context,
+          createFadeRoute(CreateService(serviceToEdit: service)),
+        );
+        if (mounted) context.read<ServiceProvider>().fetchServices();
+      },
+      onDelete: () {
+        showDeleteConfirmationDialog(
+          context: context,
+          itemName: service.title,
+          onConfirm: () => provider.deleteService(service.id),
         );
       },
     );

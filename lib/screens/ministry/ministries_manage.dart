@@ -84,10 +84,12 @@ class _MinistryManageState extends State<MinistryManage> {
     List<MinistryModel> ministries,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: isMobile
+          ? EdgeInsets.only(left: 20, bottom: 15, right: 20)
+          : EdgeInsets.all(20),
       child: isMobile
           ? ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(15),
               child: _buildMobileList(context, ministries),
             )
           : CustomWebTable<MinistryModel>(
@@ -137,25 +139,29 @@ class _MinistryManageState extends State<MinistryManage> {
     BuildContext context,
     List<MinistryModel> ministries,
   ) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(10.0),
-      itemCount: ministries.length,
-      separatorBuilder: (context, index) => const Divider(),
-      itemBuilder: (context, index) {
-        final ministry = ministries[index];
-        return ListTile(
-          title: Text(
-            ministry.name,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            ministry.description,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          trailing: _buildActions(context, ministry),
-        );
-      },
+    return Card(
+      color: Colors.white,
+      elevation: 5,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(left: 5),
+        itemCount: ministries.length,
+        separatorBuilder: (context, index) => const Divider(),
+        itemBuilder: (context, index) {
+          final ministry = ministries[index];
+          return ListTile(
+            title: Text(
+              ministry.name,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              ministry.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: _buildActions(context, ministry),
+          );
+        },
+      ),
     );
   }
 

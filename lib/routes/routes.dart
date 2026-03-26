@@ -1,7 +1,6 @@
 import 'package:Koinos/routes/route_guard.dart';
 import 'package:flutter/material.dart';
 
-import '../screens/UserHelp.dart';
 import '../screens/admin/admin.dart';
 import '../screens/admin/profile.dart';
 import '../screens/admin/users.dart';
@@ -20,6 +19,7 @@ import '../screens/ministry/ministries.dart';
 import '../screens/network/network_manage.dart';
 import '../screens/network/networks.dart';
 import '../screens/service/services.dart';
+import '../screens/user_help.dart';
 
 class AppRoutes {
   static const String auth_wrapper = '/';

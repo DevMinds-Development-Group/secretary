@@ -41,7 +41,6 @@ class _NetworkManageState extends State<NetworkManage> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Botón de agregar alineado a la derecha (Web) o centro (Móvil)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Align(
@@ -83,7 +82,9 @@ class _NetworkManageState extends State<NetworkManage> {
     List<NetworkModel> networks,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: isMobile
+          ? EdgeInsets.only(left: 20, bottom: 15, right: 20)
+          : EdgeInsets.all(20),
       child: isMobile
           ? ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -135,27 +136,43 @@ class _NetworkManageState extends State<NetworkManage> {
   }
 
   Widget _buildMobileList(BuildContext context, List<NetworkModel> networks) {
-    return ListView.separated(
-      padding: const EdgeInsets.all(10),
-      itemCount: networks.length,
-      separatorBuilder: (context, index) => const Divider(),
-      itemBuilder: (context, index) {
-        final network = networks[index];
-        final leaderNames = network.leaders.map((l) => l.name).join(", ");
+    return Card(
+      color: Colors.white,
+      elevation: 5,
+      child: ListView.separated(
+        padding: const EdgeInsets.only(left: 5, top: 5),
+        itemCount: networks.length,
+        separatorBuilder: (context, index) => const Divider(),
+        itemBuilder: (context, index) {
+          final network = networks[index];
+          final leaderNames = network.leaders.map((l) => l.name).join(", ");
 
-        return ListTile(
-          title: Text(
-            network.name,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            'Misión: ${network.mission ?? "N/A"}\nLíderes: ${leaderNames.isEmpty ? "Sin asignar" : leaderNames}',
-            style: const TextStyle(fontSize: 13),
-          ),
-          isThreeLine: true,
-          trailing: _buildActions(context, network),
-        );
-      },
+          return ListTile(
+            title: Text(
+              network.name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            subtitle: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Misión: ${network.mission ?? "N/A"}\nLíderes: ${leaderNames.isEmpty ? "Sin asignar" : leaderNames}',
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                ),
+                Align(
+                  child: _buildActions(context, network),
+                  alignment: Alignment.centerRight,
+                ),
+              ],
+            ),
+            isThreeLine: true,
+          );
+        },
+      ),
     );
   }
 

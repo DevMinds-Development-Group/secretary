@@ -27,14 +27,17 @@ Future<void> showDeleteConfirmationDialog({
 
         actions: <Widget>[
           TextButton(
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.grey, fontSize: 18),
+            ),
             onPressed: () {
               Navigator.of(ctx).pop(); // Cierra el diálogo
             },
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Eliminar'),
+            child: Text('Eliminar', style: TextStyle(fontSize: 18)),
             onPressed: () {
               // 1. Ejecuta la lógica de eliminación que nos pasaron.
               onConfirm();

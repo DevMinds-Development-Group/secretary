@@ -52,7 +52,7 @@ class _MinistriesState extends State<Ministries> {
             child: ministryProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : Padding(
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(20.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

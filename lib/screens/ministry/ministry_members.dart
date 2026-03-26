@@ -72,9 +72,13 @@ class _MinistryMembersState extends State<MinistryMembers> {
                   constraints: BoxConstraints(maxWidth: 1500),
                   child: Column(
                     children: [
-                      SizedBox(height: 20),
+                      SizedBox(height: isMobile ? 5 : 20),
+                      if (isMobile)
+                        _buildMinistryHeader(currentMinistry, isMobile),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 16.0 : 0,
+                        ),
                         child: Align(
                           alignment: isMobile
                               ? Alignment.center
@@ -95,8 +99,9 @@ class _MinistryMembersState extends State<MinistryMembers> {
                           ),
                         ),
                       ),
-                      //const SizedBox(height: 10),
-                      _buildMinistryHeader(currentMinistry, isMobile),
+                      if (!isMobile)
+                        _buildMinistryHeader(currentMinistry, isMobile),
+                      if (isMobile) const SizedBox(height: 15),
                       Expanded(
                         child: membersInGroup.isEmpty
                             ? _buildEmptyState(isMobile)
@@ -289,22 +294,23 @@ class _MinistryMembersState extends State<MinistryMembers> {
       child: CustomCardContainer(
         child: ListView.separated(
           shrinkWrap: true,
-          padding: EdgeInsets.all(isMobile ? 10 : 15),
           itemCount: members.length,
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final member = members[index];
             return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.blue[400],
-                child: Text(
-                  member.name[0].toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              leading: isMobile
+                  ? null
+                  : CircleAvatar(
+                      backgroundColor: Colors.blue[400],
+                      child: Text(
+                        member.name[0].toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
               title: Text('${member.name} ${member.lastName}'),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

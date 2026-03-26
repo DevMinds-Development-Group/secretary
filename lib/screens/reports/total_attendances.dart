@@ -98,31 +98,43 @@ class _TotalAttendancesState extends State<TotalAttendances> {
   }
 
   Widget _buildHeader(bool isMobile) {
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _searchTextField(),
+          const SizedBox(height: 15),
+          _dateRange(),
+        ],
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Expanded(
-          flex: 4,
-          child: SearchTextField(
-            hintText: "Buscar reporte por evento...",
-            onChanged: (val) => setState(() => _searchQuery = val),
-          ),
-        ),
+        Expanded(flex: 4, child: _searchTextField()),
         const SizedBox(width: 15),
-        Expanded(
-          flex: 3,
-          child: DateRange(
-            startDate: _startDate,
-            endDate: _endDate,
-            onStartDateSelected: (date) {
-              setState(() => _startDate = date);
-            },
-            onEndDateSelected: (date) {
-              setState(() => _endDate = date);
-            },
-          ),
-        ),
+        Expanded(flex: 5, child: _dateRange()),
       ],
+    );
+  }
+
+  SearchTextField _searchTextField() {
+    return SearchTextField(
+      hintText: "Buscar reporte por evento...",
+      onChanged: (val) => setState(() => _searchQuery = val),
+    );
+  }
+
+  DateRange _dateRange() {
+    return DateRange(
+      startDate: _startDate,
+      endDate: _endDate,
+      onStartDateSelected: (date) {
+        setState(() => _startDate = date);
+      },
+      onEndDateSelected: (date) {
+        setState(() => _endDate = date);
+      },
     );
   }
 

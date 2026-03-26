@@ -73,7 +73,7 @@ class _CounterState extends State<Counter> {
         Container(
           height: 36, // Altura fija para el control del contador
           decoration: BoxDecoration(
-            color: Colors.grey[200],
+            color: Colors.grey[300],
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(

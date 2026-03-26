@@ -36,25 +36,30 @@ class _NetworkMembersState extends State<NetworkMembers> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: widget.network.name),
-      body: networkProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: 1500),
-                child: Column(
-                  children: [
-                    SizedBox(height: 20),
-                    _buildNetworkHeader(widget.network, isMobile),
-                    SizedBox(height: 20),
-                    Expanded(
-                      child: membersInGroup.isEmpty
-                          ? _buildEmptyState(isMobile)
-                          : _buildMemberList(membersInGroup, isMobile),
+      body: SafeArea(
+        child: networkProvider.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 5),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: 1500),
+                    child: Column(
+                      children: [
+                        SizedBox(height: 20),
+                        _buildNetworkHeader(widget.network, isMobile),
+                        SizedBox(height: 20),
+                        Expanded(
+                          child: membersInGroup.isEmpty
+                              ? _buildEmptyState(isMobile)
+                              : _buildMemberList(membersInGroup, isMobile),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
