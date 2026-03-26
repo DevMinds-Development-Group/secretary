@@ -166,7 +166,7 @@ class _LogsState extends State<Logs> {
                   Tooltip(
                     message: logEntry.details,
                     child: SizedBox(
-                      width: 350,
+                      width: MediaQuery.of(context).size.width * 0.25,
                       child: Text(
                         logEntry.details,
                         overflow: TextOverflow.ellipsis,
