@@ -164,19 +164,29 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
 
   Widget _buildHeader(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isMobile ? 5 : 16),
       child: isMobile
           ? Column(
               children: [
-                SearchTextField(
-                  onChanged: (val) => setState(() => _searchQuery = val),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.95,
+                  child: SearchTextField(
+                    onChanged: (val) => setState(() => _searchQuery = val),
+                  ),
                 ),
-                const SizedBox(height: 10),
-                _dateWidget(),
-                const SizedBox(height: 10),
+                const SizedBox(height: 15),
+                SizedBox(
+                  child: _dateWidget(),
+                  width: MediaQuery.of(context).size.width * 0.95,
+                  height: 60,
+                ),
+                const SizedBox(height: 15),
                 Button(
                   text: 'Tomar Asistencia',
-                  size: Size(220, isMobile ? 50 : 45),
+                  size: Size(
+                    MediaQuery.of(context).size.width * 0.95,
+                    isMobile ? 50 : 45,
+                  ),
                   onPressed: () async {
                     await Navigator.push(
                       context,
@@ -257,7 +267,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     if (isLoading) return const Center(child: CircularProgressIndicator());
     if (records.isEmpty)
       return const Center(child: Text("No hay registros encontrados"));
-
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -270,10 +280,10 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
         itemBuilder: (context, index) {
           final record = records[index];
           return ListTile(
-            leading: const Icon(
-              Icons.assignment_turned_in,
-              color: Colors.green,
-            ),
+            isThreeLine: (isMobile) ? true : false,
+            leading: isMobile
+                ? null
+                : Icon(Icons.assignment_turned_in, color: Colors.green),
             title: Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
@@ -284,7 +294,8 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                     fontSize: 16,
                   ),
                 ),
-                const Text(' | ', style: TextStyle(fontSize: 16)),
+                if (!isMobile)
+                  const Text(' | ', style: TextStyle(fontSize: 16)),
                 Text(
                   record.networkName ?? 'Sin Red',
                   style: const TextStyle(
@@ -305,46 +316,27 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                   'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} | Visitas Pastorales: ${record.pastoralVisitsCount}',
                   style: TextStyle(fontSize: 16),
                 ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.picture_as_pdf,
-                    color: Colors.redAccent,
+                if (isMobile) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      _iconPdf(record),
+                      _actionButtons(context, record),
+                    ],
                   ),
-                  tooltip: 'Descargar PDF',
-                  onPressed: () => _downloadPdf(record.id),
-                ),
-                ActionButtons(
-                  onEdit: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            Attendance(existingRecord: record),
-                      ),
-                    );
-                    if (mounted) {
-                      Provider.of<AttendanceProvider>(
-                        context,
-                        listen: false,
-                      ).fetchAttendanceHistory();
-                    }
-                  },
-                  onDelete: () {
-                    showDeleteConfirmationDialog(
-                      context: context,
-                      itemName:
-                          'Asistencia del ${DateFormat('d/MM').format(record.date)}',
-                      onConfirm: () => _handleDelete(context, record),
-                    );
-                  },
-                ),
+                ],
               ],
             ),
+            trailing: isMobile
+                ? null
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _iconPdf(record),
+                      _actionButtons(context, record),
+                    ],
+                  ),
             onTap: () {
               Navigator.push(
                 context,
@@ -356,6 +348,40 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
           );
         },
       ),
+    );
+  }
+
+  ActionButtons _actionButtons(BuildContext context, AttendanceModel record) {
+    return ActionButtons(
+      onEdit: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Attendance(existingRecord: record),
+          ),
+        );
+        if (mounted) {
+          Provider.of<AttendanceProvider>(
+            context,
+            listen: false,
+          ).fetchAttendanceHistory();
+        }
+      },
+      onDelete: () {
+        showDeleteConfirmationDialog(
+          context: context,
+          itemName: 'Asistencia del ${DateFormat('d/MM').format(record.date)}',
+          onConfirm: () => _handleDelete(context, record),
+        );
+      },
+    );
+  }
+
+  IconButton _iconPdf(AttendanceModel record) {
+    return IconButton(
+      icon: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
+      tooltip: 'Descargar PDF',
+      onPressed: () => _downloadPdf(record.id),
     );
   }
 }

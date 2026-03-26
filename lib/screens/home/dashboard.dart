@@ -206,33 +206,32 @@ class _DashboardState extends State<Dashboard> {
                               .toList(),
                         ),
                 ),
-                const SizedBox(height: 20),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSmallInfoCard(
-                        'Redes',
-                        networkProvider.networks.length.toString(),
-                        Icons.group,
-                        Colors.redAccent,
-                        isMobile,
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: _buildSmallInfoCard(
-                        'Ministerios',
-                        ministryProvider.ministries.length.toString(),
-                        Icons.description_outlined,
-                        Colors.indigo,
-                        isMobile,
-                      ),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 20),
+                isMobile
+                    ? Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildNetwork(networkProvider, isMobile),
 
+                          const SizedBox(height: 20),
+                          _buildMinistry(ministryProvider, isMobile),
+                          const SizedBox(height: 20),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: _buildNetwork(networkProvider, isMobile),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: _buildMinistry(ministryProvider, isMobile),
+                          ),
+                        ],
+                      ),
+
+                const SizedBox(height: 20),
                 _buildSection(
                   "Comportamiento de la Membresía",
                   _buildGrowthChart(growthSpots, sortedMembers, isMobile),
@@ -300,6 +299,26 @@ class _DashboardState extends State<Dashboard> {
                 ],
               ),
       ),
+    );
+  }
+
+  _buildMinistry(MinistryProvider ministryProvider, bool isMobile) {
+    return _buildSmallInfoCard(
+      'Ministerios',
+      ministryProvider.ministries.length.toString(),
+      Icons.description_outlined,
+      Colors.indigo,
+      isMobile,
+    );
+  }
+
+  _buildNetwork(NetworkProvider networkProvider, bool isMobile) {
+    return _buildSmallInfoCard(
+      'Redes',
+      networkProvider.networks.length.toString(),
+      Icons.group,
+      Colors.redAccent,
+      isMobile,
     );
   }
 
@@ -377,13 +396,17 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildSection(String title, Widget content) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     return CustomCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: isMobile ? 17 : 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const Divider(height: 25),
           content,

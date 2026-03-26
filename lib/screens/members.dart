@@ -189,8 +189,9 @@ class _MembersState extends State<Members> {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 15 : 20),
       child: CustomCardContainer(
+        padding: EdgeInsets.all(isMobile ? 5 : 20),
         child: ListView.separated(
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemCount: members.length,
@@ -226,7 +227,7 @@ class _MembersState extends State<Members> {
 
               subtitle: Text(
                 member.networkName ?? '',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                 overflow: TextOverflow.ellipsis,
               ),
               trailing: ActionButtons(
