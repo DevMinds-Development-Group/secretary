@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../routes/routes.dart';
 import '../../services/auth_service.dart';
-import '../../widgets/button.dart';
+import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_form_field.dart';
 
 class Login extends StatefulWidget {
@@ -88,8 +88,26 @@ class _LoginState extends State<Login> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Image.asset('assets/logo.png', height: 150),
-                        const SizedBox(height: 50),
+                        Image.asset('assets/logo0.png', width: 160),
+                        Text(
+                          'Ministerio',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isMobile ? 24 : 30,
+                            color: Colors.grey[700],
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        Text(
+                          'Viento Recio',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: isMobile ? 32 : 50,
+                            fontWeight: FontWeight.bold,
+                            color: negativeColor,
+                          ),
+                        ),
+                        const SizedBox(height: 60),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 400),
                           child: Column(
@@ -118,11 +136,15 @@ class _LoginState extends State<Login> {
                               const SizedBox(height: 30),
                               _isLoading
                                   ? const CircularProgressIndicator()
-                                  : Button(
+                                  : CustomButton(
+                                      backgroundColor: darkColor,
                                       text: 'Iniciar sesión',
+                                      color: Colors.white,
+                                      icon: Icons.login_rounded,
+                                      iconColor: Colors.white,
                                       onPressed: _handleLogin,
-                                      size: Size(400, 45),
                                     ),
+
                               const SizedBox(height: 20),
 
                               // TextButton(

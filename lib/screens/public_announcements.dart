@@ -42,6 +42,27 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                 icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10.0),
+                  child: IconButton(
+                    tooltip: 'Iniciar Sesión',
+                    icon: const Icon(
+                      Icons.login_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: () {
+                      // Navega a la pantalla de login (ajusta la ruta si es diferente)
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        'login',
+                        (route) => false,
+                      );
+                    },
+                  ),
+                ),
+              ],
               //expandedHeight: 100.0,
               floating: false,
               pinned: true,

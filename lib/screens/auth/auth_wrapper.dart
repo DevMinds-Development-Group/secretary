@@ -1,8 +1,8 @@
+import 'package:Koinos/screens/public_announcements.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../screens/home/dashboard.dart';
-import '../../screens/home/home.dart';
 import '../../services/auth_service.dart';
 
 class AuthWrapper extends StatelessWidget {
@@ -28,8 +28,8 @@ class AuthWrapper extends StatelessWidget {
           // SI HAY TOKEN: El usuario está autenticado, va al Dashboard
           return const Dashboard();
         } else {
-          // NO HAY TOKEN: Obligatoriamente al Home (Login)
-          return const Home();
+          // NO HAY TOKEN: Obligatoriamente a los Anuncios publicos
+          return const PublicAnnouncements();
         }
       },
     );
