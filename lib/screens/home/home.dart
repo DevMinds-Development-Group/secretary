@@ -35,7 +35,7 @@ class _HomeState extends State<Home> {
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Card(
-                  color: Colors.white,
+                  color: cardColor,
                   elevation: 10,
                   //shadowColor: Colors.white.withOpacity(0.5),
                   shape: RoundedRectangleBorder(
@@ -64,7 +64,7 @@ class _HomeState extends State<Home> {
                           style: TextStyle(
                             fontSize: isMobile ? 32 : 50,
                             fontWeight: FontWeight.bold,
-                            color: Colors.red, // Usando tu color principal
+                            color: negativeColor,
                           ),
                         ),
                         const SizedBox(height: 60),
@@ -90,8 +90,11 @@ Widget _buildButtons(BuildContext context, bool isMobile) {
   return Column(
     children: [
       CustomButton(
+        backgroundColor: darkColor,
         text: 'Ver anuncios',
+        color: cardColor,
         icon: Icons.event_note,
+        iconColor: cardColor,
         onPressed: () => Navigator.push(
           context,
           createFadeRoute(const PublicAnnouncements()),

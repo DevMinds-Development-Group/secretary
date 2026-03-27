@@ -112,7 +112,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
             final member = members[index];
             return ListTile(
               leading: CircleAvatar(
-                backgroundColor: Colors.red[200],
+                backgroundColor: circleColor,
                 child: Text(
                   member.name[0].toUpperCase(),
                   style: const TextStyle(

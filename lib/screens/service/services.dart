@@ -194,7 +194,7 @@ class _ServicesState extends State<Services> {
       return Center(
         child: Column(
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 40),
+            const Icon(Icons.error_outline, color: negativeColor, size: 40),
             Text(provider.error!),
             TextButton(
               onPressed: () => provider.fetchServices(),

@@ -100,7 +100,7 @@ class AttendanceDetail extends StatelessWidget {
             DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
             style: TextStyle(
               fontSize: 16,
-              color: Colors.red,
+              color: primaryColor2,
               fontWeight: FontWeight.bold,
             ),
           ),

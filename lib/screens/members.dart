@@ -46,7 +46,7 @@ class _MembersState extends State<Members> {
                 ? 'Miembro "${member.name} ${member.lastName}" eliminado.'
                 : 'Error al eliminar el miembro',
           ),
-          backgroundColor: success ? Colors.green : Colors.red,
+          backgroundColor: success ? accentColor : negativeColor,
         ),
       );
     }
@@ -202,13 +202,13 @@ class _MembersState extends State<Members> {
               leading: isMobile
                   ? null
                   : CircleAvatar(
-                      backgroundColor: Colors.red.withOpacity(0.1),
+                      backgroundColor: negativeColor.withOpacity(0.1),
                       child: Text(
                         member.name.isNotEmpty
                             ? member.name.substring(0, 1).toUpperCase()
                             : '?',
                         style: TextStyle(
-                          color: Colors.redAccent[200],
+                          color: negativeColor.withOpacity(0.9),
                           fontWeight: FontWeight.bold,
                         ),
                       ),

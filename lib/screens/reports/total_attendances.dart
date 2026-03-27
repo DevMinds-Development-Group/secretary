@@ -168,7 +168,7 @@ class _TotalAttendancesState extends State<TotalAttendances> {
             trailing: IconButton(
               icon: const Icon(
                 Icons.picture_as_pdf,
-                color: Colors.redAccent,
+                color: negativeColor,
                 size: 30,
               ),
               tooltip: "Descargar Reporte General",
@@ -250,7 +250,7 @@ class _TotalAttendancesState extends State<TotalAttendances> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error al generar reporte: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: negativeColor,
           ),
         );
       }

@@ -1,5 +1,3 @@
-// main.dart
-
 import 'package:Koinos/providers/announcement_provider.dart';
 import 'package:Koinos/providers/attendance_provider.dart';
 import 'package:Koinos/providers/leader_provider.dart';
@@ -55,80 +53,51 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: AppRoutes.getRoutes(),
       debugShowCheckedModeBanner: false,
+
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [
-        Locale('en', ''), // Inglés
-        Locale('es', ''), // Español
-      ],
+      supportedLocales: const [Locale('en', ''), Locale('es', '')],
       locale: const Locale('es', ''),
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'sans-serif',
+    );
+  }
 
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue.shade200,
-          primary: primaryColor,
-          onPrimary: cardColor,
-          surface: cardColor,
-          onSurface: Colors.black87,
-        ),
-        datePickerTheme: DatePickerThemeData(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15), // Bordes más redondeados
-          ),
+  // Función para reutilizar tu DatePickerTheme en ambos temas
+  DatePickerThemeData _buildDatePickerTheme({required bool isDark}) {
+    final bgColor = isDark ? const Color(0xFF1E293B) : cardColor;
+    final textColor = isDark ? Colors.white : Colors.black87;
 
-          backgroundColor: Colors.white, // Fondo general del calendario
-          headerBackgroundColor:
-              primaryColor, // Color de fondo de la cabecera ("Seleccionar fecha")
-          headerForegroundColor: cardColor, // Color del texto de la cabecera
-          dayForegroundColor: WidgetStateProperty.resolveWith((states) {
-            // Color de los días del mes
-            if (states.contains(MaterialState.selected)) {
-              return Colors.white; // Color del número del día seleccionado
-            }
-            return Colors.black87; // Color de los otros días
-          }),
-          todayForegroundColor: WidgetStateProperty.all(
-            Colors.black87,
-          ), // Color del número del día de "hoy"
-          todayBackgroundColor: WidgetStateProperty.all(
-            Colors.blue.shade100,
-          ), // Fondo del día de "hoy"
-          yearForegroundColor: WidgetStateProperty.all(
-            Colors.black87,
-          ), // Color de los años en la vista de selección de año
-          // --- TAMAÑOS Y ESTILOS DE LETRA ---
-          headerHelpStyle: const TextStyle(
-            // Estilo para "Seleccionar fecha"
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-          headerHeadlineStyle: const TextStyle(
-            // Estilo para la fecha seleccionada (ej. "vie, 10 de ene")
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
-          weekdayStyle: const TextStyle(
-            // Estilo para los días de la semana (L, M, M, J, V, S, D)
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: negativeColor,
-          ),
-          dayStyle: const TextStyle(
-            // Estilo para los números de los días
-            fontSize: 16,
-            fontWeight: FontWeight.normal,
-          ),
-          yearStyle: const TextStyle(
-            // Estilo para los años en la lista
-            fontSize: 18,
-          ),
-        ),
+    return DatePickerThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      backgroundColor: bgColor,
+      headerBackgroundColor: primaryColor,
+      headerForegroundColor: Colors.white,
+      dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return Colors.white;
+        return textColor;
+      }),
+      todayForegroundColor: WidgetStateProperty.all(textColor),
+      todayBackgroundColor: WidgetStateProperty.all(
+        Colors.blue.withOpacity(0.3),
       ),
+      yearForegroundColor: WidgetStateProperty.all(textColor),
+      headerHelpStyle: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+      headerHeadlineStyle: const TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+      ),
+      weekdayStyle: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Colors.redAccent,
+      ),
+      dayStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+      yearStyle: const TextStyle(fontSize: 18),
     );
   }
 }

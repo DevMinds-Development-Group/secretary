@@ -1,17 +1,14 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 
 class ActionButtons extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final Color editColor;
-  final Color deleteColor;
 
   const ActionButtons({
     super.key,
     required this.onEdit,
     required this.onDelete,
-    this.editColor = Colors.blue,
-    this.deleteColor = Colors.red,
   });
 
   @override
@@ -20,12 +17,12 @@ class ActionButtons extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: Icon(Icons.edit, color: editColor.withOpacity(0.8)),
+          icon: Icon(Icons.edit, color: primaryColor.withOpacity(0.8)),
           onPressed: onEdit,
           tooltip: 'Editar',
         ),
         IconButton(
-          icon: Icon(Icons.delete, color: deleteColor.withOpacity(0.8)),
+          icon: Icon(Icons.delete, color: negativeColor.withOpacity(0.8)),
           onPressed: onDelete,
           tooltip: 'Eliminar',
         ),

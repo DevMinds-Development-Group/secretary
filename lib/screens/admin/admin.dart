@@ -82,7 +82,7 @@ class Admin extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 50.0, color: Colors.deepOrangeAccent),
+              Icon(icon, size: 50.0, color: darkColor),
               const SizedBox(height: 16.0),
               Text(
                 title,

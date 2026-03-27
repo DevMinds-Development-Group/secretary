@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -177,21 +178,12 @@ class _NetworkManageState extends State<NetworkManage> {
   }
 
   Widget _buildActions(BuildContext context, NetworkModel network) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-          onPressed: () => Navigator.push(
-            context,
-            createFadeRoute(CreateNetwork(networkToEdit: network)),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-          onPressed: () => _showDelete(context, network),
-        ),
-      ],
+    return ActionButtons(
+      onEdit: () => Navigator.push(
+        context,
+        createFadeRoute(CreateNetwork(networkToEdit: network)),
+      ),
+      onDelete: () => _showDelete(context, network),
     );
   }
 
@@ -218,7 +210,7 @@ class _NetworkManageState extends State<NetworkManage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al eliminar la red'),
-                backgroundColor: Colors.red,
+                backgroundColor: negativeColor,
               ),
             );
           }

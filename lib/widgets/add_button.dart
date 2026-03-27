@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 
 class AddButton extends StatefulWidget {
@@ -23,7 +24,7 @@ class _ButtonState extends State<AddButton> {
       onPressed: widget.onPressed,
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: Colors.green,
+        backgroundColor: accentColor,
         fixedSize: buttonSize,
         elevation: 5,
       ),

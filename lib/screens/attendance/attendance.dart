@@ -74,7 +74,7 @@ class _AttendanceState extends State<Attendance> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.shade400, width: 1.5),
-        color: Colors.white,
+        color: cardColor,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -106,7 +106,7 @@ class _AttendanceState extends State<Attendance> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.shade400, width: 1.5),
-        color: Colors.white,
+        color: cardColor,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -205,7 +205,7 @@ class _AttendanceState extends State<Attendance> {
           content: Text(
             attendanceProvider.error ?? 'Error al guardar asistencia',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: negativeColor,
         ),
       );
     }
@@ -368,16 +368,14 @@ class _AttendanceState extends State<Attendance> {
                   ? null
                   : CircleAvatar(
                       backgroundColor: isPresent
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
+                          ? accentColor.withOpacity(0.1)
+                          : negativeColor.withOpacity(0.1),
                       child: Text(
                         member.name.isNotEmpty
                             ? member.name.substring(0, 1).toUpperCase()
                             : '?',
                         style: TextStyle(
-                          color: isPresent
-                              ? Colors.green
-                              : Colors.redAccent[200],
+                          color: isPresent ? accentColor : negativeColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

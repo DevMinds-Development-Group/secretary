@@ -1,57 +1,81 @@
-// lib/services/auth_service.dart
-
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+// --- MODELOS INTERNOS PARA EL AUTHSERVICE ---
+class UserProfile {
+  final String username;
+  final String role;
+  final String? memberId;
+  final MemberProfile? member;
+
+  UserProfile({
+    required this.username,
+    required this.role,
+    this.memberId,
+    this.member,
+  });
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) {
+    final roles = json['roles'] as List?;
+    final roleDesc = (roles != null && roles.isNotEmpty)
+        ? roles[0]['description'] ?? 'Usuario'
+        : 'Usuario';
+
+    return UserProfile(
+      username: json['username'],
+      role: roleDesc,
+      memberId: json['memberId'],
+      member: json['member'] != null
+          ? MemberProfile.fromJson(json['member'])
+          : null,
+    );
+  }
+}
+
+class MemberProfile {
+  final String name;
+  final String lastName;
+  final String? phone;
+  final String? address;
+  final String? networkName;
+  final DateTime? birthdate;
+
+  MemberProfile({
+    required this.name,
+    required this.lastName,
+    this.phone,
+    this.address,
+    this.networkName,
+    this.birthdate,
+  });
+
+  factory MemberProfile.fromJson(Map<String, dynamic> json) {
+    return MemberProfile(
+      name: json['name'] ?? '',
+      lastName: json['lastName'] ?? '',
+      phone: json['phone'],
+      address: json['address'],
+      networkName: json['networkName'],
+      birthdate: json['birthdate'] != null
+          ? DateTime.parse(json['birthdate'])
+          : null,
+    );
+  }
+}
+
 class AuthService with ChangeNotifier {
+  // Variables de estado
   String? _userName;
   String? _userRoleDescription;
   String? _rawRole;
+  UserProfile? _user; // <--- EL OBJETO USER QUE HABÍAS BORRADO
 
+  // Getters
   String? get userName => _userName;
   String? get userRole => _userRoleDescription;
   String? get rawRole => _rawRole;
-
-  Future<void> fetchUserProfile(String username) async {
-    try {
-      final token = await getToken();
-      print("TOKEN ACTUAL: $token");
-
-      final response = await _dio.get(
-        '/users/$username',
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      print("RESPUESTA PERFIL: ${response.data}");
-
-      if (response.statusCode == 200) {
-        final userData = response.data;
-
-        _userName = userData['username'];
-
-        final roles = userData['roles'] as List?;
-        if (roles != null && roles.isNotEmpty) {
-          _userRoleDescription = roles[0]['description'] ?? 'Usuario';
-          _rawRole = roles[0]['name'];
-          print(
-            "DATOS ASIGNADOS: $_userName, $_userRoleDescription, $_rawRole",
-          );
-        }
-
-        await _secureStorage.write(key: 'user_name', value: _userName ?? "");
-        await _secureStorage.write(
-          key: 'user_role_desc',
-          value: _userRoleDescription ?? "",
-        );
-        await _secureStorage.write(key: 'raw_role', value: _rawRole ?? "");
-
-        notifyListeners();
-      }
-    } catch (e) {
-      print("Error obteniendo perfil: $e");
-    }
-  }
+  UserProfile? get user => _user; // <--- Getter para el perfil completo
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -60,16 +84,46 @@ class AuthService with ChangeNotifier {
   );
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
-  Future<void> _saveToken(String token) async {
-    await _secureStorage.write(key: 'auth_token', value: token);
-  }
+  Future<void> fetchUserProfile(String username) async {
+    try {
+      final token = await getToken();
 
-  Future<String?> getToken() async {
-    return await _secureStorage.read(key: 'auth_token');
-  }
+      final response = await _dio.get(
+        '/users/$username',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
 
-  Future<void> deleteToken() async {
-    await _secureStorage.delete(key: 'auth_token');
+      if (response.statusCode == 200) {
+        final userData = response.data;
+
+        // 1. Mapeamos al objeto UserProfile completo
+        _user = UserProfile.fromJson(userData);
+
+        // 2. Mantenemos las variables simples para compatibilidad
+        _userName = _user!.username;
+        _userRoleDescription = _user!.role;
+
+        final roles = userData['roles'] as List?;
+        if (roles != null && roles.isNotEmpty) {
+          _rawRole = roles[0]['name'];
+        }
+
+        // 3. Guardamos en persistencia (solo lo básico)
+        await _secureStorage.write(key: 'user_name', value: _userName ?? "");
+        await _secureStorage.write(
+          key: 'user_role_desc',
+          value: _userRoleDescription ?? "",
+        );
+        await _secureStorage.write(key: 'raw_role', value: _rawRole ?? "");
+
+        notifyListeners();
+        print(
+          "PERFIL CARGADO: ${_user?.username}, Miembro: ${_user?.member?.name}",
+        );
+      }
+    } catch (e) {
+      print("Error obteniendo perfil: $e");
+    }
   }
 
   Future<String?> signIn({
@@ -84,11 +138,8 @@ class AuthService with ChangeNotifier {
 
       if (response.statusCode == 200 && response.data['jwtToken'] != null) {
         final token = response.data['jwtToken'];
-
         await _saveToken(token);
-
         await fetchUserProfile(username);
-
         return null;
       }
       return 'Error de credenciales';
@@ -103,34 +154,33 @@ class AuthService with ChangeNotifier {
       final savedRoleDesc = await _secureStorage.read(key: 'user_role_desc');
       final savedRawRole = await _secureStorage.read(key: 'raw_role');
 
-      print("CARGANDO DE DISCO: $savedName, $savedRoleDesc");
-
       if (savedName != null) {
         _userName = savedName;
         _userRoleDescription = savedRoleDesc;
         _rawRole = savedRawRole;
-        print("DATOS CARGADOS DEL DISCO: $_userName");
+
+        // Intentamos recargar el perfil completo desde la API para tener el objeto _user
+        fetchUserProfile(savedName);
+
         notifyListeners();
-      } else {
-        print("NO HAY DATOS GUARDADOS EN DISCO");
       }
     } catch (e) {
       print("Error leyendo SecureStorage: $e");
     }
   }
 
+  // Métodos de Token
+  Future<void> _saveToken(String token) async =>
+      await _secureStorage.write(key: 'auth_token', value: token);
+  Future<String?> getToken() async =>
+      await _secureStorage.read(key: 'auth_token');
+
   Future<void> signOut() async {
-    try {
-      await _secureStorage.deleteAll();
-
-      _userName = null;
-      _userRoleDescription = null;
-      _rawRole = null;
-      notifyListeners();
-
-      print("Sesión destruida correctamente.");
-    } catch (e) {
-      print("Error al cerrar sesión: $e");
-    }
+    await _secureStorage.deleteAll();
+    _userName = null;
+    _userRoleDescription = null;
+    _rawRole = null;
+    _user = null;
+    notifyListeners();
   }
 }

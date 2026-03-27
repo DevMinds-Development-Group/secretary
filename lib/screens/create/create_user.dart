@@ -1,5 +1,6 @@
 // lib/screens/create/create_user.dart
 
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -102,7 +103,7 @@ class _CreateUserState extends State<CreateUser> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, selecciona un rol.'),
-          backgroundColor: Colors.red,
+          backgroundColor: negativeColor,
         ),
       );
       return;
@@ -147,7 +148,7 @@ class _CreateUserState extends State<CreateUser> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(userProvider.error ?? 'Ocurrió un error desconocido.'),
-          backgroundColor: Colors.red,
+          backgroundColor: negativeColor,
         ),
       );
     }

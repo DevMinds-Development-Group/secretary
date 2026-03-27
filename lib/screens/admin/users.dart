@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -151,21 +152,10 @@ Widget _buildMobileList(List<User> users, MemberProvider memberProvider) {
 }
 
 Widget _buildActions(BuildContext context, User user) {
-  return Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      IconButton(
-        icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-        onPressed: () => Navigator.push(
-          context,
-          createFadeRoute(CreateUser(userToEdit: user)),
-        ),
-      ),
-      IconButton(
-        icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-        onPressed: () => _showDelete(context, user),
-      ),
-    ],
+  return ActionButtons(
+    onEdit: () =>
+        Navigator.push(context, createFadeRoute(CreateUser(userToEdit: user))),
+    onDelete: () => _showDelete(context, user),
   );
 }
 

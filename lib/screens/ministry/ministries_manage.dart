@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -169,16 +170,12 @@ class _MinistryManageState extends State<MinistryManage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          icon: const Icon(Icons.edit, color: Colors.blue, size: 20),
-          onPressed: () => Navigator.push(
+        ActionButtons(
+          onEdit: () => Navigator.push(
             context,
             createFadeRoute(CreateMinistry(ministryToEdit: ministry)),
           ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-          onPressed: () => _showDelete(context, ministry),
+          onDelete: () => _showDelete(context, ministry),
         ),
       ],
     );
@@ -198,7 +195,7 @@ class _MinistryManageState extends State<MinistryManage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Ministerio ${ministry.name} eliminado'),
-                backgroundColor: Colors.green,
+                backgroundColor: accentColor,
               ),
             );
           }
@@ -207,7 +204,7 @@ class _MinistryManageState extends State<MinistryManage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Error al eliminar el ministerio'),
-                backgroundColor: Colors.red,
+                backgroundColor: negativeColor,
               ),
             );
           }

@@ -104,7 +104,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
       if (mounted) {
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error: $e'), backgroundColor: negativeColor),
         );
       }
     }
@@ -257,7 +257,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(success ? 'Registro eliminado' : 'Error al eliminar'),
-          backgroundColor: success ? Colors.green : Colors.red,
+          backgroundColor: success ? accentColor : negativeColor,
         ),
       );
     }
@@ -379,7 +379,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
 
   IconButton _iconPdf(AttendanceModel record) {
     return IconButton(
-      icon: const Icon(Icons.picture_as_pdf, color: Colors.redAccent),
+      icon: const Icon(Icons.picture_as_pdf, color: negativeColor),
       tooltip: 'Descargar PDF',
       onPressed: () => _downloadPdf(record.id),
     );

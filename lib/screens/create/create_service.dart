@@ -207,7 +207,7 @@ class _CreateServiceState extends State<CreateService> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(serviceProvider.error ?? 'Error al guardar'),
-            backgroundColor: Colors.red,
+            backgroundColor: negativeColor,
           ),
         );
       }
@@ -322,7 +322,7 @@ class _CreateServiceState extends State<CreateService> {
                               _buildLabel(
                                 Icons.calendar_today,
                                 'Fecha',
-                                Colors.redAccent,
+                                negativeColor,
                               ),
                               InkWell(
                                 onTap: () => _selectDate(context),
@@ -398,7 +398,7 @@ class _CreateServiceState extends State<CreateService> {
                                     ),
                                     Icon(
                                       Icons.schedule,
-                                      color: Colors.red.shade200,
+                                      color: primaryColor2.withOpacity(0.5),
                                     ),
                                   ],
                                 ),

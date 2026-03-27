@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -121,7 +122,7 @@ class _CreateMemberState extends State<CreateMember> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error al guardar los datos. Revisa la consola.'),
-            backgroundColor: Colors.red,
+            backgroundColor: negativeColor,
           ),
         );
       }

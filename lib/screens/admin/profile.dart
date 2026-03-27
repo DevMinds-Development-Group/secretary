@@ -1,101 +1,240 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/user_provider.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/custom_appbar.dart';
 
-class Profile extends StatelessWidget {
+class Profile extends StatefulWidget {
   const Profile({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: 'Perfil'),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Container(
-            width: 500, // Ancho máximo para la vista web
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildProfileHeader(),
-                const SizedBox(height: 10.0),
-                _buildContactInfoCard(),
-                const SizedBox(height: 15.0),
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+  State<Profile> createState() => _ProfileState();
+}
 
-                  elevation: 5,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return constraints.maxWidth < 600
-                          ? _buildMobileLayout()
-                          : _buildWebLayout();
-                    },
+class _ProfileState extends State<Profile> {
+  @override
+  void initState() {
+    super.initState();
+    // Cargar datos del perfil al iniciar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      if (authService.userName != null) {
+        authService.fetchUserProfile(authService.userName!);
+      }
+    });
+  }
+
+  // Diálogo de cambio de contraseña estilo "CreateUser"
+  void _showChangePasswordDialog(dynamic user) {
+    final TextEditingController passwordController = TextEditingController();
+    final _formKey = GlobalKey<FormState>();
+    bool obscurePassword = true;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Nueva Contraseña",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Ingresa la nueva contraseña para tu cuenta."),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "Contraseña",
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () =>
+                            setState(() => obscurePassword = !obscurePassword),
+                      ),
+                    ),
+                    validator: (v) => (v == null || v.isEmpty)
+                        ? 'La contraseña no puede estar vacía.'
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text(
+                  "CANCELAR",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                const SizedBox(height: 15.0),
-                _buildAccountActionsCard(),
-              ],
-            ),
-          ),
-        ),
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final userProvider = context.read<UserProvider>();
+
+                    // Usamos la lógica de updateUser que ya funciona en CreateUser
+                    bool success = await userProvider.updateUser(
+                      username: user.username,
+                      password: passwordController.text,
+                      roleIds:
+                          [], // El backend suele ignorar si va vacío o mantiene el actual
+                      memberId: user.memberId,
+                    );
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            success
+                                ? "Contraseña actualizada con éxito"
+                                : "Error: ${userProvider.error ?? 'No se pudo actualizar'}",
+                          ),
+                          backgroundColor: success
+                              ? Colors.green
+                              : negativeColor,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text(
+                  "ACTUALIZAR",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  // --- Widget para el encabezado del perfil ---
-  Widget _buildProfileHeader() {
+  @override
+  Widget build(BuildContext context) {
+    final authService = context.watch<AuthService>();
+    final user = authService.user;
+
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: CustomAppBar(title: 'Perfil'),
+      body: user == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Center(
+                child: Container(
+                  width: 500,
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      _buildProfileHeader(user),
+                      const SizedBox(height: 20.0),
+                      _buildContactInfoCard(user),
+                      const SizedBox(height: 15.0),
+                      _buildAccountActionsCard(user),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildProfileHeader(user) {
+    final member = user.member;
     return Column(
       children: [
-        // Imagen del perfil circular
         const CircleAvatar(
-          radius: 50,
-          backgroundImage: AssetImage(
-            'assets/perfil.png',
-          ), // Reemplaza con tu imagen
+          radius: 55,
+          backgroundColor: Colors.white,
+          child: CircleAvatar(
+            radius: 50,
+            backgroundImage: AssetImage('assets/perfil.png'),
+          ),
         ),
-        const SizedBox(height: 10.0),
-        const Text(
-          'Yamilet Yero',
-          style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
+        const SizedBox(height: 15.0),
+        Text(
+          member != null ? "${member.name} ${member.lastName}" : 'Usuario',
+          style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 4.0),
-        const Text(
-          'yami.yero@email.com',
-          style: TextStyle(fontSize: 16.0, color: Colors.grey),
+        const SizedBox(height: 5),
+        Text(
+          user.username,
+          style: const TextStyle(fontSize: 16.0, color: Colors.grey),
         ),
-        const SizedBox(height: 4.0),
-        const Text(
-          'Admin',
-          style: TextStyle(fontSize: 14.0, color: Colors.grey),
-        ),
+        const SizedBox(height: 10),
       ],
     );
   }
 
-  // --- Widget para la tarjeta de información de contacto ---
-  Widget _buildContactInfoCard() {
+  Widget _buildContactInfoCard(user) {
+    final member = user.member;
+    if (member == null) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text("Este usuario no tiene un miembro asociado."),
+        ),
+      );
+    }
+
     return Card(
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: cardColor,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Información de Contacto',
+              'Información personal',
               style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16.0),
-            _buildInfoTile(Icons.phone, 'Teléfono', '+1 (555) 123-4567'),
+            const Divider(height: 30),
             _buildInfoTile(
-              Icons.location_on,
+              Icons.phone_android_rounded,
+              'Teléfono',
+              member.phone ?? 'N/A',
+            ),
+            _buildInfoTile(
+              Icons.location_on_outlined,
               'Dirección',
-              '123 Church St, Anytown, USA',
+              member.address ?? 'N/A',
+            ),
+            _buildInfoTile(
+              Icons.group,
+              'Red Ministerial',
+              member.networkName ?? 'Sin Red',
+            ),
+            _buildInfoTile(
+              Icons.cake_outlined,
+              'Cumpleaños',
+              member.birthdate != null
+                  ? "${member.birthdate.day}/${member.birthdate.month}/${member.birthdate.year}"
+                  : 'N/A',
             ),
           ],
         ),
@@ -103,108 +242,33 @@ class Profile extends StatelessWidget {
     );
   }
 
-  // --- Widget para la tarjeta de acciones de la cuenta ---
-  Widget _buildAccountActionsCard() {
-    return Card(
-      color: Colors.blueAccent,
-      elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-      child: Padding(
-        padding: const EdgeInsets.all(5),
-        child: _buildActionButton('Cambiar Contraseña', Icons.lock_outline, () {
-          print('Navegar a la pantalla para cambiar la contraseña');
-        }),
-      ),
-    );
-  }
-
-  // --- Widgets reutilizables ---
-
-  // Para las filas de información de contacto
-  Widget _buildInfoTile(IconData icon, String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.grey, size: 24),
-          const SizedBox(width: 16.0),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: const TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Para los botones de acción
-  Widget _buildActionButton(
-    String text,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return SizedBox(
+  Widget _buildAccountActionsCard(user) {
+    return Container(
       width: double.infinity,
-      child: OutlinedButton.icon(
-        icon: Icon(icon, color: Colors.white),
-        label: Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.white,
-            //fontWeight: FontWeight.bold,
-          ),
-        ),
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          side: const BorderSide(
-            color: Colors.transparent,
-          ), // Quita el borde por defecto
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-        ),
+      decoration: BoxDecoration(
+        color: darkColor,
+        borderRadius: BorderRadius.circular(15),
       ),
-    );
-  }
-
-  Widget _buildMobileLayout() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          _buildSettingTile('Notificaciones', Icons.notifications, true),
-          _buildSettingTile('Modo Oscuro', Icons.dark_mode, false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWebLayout() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
-      child: Center(
-        child: SizedBox(
-          width: 800,
-          child: Card(
-            elevation: 5,
-            child: Column(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(15),
+          onTap: () => _showChangePasswordDialog(user),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildSettingTile('Notificaciones', Icons.notifications, true),
-                _buildSettingTile('Modo Oscuro', Icons.dark_mode, true),
+                Icon(Icons.lock_reset_rounded, color: Colors.white),
+                SizedBox(width: 10),
+                Text(
+                  'Cambiar Contraseña',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ],
             ),
           ),
@@ -213,25 +277,40 @@ class Profile extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingTile(
-    String title,
-    IconData icon, [
-    bool showSwitch = false,
-  ]) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
-      trailing: Switch(
-        focusColor: Colors.cyan,
-        value: true, // Debes manejar el estado con setState
-        onChanged: (bool value) {
-          print('Switch cambiado a $value');
-        },
+  Widget _buildInfoTile(IconData icon, String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.blueGrey, size: 22),
+          ),
+          const SizedBox(width: 15.0),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-
-      onTap: () {
-        print('Presionaste: $title');
-      },
     );
   }
 }

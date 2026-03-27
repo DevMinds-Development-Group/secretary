@@ -69,7 +69,7 @@ class _LogsState extends State<Logs> {
                               'No hay registros para mostrar.',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.grey,
+                                color: secondaryColor,
                               ),
                             ),
                           )
@@ -115,7 +115,7 @@ class _LogsState extends State<Logs> {
           'dd/MM/yyyy, HH:mm',
         ).format(logEntry.timestamp);
         return Card(
-          color: Colors.white,
+          color: cardColor,
           elevation: 2,
           margin: const EdgeInsets.only(bottom: 16.0),
           child: ListTile(

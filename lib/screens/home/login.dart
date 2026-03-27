@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -43,7 +44,7 @@ class _LoginState extends State<Login> {
       setState(() => _isLoading = false);
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: Colors.redAccent),
+          SnackBar(content: Text(error), backgroundColor: negativeColor),
         );
       } else {
         Navigator.pushNamedAndRemoveUntil(
@@ -124,27 +125,27 @@ class _LoginState extends State<Login> {
                                     ),
                               const SizedBox(height: 20),
 
-                              TextButton(
-                                onPressed: () {
-                                  // Lógica para recuperar contraseña
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Funcionalidad de recuperación de contraseña en desarrollo.',
-                                      ),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                },
-                                child: const Text(
-                                  '¿Olvidaste tu contraseña?',
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
+                              // TextButton(
+                              //   onPressed: () {
+                              //     // Lógica para recuperar contraseña
+                              //
+                              //     ScaffoldMessenger.of(context).showSnackBar(
+                              //       const SnackBar(
+                              //         content: Text(
+                              //           'Funcionalidad de recuperación de contraseña en desarrollo.',
+                              //         ),
+                              //         backgroundColor: Colors.orange,
+                              //       ),
+                              //     );
+                              //   },
+                              //   child: const Text(
+                              //     '¿Olvidaste tu contraseña?',
+                              //     style: TextStyle(
+                              //       color: Colors.black54,
+                              //       fontSize: 16,
+                              //     ),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),

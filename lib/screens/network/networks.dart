@@ -184,7 +184,7 @@ class _NetworksState extends State<Networks> {
   }) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Card(
-      color: Colors.white,
+      color: cardColor,
       elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(

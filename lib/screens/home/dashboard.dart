@@ -317,7 +317,7 @@ class _DashboardState extends State<Dashboard> {
       'Redes',
       networkProvider.networks.length.toString(),
       Icons.group,
-      Colors.redAccent,
+      negativeColor,
       isMobile,
     );
   }

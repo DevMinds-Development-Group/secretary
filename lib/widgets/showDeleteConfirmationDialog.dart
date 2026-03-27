@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 
 Future<void> showDeleteConfirmationDialog({
@@ -36,7 +37,7 @@ Future<void> showDeleteConfirmationDialog({
             },
           ),
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: primaryColor2),
             child: Text('Eliminar', style: TextStyle(fontSize: 18)),
             onPressed: () {
               // 1. Ejecuta la lógica de eliminación que nos pasaron.

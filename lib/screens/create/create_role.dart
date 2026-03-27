@@ -1,4 +1,5 @@
 // lib/screens/create/create_role.dart
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -113,7 +114,7 @@ class _CreateRoleState extends State<CreateRole> {
             content: Text(
               roleProvider.error ?? 'Error desconocido en el servidor',
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: negativeColor,
           ),
         );
       }

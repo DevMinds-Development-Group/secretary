@@ -210,7 +210,7 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                         height: 7,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.red[700],
+                          color: primaryColor3,
                         ),
                       ),
                     );

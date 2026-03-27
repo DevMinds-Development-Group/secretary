@@ -28,10 +28,11 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
 
   @override
   Widget build(BuildContext context) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     final provider = context.watch<AnnouncementProvider>();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: backgroundColor,
       body: RefreshIndicator(
         onRefresh: () => provider.fetchAnnouncements(),
         child: CustomScrollView(
@@ -41,7 +42,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                 icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
-              expandedHeight: 100.0,
+              //expandedHeight: 100.0,
               floating: false,
               pinned: true,
               elevation: 20,
@@ -74,7 +75,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
             else
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(40.0),
+                  padding: EdgeInsets.all(isMobile ? 20 : 40),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -82,19 +83,20 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                         _buildSectionTitle(
                           "Evento de Hoy",
                           Icons.today_outlined,
+                          isMobile,
                         ),
                         const SizedBox(height: 16),
-                        _buildTodayEvent(provider.todayEvent!),
+                        _buildTodayEvent(provider.todayEvent!, isMobile),
                         const SizedBox(height: 32),
                       ],
 
                       _buildSectionTitle(
                         "Tiempos de la semana",
                         Icons.calendar_month_rounded,
+                        isMobile,
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: isMobile ? 0 : 16),
 
-                      // Lista dinámica de servicios del backend
                       ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -117,19 +119,19 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Container(
         height: 60,
-        margin: const EdgeInsets.symmetric(horizontal: 24),
+        margin: EdgeInsets.symmetric(horizontal: 24),
         child: ElevatedButton.icon(
           onPressed: () {
-            _showLocationDialog(context);
+            _showLocationDialog(context, isMobile);
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: darkBlue,
-            foregroundColor: Colors.white,
+            backgroundColor: darkColor,
+            foregroundColor: cardColor,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(15),
             ),
             elevation: 10,
-            shadowColor: darkBlue.withOpacity(0.5),
+            shadowColor: darkColor.withOpacity(0.5),
           ),
           icon: const Icon(Icons.location_on_rounded),
           label: const Text(
@@ -141,15 +143,15 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
     );
   }
 
-  Widget _buildSectionTitle(String title, IconData icon) {
+  Widget _buildSectionTitle(String title, IconData icon, isMobile) {
     return Row(
       children: [
         Icon(icon, color: const Color(0xFF64748B), size: 26),
         const SizedBox(width: 8),
         Text(
           title.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 16,
+          style: TextStyle(
+            fontSize: isMobile ? 18 : 16,
             fontWeight: FontWeight.w900,
             color: Color(0xFF64748B),
             letterSpacing: 1.5,
@@ -159,13 +161,13 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
     );
   }
 
-  Widget _buildTodayEvent(Announcement event) {
+  Widget _buildTodayEvent(Announcement event, isMobile) {
     return CustomCardContainer(
       gradient: LinearGradient(
         colors: [event.color, event.color.withOpacity(0.8)],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: EdgeInsets.all(isMobile ? 18 : 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -283,7 +285,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: darkColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -355,13 +357,14 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
     );
   }
 
-  void _showLocationDialog(BuildContext context) {
+  void _showLocationDialog(BuildContext context, isMobile) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -372,7 +375,9 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                 ),
                 child: Image.asset(
                   'assets/location.png',
-                  width: MediaQuery.of(context).size.width * 0.3,
+                  width:
+                      MediaQuery.of(context).size.width *
+                      (isMobile ? 0.95 : 0.3),
                   errorBuilder: (context, error, stackTrace) => Container(
                     height: 200,
                     color: const Color(0xFFD32F2F),
@@ -400,7 +405,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                     const Text(
                       "Calle Eddy Martínez #34 entre \n Ave.Camilo Cienfuegos y J.Espinosa \nReparto Buena Vista.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.blueGrey, fontSize: 16),
+                      style: TextStyle(color: Colors.black87, fontSize: 16),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -410,7 +415,9 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0F172A),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+                            borderRadius: BorderRadius.circular(
+                              isMobile ? 15 : 10,
+                            ),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),

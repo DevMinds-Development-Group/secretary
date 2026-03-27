@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -86,7 +87,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Error al conectar con el servidor'),
-          backgroundColor: Colors.red,
+          backgroundColor: negativeColor,
         ),
       );
     }

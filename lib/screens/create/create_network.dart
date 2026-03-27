@@ -1,5 +1,6 @@
 // lib/screens/create/create_network.dart
 
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -79,12 +80,15 @@ class _CreateNetworkState extends State<CreateNetwork> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Red guardada con éxito'),
-          backgroundColor: Colors.green,
+          backgroundColor: accentColor,
         ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error al guardar los cambios.')),
+        const SnackBar(
+          content: Text('Error al guardar los cambios.'),
+          backgroundColor: negativeColor,
+        ),
       );
     }
   }

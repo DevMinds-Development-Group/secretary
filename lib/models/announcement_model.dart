@@ -76,9 +76,7 @@ class Announcement {
   String get dayNumber => specificDate.split('-').last;
 
   Color get color {
-    if (type == 'CULTO') return const Color(0xFF1E293B); // Indigo oscuro
-    if (type == 'ESTUDIO') return const Color(0xFF0284C7); // Azul
-    return const Color(0xFF7C3AED); // Morado para otros
+    return const Color(0xFF1E293B);
   }
 
   // Dentro de tu clase Announcement

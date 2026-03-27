@@ -1,5 +1,6 @@
 // lib/widgets/custom_text_form_field.dart
 
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -64,19 +65,15 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
     BuildContext context, {
     Widget? effectiveSuffixIcon,
   }) {
-    final primaryColor =
-        Colors.blueGrey ?? Theme.of(context).colorScheme.primary;
-    final errorColor = Colors.red[700] ?? Theme.of(context).colorScheme.error;
-    final defaultBorderColor = Colors.grey[600] ?? Colors.grey;
-    final iconColor = Colors.grey[600];
+    final defaultBorderColor = Colors.grey[600] ?? secondaryColor;
+    final iconColor = secondaryColor.withOpacity(0.7);
 
     return InputDecoration(
-
       labelText: widget.labelText,
       hintText: widget.hintText,
       prefixText: widget.prefixText,
-      labelStyle: TextStyle(color: Colors.grey[700]),
-      hintStyle: TextStyle(color: Colors.grey[500]),
+      labelStyle: TextStyle(color: secondaryColor.withOpacity(0.9)),
+      hintStyle: TextStyle(color: secondaryColor.withOpacity(0.7)),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5.0),
         borderSide: BorderSide(color: defaultBorderColor),
@@ -91,11 +88,11 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: errorColor, width: 1.0),
+        borderSide: BorderSide(color: primaryColor2, width: 1.0),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: errorColor, width: 2.0),
+        borderSide: BorderSide(color: primaryColor2, width: 2.0),
       ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 15.0,

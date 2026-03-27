@@ -1,11 +1,8 @@
 import 'package:Koinos/screens/user_help.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../routes/page_route_builder.dart';
-import '../screens/admin/profile.dart';
 import '../screens/home/dashboard.dart';
-import '../services/auth_service.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -24,7 +21,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
-
     Widget leadingWidget;
 
     if (showBackButton) {
@@ -47,6 +43,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         onPressed: null,
       );
     }
+
     if (!showBackButton && isMobile && isDrawerEnabled) {
       leadingWidget = Builder(
         builder: (context) => IconButton(
@@ -57,14 +54,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     }
 
     return AppBar(
-      iconTheme: IconThemeData(color: Colors.white),
+      iconTheme: const IconThemeData(color: Colors.white),
       backgroundColor: Colors.blue.shade800,
       titleSpacing: 0,
-
       automaticallyImplyLeading: true,
-
       leading: leadingWidget,
-
       title: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
@@ -89,50 +83,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           SizedBox(width: isMobile ? 5 : 20),
           IconButton(
             tooltip: 'Página principal',
-            onPressed: () {
-              Navigator.push(context, createFadeRoute(Dashboard()));
-            },
-            icon: Icon(Icons.home),
+            onPressed: () =>
+                Navigator.push(context, createFadeRoute(const Dashboard())),
+            icon: const Icon(Icons.home),
           ),
           IconButton(
             tooltip: 'Manual de Usuarios',
-            onPressed: () {
-              Navigator.push(context, createFadeRoute(UserHelp()));
-            },
-            icon: Icon(Icons.help_outline),
+            onPressed: () =>
+                Navigator.push(context, createFadeRoute(const UserHelp())),
+            icon: const Icon(Icons.help_outline),
           ),
-          //SizedBox(width: isMobile ? 10 : 20),
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              if (value == 'profile') {
-                Navigator.push(context, createFadeRoute(Profile()));
-              } else if (value == 'logout') {
-                final authService = Provider.of<AuthService>(
-                  context,
-                  listen: false,
-                );
-
-                await authService.signOut();
-
-                if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/',
-                    (route) => false,
-                  );
-                }
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(value: 'profile', child: Text('Mi Perfil')),
-              PopupMenuItem(value: 'logout', child: Text('Cerrar Sesión')),
-            ],
-            icon: Icon(
-              Icons.more_vert,
-              color: Colors.white,
-              size: isMobile ? 22 : 25,
-            ),
-          ),
+          const SizedBox(width: 10),
         ],
       ),
       bottom: bottom,
@@ -141,7 +102,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize {
-    // Suma la altura del bottom si está presente
     final bottomHeight = bottom?.preferredSize.height ?? 0;
     return Size.fromHeight(kToolbarHeight + bottomHeight);
   }

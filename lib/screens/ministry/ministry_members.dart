@@ -317,7 +317,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
                 children: [Text(member.address), Text(member.phone)],
               ),
               trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
+                icon: const Icon(Icons.delete, color: negativeColor),
                 onPressed: () {
                   showDeleteConfirmationDialog(
                     context: context,
