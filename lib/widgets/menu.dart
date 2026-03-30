@@ -13,6 +13,7 @@ import '../screens/network/networks.dart';
 import '../screens/reports/reports.dart';
 import '../screens/service/services.dart';
 import '../services/auth_service.dart';
+import '../utils/user_permissions.dart';
 
 class Menu extends StatefulWidget {
   const Menu({super.key});
@@ -30,6 +31,7 @@ class _MenuState extends State<Menu> {
     final isMobile = screenWidth < 700;
     final authService = Provider.of<AuthService>(context);
     final user = authService.user;
+    final permissions = UserPermissions(authService);
 
     String displayName = '';
     String displaySubtitle = '';
@@ -85,6 +87,8 @@ class _MenuState extends State<Menu> {
               ],
             ),
           ),
+
+          // 1. INICIO (Todos)
           ListTile(
             leading: const Icon(Icons.home, color: Colors.teal),
             title: const Text('Inicio'),
@@ -98,94 +102,113 @@ class _MenuState extends State<Menu> {
               setState(() => _selectedIndex = 0);
             },
           ),
-          ListTile(
-            leading: const Icon(
-              Icons.calendar_month_outlined,
-              color: Colors.deepOrange,
+
+          if (permissions.canSeeServices)
+            ListTile(
+              leading: const Icon(
+                Icons.calendar_month_outlined,
+                color: Colors.deepOrange,
+              ),
+              title: const Text('Servicios'),
+              selected: _selectedIndex == 1,
+              onTap: () {
+                if (isMobile) Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  createFadeRoute(const Services()),
+                );
+                setState(() => _selectedIndex = 1);
+              },
             ),
-            title: const Text('Servicios'),
-            selected: _selectedIndex == 1,
-            onTap: () {
-              if (isMobile) Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                createFadeRoute(const Services()),
-              );
-              setState(() => _selectedIndex = 1);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.people_alt_outlined, color: primaryColor),
-            title: const Text('Miembros'),
-            selected: _selectedIndex == 2,
-            onTap: () {
-              if (isMobile) Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                createFadeRoute(const Members()),
-              );
-              setState(() => _selectedIndex = 2);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.how_to_reg_outlined, color: Colors.cyan),
-            title: const Text('Asistencia'),
-            selected: _selectedIndex == 3,
-            onTap: () {
-              if (isMobile) Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                createFadeRoute(const AttendanceHistory()),
-              );
-              setState(() => _selectedIndex = 3);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.group, color: Colors.redAccent),
-            title: const Text('Redes'),
-            selected: _selectedIndex == 4,
-            onTap: () {
-              if (isMobile) Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                createFadeRoute(const Networks()),
-              );
-              setState(() => _selectedIndex = 4);
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.description_outlined,
-              color: Colors.indigo,
+
+          if (permissions.canSeeMembers)
+            ListTile(
+              leading: const Icon(
+                Icons.people_alt_outlined,
+                color: primaryColor,
+              ),
+              title: const Text('Miembros'),
+              selected: _selectedIndex == 2,
+              onTap: () {
+                if (isMobile) Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  createFadeRoute(const Members()),
+                );
+                setState(() => _selectedIndex = 2);
+              },
             ),
-            title: const Text('Ministerios'),
-            selected: _selectedIndex == 5,
-            onTap: () {
-              if (isMobile) Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                createFadeRoute(const Ministries()),
-              );
-              setState(() => _selectedIndex = 5);
-            },
-          ),
-          ListTile(
-            leading: const Icon(
-              Icons.bar_chart_outlined,
-              color: Colors.deepPurpleAccent,
+
+          if (permissions.canSeeAttendance)
+            ListTile(
+              leading: const Icon(
+                Icons.how_to_reg_outlined,
+                color: Colors.cyan,
+              ),
+              title: const Text('Asistencia'),
+              selected: _selectedIndex == 3,
+              onTap: () {
+                if (isMobile) Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  createFadeRoute(const AttendanceHistory()),
+                );
+                setState(() => _selectedIndex = 3);
+              },
             ),
-            title: const Text('Reportes'),
-            selected: _selectedIndex == 6,
-            onTap: () {
-              if (isMobile) Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                createFadeRoute(const Reports()),
-              );
-              setState(() => _selectedIndex = 6);
-            },
-          ),
-          if (authService.rawRole == 'ROLE_ADMIN')
+
+          if (permissions.canSeeNetworks)
+            ListTile(
+              leading: const Icon(Icons.group, color: Colors.redAccent),
+              title: const Text('Redes'),
+              selected: _selectedIndex == 4,
+              onTap: () {
+                if (isMobile) Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  createFadeRoute(const Networks()),
+                );
+                setState(() => _selectedIndex = 4);
+              },
+            ),
+
+          if (permissions.canSeeMinistries)
+            ListTile(
+              leading: const Icon(
+                Icons.description_outlined,
+                color: Colors.indigo,
+              ),
+              title: const Text('Ministerios'),
+              selected: _selectedIndex == 5,
+              onTap: () {
+                if (isMobile) Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  createFadeRoute(const Ministries()),
+                );
+                setState(() => _selectedIndex = 5);
+              },
+            ),
+
+          if (permissions.canSeeReports)
+            ListTile(
+              leading: const Icon(
+                Icons.bar_chart_outlined,
+                color: Colors.deepPurpleAccent,
+              ),
+              title: const Text('Reportes'),
+              selected: _selectedIndex == 6,
+              onTap: () {
+                if (isMobile) Navigator.pop(context);
+                Navigator.pushReplacement(
+                  context,
+                  createFadeRoute(const Reports()),
+                );
+                setState(() => _selectedIndex = 6);
+              },
+            ),
+
+          if (permissions.canSeeAdmin)
             ListTile(
               leading: const Icon(Icons.settings),
               title: const Text('Administración'),
@@ -199,8 +222,9 @@ class _MenuState extends State<Menu> {
                 setState(() => _selectedIndex = 7);
               },
             ),
+
           const Divider(),
-          // NUEVA OPCIÓN: MI PERFIL
+
           ListTile(
             leading: const Icon(Icons.person_outline, color: Colors.blue),
             title: const Text('Mi Perfil'),
@@ -209,12 +233,11 @@ class _MenuState extends State<Menu> {
               Navigator.pushNamed(context, AppRoutes.profile);
             },
           ),
-          // NUEVA OPCIÓN: CERRAR SESIÓN
+
           ListTile(
             leading: const Icon(Icons.exit_to_app, color: Colors.red),
             title: const Text('Cerrar Sesión'),
             onTap: () {
-              // Mostramos el diálogo de confirmación
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
@@ -225,7 +248,7 @@ class _MenuState extends State<Menu> {
                     ),
                     actions: [
                       TextButton(
-                        onPressed: () => Navigator.pop(context), // Cancelar
+                        onPressed: () => Navigator.pop(context),
                         child: const Text(
                           'Cancelar',
                           style: TextStyle(color: Colors.grey),

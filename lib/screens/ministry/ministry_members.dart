@@ -6,6 +6,8 @@ import '../../models/member_model.dart';
 import '../../models/ministry_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
+import '../../services/auth_service.dart';
+import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
@@ -37,6 +39,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
   Widget build(BuildContext context) {
     final ministryProvider = context.watch<MinistryProvider>();
     final memberProvider = context.watch<MemberProvider>();
+    final permissions = UserPermissions(context.read<AuthService>());
     final memberIds = ministryProvider.getMemberIdsForMinistry(
       widget.ministry.id,
     );
@@ -75,30 +78,31 @@ class _MinistryMembersState extends State<MinistryMembers> {
                       SizedBox(height: isMobile ? 5 : 20),
                       if (isMobile)
                         _buildMinistryHeader(currentMinistry, isMobile),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 16.0 : 0,
-                        ),
-                        child: Align(
-                          alignment: isMobile
-                              ? Alignment.center
-                              : Alignment.centerRight,
-                          child: AddButton(
-                            size: isMobile
-                                ? Size(
-                                    MediaQuery.of(context).size.width * 0.9,
-                                    50,
-                                  )
-                                : null,
-                            onPressed: () => _showAddMemberDialog(
-                              context,
-                              allMembers,
-                              isMobile,
-                              currentMinistry,
+                      if (permissions.canSeeMembers)
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 16.0 : 0,
+                          ),
+                          child: Align(
+                            alignment: isMobile
+                                ? Alignment.center
+                                : Alignment.centerRight,
+                            child: AddButton(
+                              size: isMobile
+                                  ? Size(
+                                      MediaQuery.of(context).size.width * 0.9,
+                                      50,
+                                    )
+                                  : null,
+                              onPressed: () => _showAddMemberDialog(
+                                context,
+                                allMembers,
+                                isMobile,
+                                currentMinistry,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                       if (!isMobile)
                         _buildMinistryHeader(currentMinistry, isMobile),
                       if (isMobile) const SizedBox(height: 15),
@@ -109,6 +113,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
                                 membersInGroup,
                                 isMobile,
                                 currentMinistry,
+                                permissions,
                               ),
                       ),
                     ],
@@ -288,6 +293,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
     List<Member> members,
     bool isMobile,
     MinistryModel currentMinistry,
+    permissions,
   ) {
     return Padding(
       padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
@@ -316,29 +322,34 @@ class _MinistryMembersState extends State<MinistryMembers> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [Text(member.address), Text(member.phone)],
               ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: negativeColor),
-                onPressed: () {
-                  showDeleteConfirmationDialog(
-                    context: context,
-                    itemName: '${member.name} ${member.lastName}',
-                    onConfirm: () async {
-                      try {
-                        await Provider.of<MinistryProvider>(
-                          context,
-                          listen: false,
-                        ).removeMemberFromMinistry(currentMinistry.id, member);
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Error al eliminar miembro'),
-                          ),
+              trailing: permissions.canSeeMembers
+                  ? IconButton(
+                      icon: const Icon(Icons.delete, color: negativeColor),
+                      onPressed: () {
+                        showDeleteConfirmationDialog(
+                          context: context,
+                          itemName: '${member.name} ${member.lastName}',
+                          onConfirm: () async {
+                            try {
+                              await Provider.of<MinistryProvider>(
+                                context,
+                                listen: false,
+                              ).removeMemberFromMinistry(
+                                currentMinistry.id,
+                                member,
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Error al eliminar miembro'),
+                                ),
+                              );
+                            }
+                          },
                         );
-                      }
-                    },
-                  );
-                },
-              ),
+                      },
+                    )
+                  : null,
             );
           },
         ),

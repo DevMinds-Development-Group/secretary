@@ -13,7 +13,6 @@ import '../../widgets/counter.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/menu.dart';
-import '../../widgets/search_text_field.dart';
 
 class Attendance extends StatefulWidget {
   final AttendanceModel? existingRecord;
@@ -111,7 +110,10 @@ class _AttendanceState extends State<Attendance> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedEventId,
-          hint: const Text("Seleccionar Evento"),
+          hint: const Text(
+            "Seleccionar Evento",
+            style: TextStyle(color: Colors.black87),
+          ),
           isExpanded: false,
           items: services.map((service) {
             return DropdownMenuItem<String>(
@@ -260,17 +262,6 @@ class _AttendanceState extends State<Attendance> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5.0),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.95,
-            child: SearchTextField(
-              onChanged: (query) => memberProvider.search(query),
-            ),
-          ),
-        ),
-
-        SizedBox(height: 15),
         Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,

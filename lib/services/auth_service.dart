@@ -69,13 +69,21 @@ class AuthService with ChangeNotifier {
   String? _userName;
   String? _userRoleDescription;
   String? _rawRole;
-  UserProfile? _user; // <--- EL OBJETO USER QUE HABÍAS BORRADO
+  UserProfile? _user;
 
   // Getters
   String? get userName => _userName;
   String? get userRole => _userRoleDescription;
   String? get rawRole => _rawRole;
-  UserProfile? get user => _user; // <--- Getter para el perfil completo
+  UserProfile? get user => _user;
+
+  List<String> _permissions = [];
+
+  List<String> get permissions => _permissions;
+
+  bool hasPermission(String permissionName) {
+    return _permissions.contains(permissionName);
+  }
 
   final Dio _dio = Dio(
     BaseOptions(
@@ -96,19 +104,21 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200) {
         final userData = response.data;
 
-        // 1. Mapeamos al objeto UserProfile completo
+        // Extraer permisos del primer rol
+        final roles = userData['roles'] as List?;
+        if (roles != null && roles.isNotEmpty) {
+          _userRoleDescription = roles[0]['description'];
+          _rawRole = roles[0]['name'];
+
+          _permissions = List<String>.from(roles[0]['permissions'] ?? []);
+          print("PERMISOS CARGADOS: $_permissions");
+        }
+
         _user = UserProfile.fromJson(userData);
 
-        // 2. Mantenemos las variables simples para compatibilidad
         _userName = _user!.username;
         _userRoleDescription = _user!.role;
 
-        final roles = userData['roles'] as List?;
-        if (roles != null && roles.isNotEmpty) {
-          _rawRole = roles[0]['name'];
-        }
-
-        // 3. Guardamos en persistencia (solo lo básico)
         await _secureStorage.write(key: 'user_name', value: _userName ?? "");
         await _secureStorage.write(
           key: 'user_role_desc',

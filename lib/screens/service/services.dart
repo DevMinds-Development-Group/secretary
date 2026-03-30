@@ -5,6 +5,8 @@ import '../../colors.dart';
 import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../services/auth_service.dart';
+import '../../utils/user_permissions.dart';
 import '../../widgets/action_buttons.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
@@ -109,6 +111,8 @@ class _ServicesState extends State<Services> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
+    final permissions = UserPermissions(context.read<AuthService>());
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(
@@ -142,15 +146,20 @@ class _ServicesState extends State<Services> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(isMobile),
+          _buildHeader(isMobile, UserPermissions(context.read<AuthService>())),
           const Divider(height: 32),
-          _buildListState(servicesProvider, services, isMobile),
+          _buildListState(
+            servicesProvider,
+            services,
+            isMobile,
+            UserPermissions(context.read<AuthService>()),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(bool isMobile) {
+  Widget _buildHeader(bool isMobile, UserPermissions permissions) {
     final title = const Text(
       'Servicios de la semana',
       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -168,12 +177,13 @@ class _ServicesState extends State<Services> {
             children: [
               title,
               const SizedBox(height: 16),
-              SizedBox(width: double.infinity, child: addButton),
+              if (permissions.canSeeMembers)
+                SizedBox(width: double.infinity, child: addButton),
             ],
           )
         : Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [title, addButton],
+            children: [title, if (permissions.canSeeMembers) addButton],
           );
   }
 
@@ -181,6 +191,7 @@ class _ServicesState extends State<Services> {
     ServiceProvider provider,
     List<ServiceModel> services,
     bool isMobile,
+    permissions,
   ) {
     if (provider.isLoading)
       return const Center(
@@ -299,15 +310,19 @@ class _ServicesState extends State<Services> {
                         ],
                       ),
                     ),
-                  if (isMobile)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: _actionButtons(context, service, provider),
-                    ),
+                  if (permissions.canSeeMembers) ...[
+                    if (isMobile)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: _actionButtons(context, service, provider),
+                      ),
+                  ],
                 ],
               ),
             ),
-            if (!isMobile) _actionButtons(context, service, provider),
+            if (permissions.canSeeMembers) ...[
+              if (!isMobile) _actionButtons(context, service, provider),
+            ],
           ],
         );
       },

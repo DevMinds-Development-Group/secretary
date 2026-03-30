@@ -47,14 +47,13 @@ class _CreateServiceState extends State<CreateService> {
     if (parsed != null && parsed >= 1 && parsed <= 7) {
       return parsed;
     }
-    // Si viene como String "LUNES", buscamos su ID en el mapa
+
     return weekDaysMap.entries
-        .firstWhere(
-          (entry) => entry.value == day.toString().toUpperCase(),
-          orElse: () => const MapEntry(1, 'LUNES'),
-        )
+        .firstWhere((entry) => entry.value == day.toString().toUpperCase())
         .key;
   }
+
+  bool get _isEditing => widget.serviceToEdit != null;
 
   @override
   void initState() {
@@ -220,7 +219,9 @@ class _CreateServiceState extends State<CreateService> {
     final serviceProvider = context.watch<ServiceProvider>();
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Crear servicio'),
+      appBar: CustomAppBar(
+        title: _isEditing ? 'Editar servicio' : 'Crear servicio',
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -265,7 +266,12 @@ class _CreateServiceState extends State<CreateService> {
                             ),
                             DropdownButtonFormField<String>(
                               value: type,
+                              isExpanded: true,
                               decoration: _inputDecoration(''),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                              ),
                               items: serviceTypes
                                   .map(
                                     (t) => DropdownMenuItem(
@@ -361,8 +367,8 @@ class _CreateServiceState extends State<CreateService> {
                               DropdownButtonFormField<int>(
                                 style: _headerStyle(),
                                 value: weekDay,
+                                isExpanded: true,
                                 decoration: _inputDecoration(''),
-
                                 items: weekDaysMap.entries.map((entry) {
                                   return DropdownMenuItem<int>(
                                     value: entry.key,
@@ -527,5 +533,9 @@ class DateFormat {
 }
 
 TextStyle _headerStyle() {
-  return TextStyle(fontSize: 15, fontWeight: FontWeight.w600);
+  return TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: Colors.black87,
+  );
 }

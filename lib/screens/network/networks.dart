@@ -6,6 +6,8 @@ import '../../models/network_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../services/auth_service.dart';
+import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
@@ -39,6 +41,7 @@ class _NetworksState extends State<Networks> {
     final networkProvider = context.watch<NetworkProvider>();
     final List<NetworkModel> networks = networkProvider.networks;
     final memberProvider = context.watch<MemberProvider>();
+    final permissions = UserPermissions(context.read<AuthService>());
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -124,7 +127,11 @@ class _NetworksState extends State<Networks> {
   }
 
   Widget _buildHeader(BuildContext context, bool isMobile) {
-    final headerItems = _buildHeaderItems(context, isMobile);
+    final headerItems = _buildHeaderItems(
+      context,
+      isMobile,
+      UserPermissions(context.read<AuthService>()),
+    );
 
     if (isMobile) {
       return Column(
@@ -137,7 +144,11 @@ class _NetworksState extends State<Networks> {
     return Row(children: headerItems);
   }
 
-  List<Widget> _buildHeaderItems(BuildContext context, bool isMobile) {
+  List<Widget> _buildHeaderItems(
+    BuildContext context,
+    bool isMobile,
+    UserPermissions permissions,
+  ) {
     return [
       isMobile
           ? SizedBox()
@@ -150,28 +161,29 @@ class _NetworksState extends State<Networks> {
             ),
 
       isMobile ? const SizedBox(height: 16) : const Spacer(),
-
-      Button(
-        text: 'Gestionar redes',
-        onPressed: () {
-          Navigator.push(context, createFadeRoute(const NetworkManage()));
-        },
-        size: Size(
-          isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
-          isMobile ? 50 : 45,
+      if (permissions.canCreateMember) ...[
+        Button(
+          text: 'Gestionar redes',
+          onPressed: () {
+            Navigator.push(context, createFadeRoute(const NetworkManage()));
+          },
+          size: Size(
+            isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
+            isMobile ? 50 : 45,
+          ),
         ),
-      ),
 
-      isMobile ? const SizedBox(height: 10) : const SizedBox(width: 15),
-      AddButton(
-        size: Size(
-          isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
-          isMobile ? 50 : 45,
+        isMobile ? const SizedBox(height: 10) : const SizedBox(width: 15),
+        AddButton(
+          size: Size(
+            isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
+            isMobile ? 50 : 45,
+          ),
+          onPressed: () {
+            Navigator.push(context, createFadeRoute(const CreateNetwork()));
+          },
         ),
-        onPressed: () {
-          Navigator.push(context, createFadeRoute(const CreateNetwork()));
-        },
-      ),
+      ],
     ];
   }
 

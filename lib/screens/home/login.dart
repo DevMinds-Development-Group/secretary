@@ -59,6 +59,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
       // Evita que el contenido se redimensione cuando el teclado aparece.
       resizeToAvoidBottomInset: true,

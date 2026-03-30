@@ -75,10 +75,16 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                 title: const Text(
                   "Anuncios",
                   style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w400,
+                    color: darkColor,
+                    fontWeight: FontWeight.bold,
                     fontSize: 28,
-                    shadows: [Shadow(offset: Offset(2, 2), blurRadius: 5)],
+                    shadows: [
+                      Shadow(
+                        //offset: Offset(2, 2),
+                        blurRadius: 30,
+                        color: cardColor,
+                      ),
+                    ],
                   ),
                 ),
                 background: Image.asset('assets/03.png', fit: BoxFit.cover),

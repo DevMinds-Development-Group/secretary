@@ -6,6 +6,8 @@ import '../../models/ministry_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../services/auth_service.dart';
+import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
@@ -39,6 +41,7 @@ class _MinistriesState extends State<Ministries> {
     final ministryProvider = context.watch<MinistryProvider>();
     final List<MinistryModel> ministries = ministryProvider.ministries;
     final memberProvider = context.watch<MemberProvider>();
+    final permissions = UserPermissions(context.read<AuthService>());
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -177,7 +180,11 @@ class _MinistriesState extends State<Ministries> {
   }
 
   Widget _buildHeader(BuildContext context, bool isMobile) {
-    final headerItems = _buildHeaderItems(context, isMobile);
+    final headerItems = _buildHeaderItems(
+      context,
+      isMobile,
+      UserPermissions(context.read<AuthService>()),
+    );
 
     if (isMobile) {
       return Column(
@@ -190,7 +197,11 @@ class _MinistriesState extends State<Ministries> {
     return Row(children: headerItems);
   }
 
-  List<Widget> _buildHeaderItems(BuildContext context, bool isMobile) {
+  List<Widget> _buildHeaderItems(
+    BuildContext context,
+    bool isMobile,
+    permissions,
+  ) {
     return [
       isMobile
           ? SizedBox()
@@ -202,27 +213,29 @@ class _MinistriesState extends State<Ministries> {
               ),
             ),
       isMobile ? const SizedBox(height: 16) : const Spacer(),
-      Button(
-        text: 'Gestionar ministerios',
-        onPressed: () {
-          Navigator.push(context, createFadeRoute(MinistryManage()));
-        },
-        size: Size(
-          isMobile ? MediaQuery.of(context).size.width * 0.9 : 230,
-          isMobile ? 50 : 45,
+      if (permissions.canSeeMembers) ...[
+        Button(
+          text: 'Gestionar ministerios',
+          onPressed: () {
+            Navigator.push(context, createFadeRoute(MinistryManage()));
+          },
+          size: Size(
+            isMobile ? MediaQuery.of(context).size.width * 0.9 : 230,
+            isMobile ? 50 : 45,
+          ),
         ),
-      ),
 
-      isMobile ? const SizedBox(height: 10) : const SizedBox(width: 15),
-      AddButton(
-        onPressed: () {
-          Navigator.push(context, createFadeRoute(CreateMinistry()));
-        },
-        size: Size(
-          isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
-          isMobile ? 50 : 45,
+        isMobile ? const SizedBox(height: 10) : const SizedBox(width: 15),
+        AddButton(
+          onPressed: () {
+            Navigator.push(context, createFadeRoute(CreateMinistry()));
+          },
+          size: Size(
+            isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
+            isMobile ? 50 : 45,
+          ),
         ),
-      ),
+      ],
     ];
   }
 }
