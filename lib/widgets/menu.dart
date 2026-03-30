@@ -213,15 +213,45 @@ class _MenuState extends State<Menu> {
           ListTile(
             leading: const Icon(Icons.exit_to_app, color: Colors.red),
             title: const Text('Cerrar Sesión'),
-            onTap: () async {
-              await authService.signOut();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/',
-                  (route) => false,
-                );
-              }
+            onTap: () {
+              // Mostramos el diálogo de confirmación
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('Confirmar', textAlign: TextAlign.center),
+                    content: const Text(
+                      '¿Estás seguro de que deseas cerrar sesión?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context), // Cancelar
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await authService.signOut();
+                          if (mounted) {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/',
+                              (route) => false,
+                            );
+                          }
+                        },
+                        child: const Text(
+                          'Cerrar Sesión',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
             },
           ),
         ],

@@ -6,7 +6,6 @@ import '../../colors.dart';
 import '../../models/ministry_model.dart';
 import '../../providers/ministry_provider.dart';
 import '../../routes/page_route_builder.dart';
-import '../../widgets/add_button.dart'; // Asegúrate de importar el AddButton
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
@@ -40,24 +39,7 @@ class _MinistryManageState extends State<MinistryManage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 20),
-            // Botón de agregar alineado como en Roles
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Align(
-                alignment: isMobile ? Alignment.center : Alignment.centerRight,
-                child: AddButton(
-                  size: isMobile
-                      ? Size(MediaQuery.of(context).size.width * 0.9, 50)
-                      : null,
-                  onPressed: () => Navigator.push(
-                    context,
-                    createFadeRoute(const CreateMinistry()),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: isMobile ? 20 : 5),
+            SizedBox(height: isMobile ? 20 : 40),
             Expanded(
               child: ministryProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())

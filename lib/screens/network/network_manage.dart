@@ -6,7 +6,6 @@ import '../../colors.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
-import '../../widgets/add_button.dart'; // Importante para el botón superior
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
@@ -41,23 +40,7 @@ class _NetworkManageState extends State<NetworkManage> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Align(
-                alignment: isMobile ? Alignment.center : Alignment.centerRight,
-                child: AddButton(
-                  size: isMobile
-                      ? Size(MediaQuery.of(context).size.width * 0.9, 50)
-                      : null,
-                  onPressed: () => Navigator.push(
-                    context,
-                    createFadeRoute(const CreateNetwork()),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(height: isMobile ? 20 : 5),
+            SizedBox(height: isMobile ? 20 : 40),
             Expanded(
               child: networkProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())

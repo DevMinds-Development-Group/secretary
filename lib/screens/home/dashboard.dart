@@ -103,7 +103,7 @@ class _DashboardState extends State<Dashboard> {
         Colors.blue,
       ),
       _buildMetricItem(
-        "Activos (30 días)",
+        "Activos",
         activeMembers.toString(),
         Icons.person,
         Colors.green,
@@ -245,7 +245,7 @@ class _DashboardState extends State<Dashboard> {
                       Expanded(
                         flex: 2,
                         child: _buildSection(
-                          "Actividad (30 días)",
+                          "Actividad de los miembros",
                           _buildPieChart(activeMembers, inactiveMembers),
                         ),
                       ),
@@ -261,7 +261,7 @@ class _DashboardState extends State<Dashboard> {
                   )
                 else ...[
                   _buildSection(
-                    "Actividad (30 días)",
+                    "Actividad de los miembros",
                     _buildPieChart(activeMembers, inactiveMembers),
                   ),
                   const SizedBox(height: 20),
