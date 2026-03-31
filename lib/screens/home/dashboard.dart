@@ -213,7 +213,6 @@ class _DashboardState extends State<Dashboard> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildNetwork(networkProvider, isMobile),
-
                           const SizedBox(height: 20),
                           _buildMinistry(ministryProvider, isMobile),
                           const SizedBox(height: 20),
@@ -231,13 +230,13 @@ class _DashboardState extends State<Dashboard> {
                         ],
                       ),
 
-                const SizedBox(height: 20),
-                _buildSection(
-                  "Comportamiento de la Membresía",
-                  _buildGrowthChart(growthSpots, sortedMembers, isMobile),
-                ),
-                const SizedBox(height: 25),
+                if (!isMobile) SizedBox(height: 20),
 
+                // _buildSection(
+                //   "Comportamiento de la Membresía",
+                //   _buildGrowthChart(growthSpots, sortedMembers, isMobile),
+                // ),
+                // const SizedBox(height: 25),
                 if (!isMobile)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

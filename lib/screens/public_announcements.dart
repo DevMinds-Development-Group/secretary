@@ -69,7 +69,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
               elevation: 20,
               forceElevated: true,
               shadowColor: Colors.black.withOpacity(0.8),
-              backgroundColor: primaryColor2,
+              backgroundColor: cardColor,
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: EdgeInsets.only(bottom: isMobile ? 16 : 10),
                 centerTitle: true,

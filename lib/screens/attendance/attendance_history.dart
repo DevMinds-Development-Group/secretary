@@ -14,7 +14,6 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/attendance_model.dart';
 import '../../providers/attendance_provider.dart';
-import '../../providers/member_provider.dart';
 import '../../utils/download_stub.dart'
     if (dart.library.html) '../../utils/download_web.dart';
 import '../../widgets/action_buttons.dart';
@@ -22,6 +21,7 @@ import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/date.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/pagination.dart';
 import '../../widgets/search_text_field.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import 'attendance.dart';
@@ -46,7 +46,10 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
         context,
         listen: false,
       ).fetchAttendanceHistory();
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<AttendanceProvider>(
+        context,
+        listen: false,
+      ).fetchAttendanceHistory();
     });
   }
 
@@ -84,7 +87,6 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
           "asistencia_$recordId.pdf",
         );
       } else {
-        // LÓGICA PARA MÓVIL (Android)
         final directory = await getTemporaryDirectory();
         final filePath = '${directory.path}/asistencia_$recordId.pdf';
         final file = File(filePath);
@@ -113,9 +115,9 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-    final attendanceProvider = Provider.of<AttendanceProvider>(context);
+    final provider = Provider.of<AttendanceProvider>(context);
 
-    final records = attendanceProvider.recordsList.where((r) {
+    final records = provider.recordsList.where((r) {
       final matchesSearch =
           (r.definitionName?.toLowerCase().contains(
                 _searchQuery.toLowerCase(),
@@ -137,27 +139,44 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: Row(
-        children: [
-          if (!isMobile) Menu(),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Row(
                 children: [
-                  _buildHeader(isMobile),
-                  const SizedBox(height: 20),
+                  if (!isMobile) Menu(),
                   Expanded(
-                    child: _buildRecordsList(
-                      records,
-                      attendanceProvider.isLoading,
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        children: [
+                          _buildHeader(isMobile),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: _buildRecordsList(
+                              records,
+                              provider.isLoading,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            if (provider.totalPages > 0 && !provider.isLoading)
+              Pagination(
+                currentPage: provider.currentPage,
+                totalPages: provider.totalPages,
+                itemsPerPage: provider.pageSize,
+                onPageChanged: (page) => provider.onPageChanged(page),
+                onItemsPerPageChanged: (size) =>
+                    provider.onItemsPerPageChanged(size),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -10,33 +10,46 @@ class AttendanceProvider with ChangeNotifier {
   List<AttendanceModel> _recordsList = [];
   bool _isLoading = false;
   String? _error;
+  int _currentPage = 0;
+  int _totalPages = 0;
+  int _pageSize = 10;
 
   bool get isLoading => _isLoading;
   String? get error => _error;
   List<AttendanceModel> get recordsList => _recordsList;
+  int get currentPage => _currentPage;
+  int get totalPages => _totalPages;
+  int get pageSize => _pageSize;
 
   Map<String, AttendanceModel> _records = {};
   Map<String, AttendanceModel> get records => _records;
 
-  // --- MÉTODO PARA CARGAR EL HISTORIAL ---
-  Future<void> fetchAttendanceHistory() async {
+  Future<void> fetchAttendanceHistory({int page = 0, int? size}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await _apiClient.dio.get('/event-attendances');
+      final response = await _apiClient.dio.get(
+        '/event-attendances',
+        queryParameters: {
+          'pageNo': page,
+          'pageSize': _pageSize,
+          'sortBy': 'date',
+        },
+      );
 
       if (response.statusCode == 200) {
-        // 1. Extraemos la lista desde la propiedad 'content' del JSON
         final List<dynamic> rawData = response.data['content'] ?? [];
 
-        // 2. Convertimos el JSON a objetos AttendanceModel
+        _currentPage = response.data['number'];
+        _totalPages = response.data['totalPages'];
+        _pageSize = response.data['size'] ?? 10;
+
         _recordsList = rawData
             .map((item) => AttendanceModel.fromJson(item))
             .toList();
 
-        // 3. Ordenamos por fecha (más reciente primero)
         _recordsList.sort((a, b) => b.date.compareTo(a.date));
 
         print(
@@ -52,7 +65,27 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // --- MÉTODO PARA GUARDAR ASISTENCIA ---
+  Future<void> onPageChanged(int newPage) async {
+    await fetchAttendanceHistory(page: newPage);
+  }
+
+  Future<void> onItemsPerPageChanged(int newSize) async {
+    _pageSize = newSize;
+    await fetchAttendanceHistory(page: 0);
+  }
+
+  Future<void> nextPage() async {
+    if (_currentPage < _totalPages - 1) {
+      await fetchAttendanceHistory(page: _currentPage + 1);
+    }
+  }
+
+  Future<void> previousPage() async {
+    if (_currentPage > 0) {
+      await fetchAttendanceHistory(page: _currentPage - 1);
+    }
+  }
+
   Future<bool> saveRecord(AttendanceModel record) async {
     _isLoading = true;
     _error = null;
@@ -81,9 +114,6 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // --- MÉTODOS DE APOYO ---
-
-  // Busca un registro por fecha en la lista local
   AttendanceModel? getRecordForDate(DateTime date) {
     try {
       return _recordsList.firstWhere(
@@ -97,34 +127,27 @@ class AttendanceProvider with ChangeNotifier {
     }
   }
 
-  // CAMBIA ESTO:
-  // void deleteRecord(String id) { ... }
-
-  // POR ESTO:
   Future<bool> deleteRecord(String id) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // 1. Llamada al backend (ajusta el endpoint si es necesario)
       final response = await _apiClient.dio.delete('/event-attendances/$id');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        // 2. Si el servidor borró con éxito, eliminamos de la lista local
         _recordsList.removeWhere((record) => record.id == id);
-        return true; // <--- DEVOLVEMOS TRUE
+        return true;
       }
       return false;
     } catch (e) {
       print("DEBUG ERROR DELETE: $e");
-      return false; // <--- DEVOLVEMOS FALSE SI HAY ERROR
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Buscador por ID o por nombre de evento (si el modelo tiene definitionName)
   List<AttendanceModel> searchRecords(String query) {
     if (query.isEmpty) return _recordsList;
     return _recordsList.where((record) {

@@ -85,10 +85,9 @@ class _RolesState extends State<Roles> {
     List<Role> roles,
   ) {
     return Padding(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.all(0),
       child: isMobile
           ? ClipRRect(
-              // Solo envuelve al móvil si lo necesitas
               borderRadius: BorderRadius.circular(12),
               child: _buildMobileList(roles),
             )

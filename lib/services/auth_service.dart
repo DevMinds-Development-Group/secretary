@@ -150,11 +150,21 @@ class AuthService with ChangeNotifier {
         final token = response.data['jwtToken'];
         await _saveToken(token);
         await fetchUserProfile(username);
-        return null;
+        return null; // Éxito
       }
-      return 'Error de credenciales';
+      return 'Error desconocido';
+    } on DioException catch (e) {
+      // Si el servidor responde con un error (como 401)
+      if (e.response != null) {
+        if (e.response?.statusCode == 401 || e.response?.statusCode == 403) {
+          return 'CREDENTIALS_ERROR'; // Clave para la UI
+        }
+        return 'SERVER_ERROR';
+      }
+      // Si es un error de red (timeout, sin internet)
+      return 'NETWORK_ERROR';
     } catch (e) {
-      return 'Error de conexión';
+      return 'UNKNOWN_ERROR';
     }
   }
 
@@ -169,7 +179,6 @@ class AuthService with ChangeNotifier {
         _userRoleDescription = savedRoleDesc;
         _rawRole = savedRawRole;
 
-        // Intentamos recargar el perfil completo desde la API para tener el objeto _user
         fetchUserProfile(savedName);
 
         notifyListeners();

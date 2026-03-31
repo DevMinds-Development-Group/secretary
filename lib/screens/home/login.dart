@@ -43,8 +43,22 @@ class _LoginState extends State<Login> {
     if (mounted) {
       setState(() => _isLoading = false);
       if (error != null) {
+        String message;
+
+        // Mapeo de errores a mensajes amigables
+        switch (error) {
+          case 'CREDENTIALS_ERROR':
+            message = 'Usuario o contraseña incorrectos';
+            break;
+          case 'NETWORK_ERROR':
+            message = 'No hay conexión con el servidor';
+            break;
+          default:
+            message = 'Error al intentar iniciar sesión';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error), backgroundColor: negativeColor),
+          SnackBar(content: Text(message), backgroundColor: negativeColor),
         );
       } else {
         Navigator.pushNamedAndRemoveUntil(
@@ -61,7 +75,6 @@ class _LoginState extends State<Login> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
     return Scaffold(
-      // Evita que el contenido se redimensione cuando el teclado aparece.
       resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: Container(

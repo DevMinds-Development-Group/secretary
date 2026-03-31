@@ -133,6 +133,7 @@ class _ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
+    bool isMobile = MediaQuery.of(context).size.width < 700;
     final authService = context.watch<AuthService>();
     final user = authService.user;
 
@@ -148,7 +149,7 @@ class _ProfileState extends State<Profile> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      _buildProfileHeader(user),
+                      _buildProfileHeader(user, isMobile),
                       const SizedBox(height: 20.0),
                       _buildContactInfoCard(user),
                       const SizedBox(height: 15.0),
@@ -161,16 +162,23 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  Widget _buildProfileHeader(user) {
+  Widget _buildProfileHeader(user, isMobile) {
     final member = user.member;
     return Column(
       children: [
-        const CircleAvatar(
-          radius: 55,
-          backgroundColor: Colors.white,
-          child: CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage('assets/perfil.png'),
+        SizedBox(height: 20),
+        CircleAvatar(
+          maxRadius: isMobile ? 30 : 40,
+          backgroundColor: negativeColor.withOpacity(0.1),
+          child: Text(
+            member.name.isNotEmpty
+                ? member.name.substring(0, 1).toUpperCase()
+                : '?',
+            style: TextStyle(
+              fontSize: isMobile ? 28 : 32,
+              color: negativeColor.withOpacity(0.9),
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 15.0),

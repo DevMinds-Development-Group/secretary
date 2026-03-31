@@ -13,8 +13,8 @@ class LogProvider with ChangeNotifier {
   int _currentPage = 0;
   int _totalPages = 0;
   int _pageSize = 10;
-  bool _isLoading = false; // Para la carga inicial o refresco
-  bool _isLoadingMore = false; // Para cargar las páginas siguientes
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _error;
 
   List<Log> get logs => _logs;
@@ -62,11 +62,9 @@ class LogProvider with ChangeNotifier {
 
   Future<void> onItemsPerPageChanged(int newSize) async {
     _pageSize = newSize;
-    // Volvemos a la página 0 para evitar inconsistencias.
     await fetchLogs(page: 0);
   }
 
-  // Métodos para navegación
   Future<void> nextPage() async {
     if (_currentPage < _totalPages - 1) {
       await fetchLogs(page: _currentPage + 1);

@@ -10,6 +10,7 @@ import '../widgets/add_button.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/custom_card_container.dart';
 import '../widgets/menu.dart';
+import '../widgets/pagination.dart';
 import '../widgets/search_text_field.dart';
 import '../widgets/showDeleteConfirmationDialog.dart';
 import 'create/create_member.dart';
@@ -25,14 +26,12 @@ class _MembersState extends State<Members> {
   @override
   void initState() {
     super.initState();
-    // Cargamos los miembros al entrar
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MemberProvider>(context, listen: false).fetchMembers();
     });
   }
-  // lib/screens/admin/members.dart
 
-  // 1. Función que ejecuta la eliminación real
   void _handleDelete(BuildContext context, Member member) async {
     final memberProvider = Provider.of<MemberProvider>(context, listen: false);
 
@@ -76,26 +75,21 @@ class _MembersState extends State<Members> {
         showBackButton: true,
       ),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: isMobile
-          ? _buildMembersContent(
-              context,
-              isMobile,
-              memberProvider,
-              filteredMembers,
-            )
-          : Row(
-              children: [
-                Menu(),
-                Expanded(
-                  child: _buildMembersContent(
-                    context,
-                    isMobile,
-                    memberProvider,
-                    filteredMembers,
-                  ),
-                ),
-              ],
+      body: SafeArea(
+        child: Row(
+          children: [
+            if (!isMobile) Menu(),
+            Expanded(
+              child: _buildMembersContent(
+                context,
+                isMobile,
+                memberProvider,
+                filteredMembers,
+              ),
             ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -121,6 +115,15 @@ class _MembersState extends State<Members> {
         Expanded(
           child: _buildMemberList(context, isMobile, members),
         ), // Pasa la lista filtrada
+        if (provider.totalPages > 0 && !provider.isLoading)
+          Pagination(
+            currentPage: provider.currentPage,
+            totalPages: provider.totalPages,
+            itemsPerPage: provider.pageSize,
+            onPageChanged: (page) => provider.onPageChanged(page),
+            onItemsPerPageChanged: (size) =>
+                provider.onItemsPerPageChanged(size),
+          ),
       ],
     );
   }

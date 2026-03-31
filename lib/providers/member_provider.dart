@@ -13,10 +13,16 @@ class MemberProvider with ChangeNotifier {
   String? _error;
   String _searchQuery = '';
 
-  // Getters
+  int _currentPage = 0;
+  int _totalPages = 0;
+  int _pageSize = 10;
+
   List<Member> get members => _members;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get currentPage => _currentPage;
+  int get totalPages => _totalPages;
+  int get pageSize => _pageSize;
 
   List<Member> getMembersByIds(List<String> ids) {
     return _members.where((member) => ids.contains(member.id)).toList();
@@ -33,30 +39,59 @@ class MemberProvider with ChangeNotifier {
     }).toList();
   }
 
-  Future<void> fetchMembers({bool force = false}) async {
-    if (_isLoading) return;
-
+  Future<void> fetchMembers({
+    bool force = false,
+    int page = 0,
+    int size = 10,
+  }) async {
+    _currentPage = page;
+    _pageSize = size;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final response = await _apiClient.dio.get('/members');
-
-      // Log para saber qué está llegando exactamente
-      print(
-        "DEBUG: Respuesta de /members recibida. Status: ${response.statusCode}",
+      final response = await _apiClient.dio.get(
+        '/members',
+        queryParameters: {
+          'pageNo': page,
+          'pageSize': _pageSize,
+          'sortType': 'asc',
+        },
       );
 
-      final List<dynamic> data = response.data is List
-          ? response.data
-          : (response.data['content'] ?? []);
+      final List<dynamic> data = response.data['content'] ?? [];
       _members = data.map((m) => Member.fromJson(m)).toList();
+
+      _currentPage = response.data['number'];
+      _totalPages = response.data['totalPages'];
+      _pageSize = response.data['size'] ?? 10;
     } catch (e) {
       _error = 'Error al cargar miembros: ${e}';
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> onPageChanged(int newPage) async {
+    await fetchMembers(page: newPage);
+  }
+
+  Future<void> onItemsPerPageChanged(int newSize) async {
+    _pageSize = newSize;
+    await fetchMembers(page: 0);
+  }
+
+  Future<void> nextPage() async {
+    if (_currentPage < _totalPages - 1) {
+      await fetchMembers(page: _currentPage + 1);
+    }
+  }
+
+  Future<void> previousPage() async {
+    if (_currentPage > 0) {
+      await fetchMembers(page: _currentPage - 1);
     }
   }
 

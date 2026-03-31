@@ -46,7 +46,6 @@ class _UsersState extends State<Users> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Botón de agregar siempre visible arriba
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Align(

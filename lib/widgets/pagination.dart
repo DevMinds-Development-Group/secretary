@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class Pagination extends StatefulWidget {
-  final int currentPage; // Recibe la página actual (0-indexed del backend)
-  final int totalPages; // Recibe el total de páginas
-  final int itemsPerPage; // Recibe el tamaño de página actual
-  final List<int> availableItemsPerPage; // Recibe las opciones para el dropdown
-  final ValueChanged<int> onPageChanged; // Notifica cambio de página
-  final ValueChanged<int>
-  onItemsPerPageChanged; // Notifica cambio de tamaño de página
-
+  final int currentPage;
+  final int totalPages;
+  final int itemsPerPage;
+  final List<int> availableItemsPerPage;
+  final ValueChanged<int> onPageChanged;
+  final ValueChanged<int> onItemsPerPageChanged;
   const Pagination({
     Key? key,
     required this.currentPage,

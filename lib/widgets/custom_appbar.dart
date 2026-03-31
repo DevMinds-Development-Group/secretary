@@ -63,14 +63,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           isMobile
-              ? SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.4,
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isMobile ? 16 : 18,
-                    ),
+              ? Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMobile ? 16 : 18,
                   ),
                 )
               : Text(

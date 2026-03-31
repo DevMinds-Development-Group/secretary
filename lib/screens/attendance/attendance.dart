@@ -39,7 +39,10 @@ class _AttendanceState extends State<Attendance> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ServiceProvider>(context, listen: false).fetchServices();
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
       Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
     });
 
