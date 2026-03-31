@@ -1,3 +1,5 @@
+import kotlin.io.path.exists
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -36,6 +38,15 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val versionName = variant.versionName
+            // Esto cambiará el nombre a Koinos-v1.0.x.apk
+            output.outputFileName = "Koinos-v${versionName}.apk"
         }
     }
 }

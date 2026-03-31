@@ -71,19 +71,17 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
               shadowColor: Colors.black.withOpacity(0.8),
               backgroundColor: primaryColor2,
               flexibleSpace: FlexibleSpaceBar(
+                titlePadding: EdgeInsets.only(bottom: isMobile ? 16 : 10),
                 centerTitle: true,
-                title: const Text(
+                title: Text(
                   "Anuncios",
                   style: TextStyle(
-                    color: darkColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 28,
+                    color: cardColor,
+                    fontWeight: isMobile ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 30,
+
                     shadows: [
-                      Shadow(
-                        //offset: Offset(2, 2),
-                        blurRadius: 30,
-                        color: cardColor,
-                      ),
+                      Shadow(blurRadius: isMobile ? 20 : 30, color: darkColor),
                     ],
                   ),
                 ),
