@@ -303,27 +303,19 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
             leading: isMobile
                 ? null
                 : Icon(Icons.assignment_turned_in, color: Colors.green),
-            title: Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  record.definitionName ?? 'Evento sin nombre',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+            title: isMobile
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [_buildName(record), _buildNetwork(record)],
+                  )
+                : Row(
+                    children: [
+                      _buildName(record),
+                      const Text(' | ', style: TextStyle(fontSize: 16)),
+                      _buildNetwork(record),
+                    ],
                   ),
-                ),
-                if (!isMobile)
-                  const Text(' | ', style: TextStyle(fontSize: 16)),
-                Text(
-                  record.networkName ?? 'Sin Red',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -367,6 +359,20 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
           );
         },
       ),
+    );
+  }
+
+  Text _buildNetwork(AttendanceModel record) {
+    return Text(
+      record.networkName ?? 'Sin Red',
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+    );
+  }
+
+  Text _buildName(AttendanceModel record) {
+    return Text(
+      record.definitionName ?? 'Evento sin nombre',
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
     );
   }
 

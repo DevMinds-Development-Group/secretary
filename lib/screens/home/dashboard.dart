@@ -47,7 +47,7 @@ class _DashboardState extends State<Dashboard> {
       // Usamos microtask para separar la carga del ciclo de renderizado inicial
       Future.microtask(() async {
         await Future.wait([
-          context.read<MemberProvider>().fetchMembers(),
+          context.read<MemberProvider>().fetchMembers(size: 1000),
           context.read<ServiceProvider>().fetchServices(),
           context.read<AttendanceProvider>().fetchAttendanceHistory(),
           context.read<NetworkProvider>().fetchNetworks(),
