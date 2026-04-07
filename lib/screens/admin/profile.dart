@@ -163,7 +163,18 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _buildProfileHeader(user, isMobile) {
-    final member = user.member;
+    final String? memberName = user.member?.name;
+    final String? memberLastName = user.member?.lastName;
+    final String username = user.username ?? 'Usuario';
+
+    // Determinamos qué inicial mostrar
+    String initial = '?';
+    if (memberName != null && memberName.isNotEmpty) {
+      initial = memberName.substring(0, 1).toUpperCase();
+    } else if (username.isNotEmpty) {
+      initial = username.substring(0, 1).toUpperCase();
+    }
+
     return Column(
       children: [
         SizedBox(height: 20),
@@ -171,9 +182,7 @@ class _ProfileState extends State<Profile> {
           maxRadius: isMobile ? 30 : 40,
           backgroundColor: negativeColor.withOpacity(0.1),
           child: Text(
-            member.name.isNotEmpty
-                ? member.name.substring(0, 1).toUpperCase()
-                : '?',
+            initial,
             style: TextStyle(
               fontSize: isMobile ? 28 : 32,
               color: negativeColor.withOpacity(0.9),
@@ -183,7 +192,9 @@ class _ProfileState extends State<Profile> {
         ),
         const SizedBox(height: 15.0),
         Text(
-          member != null ? "${member.name} ${member.lastName}" : 'Usuario',
+          (memberName != null && memberName.isNotEmpty)
+              ? "$memberName ${memberLastName ?? ''}"
+              : username,
           style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
           textAlign: TextAlign.center,
         ),

@@ -160,6 +160,11 @@ class _PaginationState extends State<Pagination> {
   }
 
   Widget _buildPerPageDropdown() {
+    final int safeValue =
+        widget.availableItemsPerPage.contains(widget.itemsPerPage)
+        ? widget.itemsPerPage
+        : widget.availableItemsPerPage.first;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
@@ -169,7 +174,7 @@ class _PaginationState extends State<Pagination> {
         ),
         const SizedBox(width: 10),
         DropdownButton<int>(
-          value: widget.itemsPerPage,
+          value: safeValue,
           onChanged: (value) {
             if (value != null) {
               widget.onItemsPerPageChanged(value);

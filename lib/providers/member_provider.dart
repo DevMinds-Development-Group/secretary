@@ -39,13 +39,9 @@ class MemberProvider with ChangeNotifier {
     }).toList();
   }
 
-  Future<void> fetchMembers({
-    bool force = false,
-    int page = 0,
-    int size = 10,
-  }) async {
-    _currentPage = page;
-    _pageSize = size;
+  Future<void> fetchMembers({bool force = false, int? page, int? size}) async {
+    _currentPage = page ?? _currentPage;
+    _pageSize = size ?? _pageSize;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -54,7 +50,7 @@ class MemberProvider with ChangeNotifier {
       final response = await _apiClient.dio.get(
         '/members',
         queryParameters: {
-          'pageNo': page,
+          'pageNo': _currentPage,
           'pageSize': _pageSize,
           'sortType': 'asc',
         },
@@ -65,7 +61,9 @@ class MemberProvider with ChangeNotifier {
 
       _currentPage = response.data['number'];
       _totalPages = response.data['totalPages'];
-      _pageSize = response.data['size'] ?? 10;
+      if (response.data['size'] != null) {
+        _pageSize = response.data['size'];
+      }
     } catch (e) {
       _error = 'Error al cargar miembros: ${e}';
     } finally {
@@ -79,8 +77,7 @@ class MemberProvider with ChangeNotifier {
   }
 
   Future<void> onItemsPerPageChanged(int newSize) async {
-    _pageSize = newSize;
-    await fetchMembers(page: 0);
+    await fetchMembers(page: 0, size: newSize);
   }
 
   Future<void> nextPage() async {
