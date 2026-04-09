@@ -74,53 +74,48 @@ class _MinistryMembersState extends State<MinistryMembers> {
           ? const Center(child: CircularProgressIndicator()) // Mostrar carga
           : SafeArea(
               child: Center(
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 1500),
-                  child: Column(
-                    children: [
-                      SizedBox(height: isMobile ? 5 : 20),
-                      if (isMobile)
-                        _buildMinistryHeader(currentMinistry, isMobile),
-                      if (permissions.canSeeMembers)
-                        Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: isMobile ? 16.0 : 0,
-                          ),
-                          child: Align(
-                            alignment: isMobile
-                                ? Alignment.center
-                                : Alignment.centerRight,
-                            child: AddButton(
-                              size: isMobile
-                                  ? Size(
-                                      MediaQuery.of(context).size.width * 0.9,
-                                      50,
-                                    )
-                                  : null,
-                              onPressed: () => _showAddMemberDialog(
-                                context,
-                                allMembers,
-                                isMobile,
-                                currentMinistry,
-                              ),
+                child: Column(
+                  children: [
+                    SizedBox(height: isMobile ? 5 : 20),
+                    if (isMobile)
+                      _buildMinistryHeader(currentMinistry, isMobile),
+                    if (permissions.canSeeMembers)
+                      Padding(
+                        padding: const EdgeInsets.all(0),
+                        child: Align(
+                          alignment: isMobile
+                              ? Alignment.center
+                              : Alignment.centerRight,
+                          child: AddButton(
+                            size: isMobile
+                                ? Size(
+                                    MediaQuery.of(context).size.width * 0.9,
+                                    50,
+                                  )
+                                : null,
+                            onPressed: () => _showAddMemberDialog(
+                              context,
+                              allMembers,
+                              isMobile,
+                              currentMinistry,
                             ),
                           ),
                         ),
-                      if (!isMobile)
-                        _buildMinistryHeader(currentMinistry, isMobile),
-                      if (isMobile) const SizedBox(height: 15),
-                      Expanded(
-                        child: membersInGroup.isEmpty
-                            ? _buildEmptyState(isMobile)
-                            : _buildMemberList(
-                                membersInGroup,
-                                isMobile,
-                                currentMinistry,
-                                permissions,
-                              ),
                       ),
-                    ],
-                  ),
+                    if (!isMobile)
+                      _buildMinistryHeader(currentMinistry, isMobile),
+                    if (isMobile) const SizedBox(height: 15),
+                    Expanded(
+                      child: membersInGroup.isEmpty
+                          ? _buildEmptyState(isMobile)
+                          : _buildMemberList(
+                              membersInGroup,
+                              isMobile,
+                              currentMinistry,
+                              permissions,
+                            ),
+                    ),
+                  ],
                 ),
               ),
             ),

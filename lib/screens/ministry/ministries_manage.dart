@@ -39,7 +39,7 @@ class _MinistryManageState extends State<MinistryManage> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: isMobile ? 20 : 40),
+            SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: ministryProvider.isLoading
@@ -51,7 +51,7 @@ class _MinistryManageState extends State<MinistryManage> {
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
+                        constraints: const BoxConstraints(),
                         child: _buildMainContent(context, isMobile, ministries),
                       ),
                     ),
@@ -90,24 +90,19 @@ class _MinistryManageState extends State<MinistryManage> {
                   Text(ministry.name, style: const TextStyle(fontSize: 14)),
                 ),
                 DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 350),
-                    child: Text(
-                      ministry.description,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                  Text(
+                    ministry.description,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
+
                 DataCell(
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 250),
-                    child: Text(
-                      ministry.leaders.map((l) => l.name).join(', '),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                  Text(
+                    ministry.leaders.map((l) => l.name).join(', '),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
 

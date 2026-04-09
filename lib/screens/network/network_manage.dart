@@ -41,15 +41,17 @@ class _NetworkManageState extends State<NetworkManage> {
         child: Column(
           children: [
             SizedBox(height: isMobile ? 20 : 40),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            Expanded(
               child: networkProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : networks.isEmpty
                   ? const Center(child: Text('No hay redes para mostrar.'))
                   : Align(
                       alignment: Alignment.topCenter,
-                      child: _buildMainContent(context, isMobile, networks),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(),
+                        child: _buildMainContent(context, isMobile, networks),
+                      ),
                     ),
             ),
           ],
@@ -64,9 +66,7 @@ class _NetworkManageState extends State<NetworkManage> {
     List<NetworkModel> networks,
   ) {
     return Padding(
-      padding: isMobile
-          ? EdgeInsets.only(left: 20, bottom: 15, right: 20)
-          : EdgeInsets.all(20),
+      padding: const EdgeInsets.all(0),
       child: isMobile
           ? ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -85,25 +85,19 @@ class _NetworkManageState extends State<NetworkManage> {
                     Text(network.name, style: const TextStyle(fontSize: 14)),
                   ),
                   DataCell(
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 350),
-                      child: Text(
-                        network.mission ?? 'N/A',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 14),
-                        maxLines: 1,
-                      ),
+                    Text(
+                      network.mission ?? 'N/A',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
+
                   DataCell(
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 250),
-                      child: Text(
-                        leaderNames.isEmpty ? "Sin asignar" : leaderNames,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: const TextStyle(fontSize: 14),
-                      ),
+                    Text(
+                      leaderNames.isEmpty ? "Sin asignar" : leaderNames,
+                      overflow: TextOverflow.ellipsis,
+
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
 

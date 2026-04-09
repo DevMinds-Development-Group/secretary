@@ -19,6 +19,7 @@ class UserPermissions {
     'ROLE_ADMIN',
     'ROLE_APOSTOL',
     'ROLE_PASTOR',
+    'ROLE_LIDER',
     'ROLE_SECRETARIO',
   ].contains(role);
 
