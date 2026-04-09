@@ -30,7 +30,10 @@ class _NetworksState extends State<Networks> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
     });
   }
 

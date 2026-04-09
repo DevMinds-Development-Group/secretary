@@ -72,6 +72,10 @@ class MemberProvider with ChangeNotifier {
     }
   }
 
+  Future<void> fetchAllMembersForGroups() async {
+    await fetchMembers(page: 0, size: 1000);
+  }
+
   Future<void> onPageChanged(int newPage) async {
     await fetchMembers(page: newPage);
   }

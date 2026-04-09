@@ -31,7 +31,10 @@ class _MinistryMembersState extends State<MinistryMembers> {
       final provider = Provider.of<MinistryProvider>(context, listen: false);
       provider.fetchMinistryDetails(widget.ministry.id);
 
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
     });
   }
 
