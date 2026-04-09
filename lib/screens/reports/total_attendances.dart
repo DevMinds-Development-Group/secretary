@@ -85,7 +85,11 @@ class _TotalAttendancesState extends State<TotalAttendances> {
                   const SizedBox(height: 20),
                   Expanded(
                     child: attendanceProvider.isLoading
-                        ? const Center(child: CircularProgressIndicator())
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                            ),
+                          )
                         : _buildSimpleList(filteredList),
                   ),
                 ],

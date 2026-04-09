@@ -71,7 +71,9 @@ class _MinistryMembersState extends State<MinistryMembers> {
             : 'Miembros de ${currentMinistry.name}',
       ),
       body: ministryProvider.isLoading
-          ? const Center(child: CircularProgressIndicator()) // Mostrar carga
+          ? const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            ) // Mostrar carga
           : SafeArea(
               child: Center(
                 child: Column(

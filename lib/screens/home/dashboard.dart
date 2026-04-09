@@ -33,7 +33,9 @@ class _DashboardState extends State<Dashboard> {
     final summary = dashboardProvider.summary;
 
     if (dashboardProvider.isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: primaryColor)),
+      );
     }
 
     if (summary == null) {

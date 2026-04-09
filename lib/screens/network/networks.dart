@@ -56,7 +56,9 @@ class _NetworksState extends State<Networks> {
           if (!isMobile) Menu(),
           Expanded(
             child: networkProvider.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  )
                 : Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(

@@ -12,11 +12,20 @@ class UserProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  int _currentPage = 0;
+  int _totalPages = 0;
+  int _pageSize = 10;
+
   List<User> get users => _users;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  int get currentPage => _currentPage;
+  int get totalPages => _totalPages;
+  int get pageSize => _pageSize;
 
-  Future<void> fetchUsers() async {
+  Future<void> fetchUsers({int? page, int? size}) async {
+    _currentPage = page ?? _currentPage;
+    _pageSize = size ?? _pageSize;
     if (_isLoading) return;
 
     _isLoading = true;
@@ -24,9 +33,15 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiClient.dio.get('/users');
-      final List<dynamic> userData = response.data['content'];
-      _users = userData.map((data) => User.fromJson(data)).toList();
+      final response = await _apiClient.dio.get(
+        '/users',
+        queryParameters: {'pageNo': _currentPage, 'pageSize': _pageSize},
+      );
+
+      final List<dynamic> data = response.data['content'] ?? [];
+      _users = data.map((u) => User.fromJson(u)).toList();
+      _totalPages = response.data['totalPages'] ?? 0;
+      _currentPage = response.data['number'] ?? 0;
     } on DioException catch (e) {
       _error = 'Error al cargar usuarios: ${e.message}';
       print(_error);
@@ -34,6 +49,16 @@ class UserProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> onPageChanged(int newPage) async {
+    await fetchUsers(page: newPage);
+  }
+
+  Future<void> onItemsPerPageChanged(int newSize) async {
+    _pageSize = newSize;
+    _currentPage = 0; // Reiniciar a la primera página con el nuevo tamaño
+    await fetchUsers(page: 0, size: newSize);
   }
 
   Future<bool> addUser({

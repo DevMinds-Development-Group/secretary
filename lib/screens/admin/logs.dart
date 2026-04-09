@@ -62,7 +62,11 @@ class _LogsState extends State<Logs> {
                   SizedBox(height: 30),
                   Expanded(
                     child: logProvider.isLoading
-                        ? const Center(child: CircularProgressIndicator())
+                        ? const Center(
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                            ),
+                          )
                         : logProvider.logs.isEmpty
                         ? const Center(
                             child: Text(

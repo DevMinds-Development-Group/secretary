@@ -58,7 +58,9 @@ class _RolesState extends State<Roles> {
             SizedBox(height: isMobile ? 20 : 5),
             Expanded(
               child: roleProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
                   : roleProvider.roles.isEmpty
                   ? const Center(child: Text('No hay roles para mostrar.'))
                   : Align(

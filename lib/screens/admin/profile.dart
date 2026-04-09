@@ -141,7 +141,7 @@ class _ProfileState extends State<Profile> {
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Perfil'),
       body: user == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : SingleChildScrollView(
               child: Center(
                 child: Container(

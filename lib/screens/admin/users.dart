@@ -11,6 +11,7 @@ import '../../routes/page_route_builder.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
+import '../../widgets/pagination.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_user.dart';
 
@@ -26,9 +27,12 @@ class _UsersState extends State<Users> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<UserProvider>(context, listen: false).fetchUsers();
+      Provider.of<UserProvider>(context, listen: false).fetchUsers(page: 0);
       Provider.of<RoleProvider>(context, listen: false).fetchRoles();
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(size: 1000);
     });
   }
 
@@ -64,7 +68,9 @@ class _UsersState extends State<Users> {
             SizedBox(height: isMobile ? 20 : 5),
             Expanded(
               child: userProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
                   : userProvider.users.isEmpty
                   ? const Center(child: Text('No hay usuarios para mostrar.'))
                   : Align(
@@ -79,6 +85,14 @@ class _UsersState extends State<Users> {
                         ),
                       ),
                     ),
+            ),
+            Pagination(
+              currentPage: userProvider.currentPage,
+              totalPages: userProvider.totalPages,
+              itemsPerPage: userProvider.pageSize,
+              onPageChanged: (page) => userProvider.onPageChanged(page),
+              onItemsPerPageChanged: (size) =>
+                  userProvider.onItemsPerPageChanged(size),
             ),
           ],
         ),
@@ -100,30 +114,32 @@ Widget _buildMainContent(
             borderRadius: BorderRadius.circular(12),
             child: _buildMobileList(users, memberProvider),
           )
-        : CustomWebTable<User>(
-            items: users,
-            columnLabels: [
-              'Nombre de usuario',
-              'Rol',
-              'Miembro asociado',
-              'Acciones',
-            ],
-            columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
-            rowBuilder: (user) {
-              final member = user.member;
-              return [
-                DataCell(Text(user.username)),
-                DataCell(Text(user.role)),
-                DataCell(
-                  Text(
-                    member != null
-                        ? '${member.name} ${member.lastName}'
-                        : 'Sin miembro',
+        : SingleChildScrollView(
+            child: CustomWebTable<User>(
+              items: users,
+              columnLabels: [
+                'Nombre de usuario',
+                'Rol',
+                'Miembro asociado',
+                'Acciones',
+              ],
+              columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
+              rowBuilder: (user) {
+                final member = user.member;
+                return [
+                  DataCell(Text(user.username)),
+                  DataCell(Text(user.role)),
+                  DataCell(
+                    Text(
+                      member != null
+                          ? '${member.name} ${member.lastName}'
+                          : 'Sin miembro',
+                    ),
                   ),
-                ),
-                DataCell(_buildActions(context, user)),
-              ];
-            },
+                  DataCell(_buildActions(context, user)),
+                ];
+              },
+            ),
           ),
   );
 }

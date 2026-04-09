@@ -149,7 +149,9 @@ class _LoginState extends State<Login> {
                               ),
                               const SizedBox(height: 30),
                               _isLoading
-                                  ? const CircularProgressIndicator()
+                                  ? const CircularProgressIndicator(
+                                      color: primaryColor,
+                                    )
                                   : CustomButton(
                                       backgroundColor: darkColor,
                                       text: 'Iniciar sesión',

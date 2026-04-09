@@ -197,7 +197,7 @@ class _ServicesState extends State<Services> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(color: primaryColor),
         ),
       );
 

@@ -7,13 +7,13 @@ class Pagination extends StatefulWidget {
   final int itemsPerPage;
   final List<int> availableItemsPerPage;
   final ValueChanged<int> onPageChanged;
-  final ValueChanged<int> onItemsPerPageChanged;
+  final ValueChanged<int>? onItemsPerPageChanged;
   const Pagination({
     Key? key,
     required this.currentPage,
     required this.totalPages,
     required this.onPageChanged,
-    required this.onItemsPerPageChanged,
+    this.onItemsPerPageChanged,
     this.itemsPerPage = 10,
     this.availableItemsPerPage = const [10, 25, 50, 100],
   }) : super(key: key);
@@ -82,7 +82,8 @@ class _PaginationState extends State<Pagination> {
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildPerPageDropdown(),
+                if (widget.onItemsPerPageChanged != null)
+                  _buildPerPageDropdown(),
                 const SizedBox(width: 15),
                 _buildPageControls(isMobile),
                 const SizedBox(width: 15),
@@ -108,7 +109,6 @@ class _PaginationState extends State<Pagination> {
               : null,
         ),
         Text(
-          // Si no hay páginas, muestra "Página 0 de 0", si no, suma 1 para el usuario.
           'Página ${widget.totalPages == 0 ? 0 : widget.currentPage + 1} de ${widget.totalPages}',
           style: TextStyle(
             fontSize: 16,
@@ -166,6 +166,7 @@ class _PaginationState extends State<Pagination> {
         : widget.availableItemsPerPage.first;
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         const Text(
@@ -176,8 +177,8 @@ class _PaginationState extends State<Pagination> {
         DropdownButton<int>(
           value: safeValue,
           onChanged: (value) {
-            if (value != null) {
-              widget.onItemsPerPageChanged(value);
+            if (value != null && widget.onItemsPerPageChanged != null) {
+              widget.onItemsPerPageChanged!(value);
             }
           },
           items: widget.availableItemsPerPage.map((int item) {
@@ -205,21 +206,4 @@ class _PaginationState extends State<Pagination> {
       ),
     );
   }
-
-  // Widget _buildSizeAndGoControls(bool isMobile) {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.center,
-  //     children: [
-  //       _buildPerPageDropdown(),
-  //       Row(
-  //         mainAxisSize: MainAxisSize.min,
-  //         children: [
-  //           _buildGoToPage(isMobile),
-  //           const SizedBox(width: 5),
-  //           _buildGoButton(),
-  //         ],
-  //       ),
-  //     ],
-  //   );
-  // }
 }

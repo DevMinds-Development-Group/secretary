@@ -184,7 +184,9 @@ class _MembersState extends State<Members> {
     final provider = Provider.of<MemberProvider>(context, listen: false);
 
     if (provider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
     }
 
     if (members.isEmpty) {

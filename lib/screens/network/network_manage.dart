@@ -43,7 +43,9 @@ class _NetworkManageState extends State<NetworkManage> {
             SizedBox(height: isMobile ? 20 : 40),
             Expanded(
               child: networkProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
                   : networks.isEmpty
                   ? const Center(child: Text('No hay redes para mostrar.'))
                   : Align(

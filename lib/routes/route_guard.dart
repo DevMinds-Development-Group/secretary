@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +14,7 @@ class RouteGuard {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: CircularProgressIndicator(color: primaryColor)),
           );
         }
 

@@ -1,3 +1,4 @@
+import 'package:Koinos/colors.dart';
 import 'package:Koinos/screens/public_announcements.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,7 @@ class AuthWrapper extends StatelessWidget {
         // 1. Mientras carga el token del disco
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: CircularProgressIndicator(color: primaryColor)),
           );
         }
 

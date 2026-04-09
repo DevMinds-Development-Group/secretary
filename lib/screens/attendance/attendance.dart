@@ -364,7 +364,9 @@ class _AttendanceState extends State<Attendance> {
     final memberProvider = context.watch<MemberProvider>();
 
     if (memberProvider.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
     }
     if (members.isEmpty) {
       return const Center(child: Text('No se encontraron miembros.'));

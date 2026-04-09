@@ -41,7 +41,9 @@ class _NetworkMembersState extends State<NetworkMembers> {
       appBar: CustomAppBar(title: widget.network.name),
       body: SafeArea(
         child: networkProvider.isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              )
             : Padding(
                 padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 5),
                 child: Center(
@@ -74,7 +76,10 @@ class _NetworkMembersState extends State<NetworkMembers> {
           Align(
             alignment: Alignment.centerRight,
             child: AddButton(
-              size: Size(isMobile ? 140 : 200, isMobile ? 50 : 45),
+              size: Size(
+                isMobile ? MediaQuery.of(context).size.width * 0.85 : 200,
+                isMobile ? 50 : 45,
+              ),
               onPressed: () => Navigator.push(
                 context,
                 createFadeRoute(const CreateMember()),
@@ -82,6 +87,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
               title: 'Crear Miembro',
             ),
           ),
+          SizedBox(height: isMobile ? 15 : 0),
           isMobile
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

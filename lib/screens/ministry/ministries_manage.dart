@@ -43,7 +43,9 @@ class _MinistryManageState extends State<MinistryManage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: ministryProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
                   : ministries.isEmpty
                   ? const Center(
                       child: Text('No hay ministerios para mostrar.'),

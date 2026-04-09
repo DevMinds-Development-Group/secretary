@@ -91,7 +91,9 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
 
             if (provider.isLoading)
               const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
               )
             else if (provider.announcements.isEmpty)
               const SliverFillRemaining(

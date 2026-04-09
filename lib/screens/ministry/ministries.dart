@@ -57,7 +57,9 @@ class _MinistriesState extends State<Ministries> {
           if (!isMobile) Menu(),
           Expanded(
             child: ministryProvider.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(color: primaryColor),
+                  )
                 : Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(

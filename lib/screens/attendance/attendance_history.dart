@@ -283,7 +283,10 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
   }
 
   Widget _buildRecordsList(List<AttendanceModel> records, bool isLoading) {
-    if (isLoading) return const Center(child: CircularProgressIndicator());
+    if (isLoading)
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
     if (records.isEmpty)
       return const Center(child: Text("No hay registros encontrados"));
     bool isMobile = MediaQuery.of(context).size.width < 700;
