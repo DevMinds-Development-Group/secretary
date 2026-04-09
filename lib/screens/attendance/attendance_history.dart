@@ -147,34 +147,29 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                 children: [
                   if (!isMobile) Menu(),
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          _buildHeader(isMobile),
-                          const SizedBox(height: 20),
-                          Expanded(
-                            child: _buildRecordsList(
-                              records,
-                              provider.isLoading,
-                            ),
+                    child: Column(
+                      children: [
+                        _buildHeader(isMobile),
+                        const SizedBox(height: 20),
+                        Expanded(
+                          child: _buildRecordsList(records, provider.isLoading),
+                        ),
+                        if (provider.totalPages > 0 && !provider.isLoading)
+                          Pagination(
+                            currentPage: provider.currentPage,
+                            totalPages: provider.totalPages,
+                            itemsPerPage: provider.pageSize,
+                            onPageChanged: (page) =>
+                                provider.onPageChanged(page),
+                            onItemsPerPageChanged: (size) =>
+                                provider.onItemsPerPageChanged(size),
                           ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-            if (provider.totalPages > 0 && !provider.isLoading)
-              Pagination(
-                currentPage: provider.currentPage,
-                totalPages: provider.totalPages,
-                itemsPerPage: provider.pageSize,
-                onPageChanged: (page) => provider.onPageChanged(page),
-                onItemsPerPageChanged: (size) =>
-                    provider.onItemsPerPageChanged(size),
-              ),
           ],
         ),
       ),

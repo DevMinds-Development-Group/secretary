@@ -45,7 +45,7 @@ class _MinistriesState extends State<Ministries> {
     final ministryProvider = context.watch<MinistryProvider>();
     final List<MinistryModel> ministries = ministryProvider.ministries;
     final memberProvider = context.watch<MemberProvider>();
-    final permissions = UserPermissions(context.read<AuthService>());
+    // final permissions = UserPermissions(context.read<AuthService>());
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -91,9 +91,9 @@ class _MinistriesState extends State<Ministries> {
                                         '${leader.name} ${leader.lastName}',
                                   )
                                   .join(', ');
-                              final membersInNetwork = memberProvider.members
-                                  .where((m) => m.networkName == ministry.name)
-                                  .toList();
+                              // final membersInNetwork = memberProvider.members
+                              //     .where((m) => m.networkName == ministry.name)
+                              //     .toList();
                               final memberCount = ministryProvider
                                   .getMemberCountForMinistry(ministry.id);
                               return InkWell(
@@ -219,7 +219,7 @@ class _MinistriesState extends State<Ministries> {
               ),
             ),
       isMobile ? const SizedBox(height: 16) : const Spacer(),
-      if (permissions.canSeeMembers) ...[
+      if (permissions.canSeeReports) ...[
         Button(
           text: 'Gestionar ministerios',
           onPressed: () {
