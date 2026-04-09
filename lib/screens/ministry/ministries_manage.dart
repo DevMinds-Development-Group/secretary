@@ -92,10 +92,13 @@ class _MinistryManageState extends State<MinistryManage> {
                   Text(ministry.name, style: const TextStyle(fontSize: 14)),
                 ),
                 DataCell(
-                  Text(
-                    ministry.description,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 300),
+                    child: Text(
+                      ministry.description,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14),
+                    ),
                   ),
                 ),
 

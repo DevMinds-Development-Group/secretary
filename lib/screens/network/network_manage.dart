@@ -41,7 +41,8 @@ class _NetworkManageState extends State<NetworkManage> {
         child: Column(
           children: [
             SizedBox(height: isMobile ? 20 : 40),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: networkProvider.isLoading
                   ? const Center(
                       child: CircularProgressIndicator(color: primaryColor),
@@ -87,10 +88,14 @@ class _NetworkManageState extends State<NetworkManage> {
                     Text(network.name, style: const TextStyle(fontSize: 14)),
                   ),
                   DataCell(
-                    Text(
-                      network.mission ?? 'N/A',
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 14),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      child: Text(
+                        network.mission ?? 'N/A',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                        maxLines: 2,
+                      ),
                     ),
                   ),
 
