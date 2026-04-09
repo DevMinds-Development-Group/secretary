@@ -54,18 +54,21 @@ class _DashboardState extends State<Dashboard> {
         summary.totalMembers.toString(),
         Icons.groups,
         Colors.blue,
+        () => Navigator.pushNamed(context, 'members'),
       ),
       _buildMetricItem(
         "Activos",
         summary.activeMembers.toString(),
         Icons.person,
         Colors.green,
+        () => Navigator.pushNamed(context, 'members'),
       ),
       _buildMetricItem(
         "Inactivos",
         summary.inactiveMembers.toString(),
         Icons.person_off,
         Colors.orange,
+        () => Navigator.pushNamed(context, 'members'),
       ),
     ];
 
@@ -124,6 +127,7 @@ class _DashboardState extends State<Dashboard> {
                             Icons.group,
                             negativeColor,
                             isMobile,
+                            () => Navigator.pushNamed(context, 'networks'),
                           ),
                           const SizedBox(height: 20),
                           _buildSmallInfoCard(
@@ -132,6 +136,7 @@ class _DashboardState extends State<Dashboard> {
                             Icons.description_outlined,
                             Colors.indigo,
                             isMobile,
+                            () => Navigator.pushNamed(context, 'ministries'),
                           ),
                         ],
                       )
@@ -144,9 +149,10 @@ class _DashboardState extends State<Dashboard> {
                               Icons.group,
                               negativeColor,
                               isMobile,
+                              () => Navigator.pushNamed(context, 'networks'),
                             ),
                           ),
-                          const SizedBox(width: 20),
+                          SizedBox(width: 20),
                           Expanded(
                             child: _buildSmallInfoCard(
                               'Ministerios',
@@ -154,6 +160,7 @@ class _DashboardState extends State<Dashboard> {
                               Icons.description_outlined,
                               Colors.indigo,
                               isMobile,
+                              () => Navigator.pushNamed(context, 'ministries'),
                             ),
                           ),
                         ],
@@ -237,28 +244,35 @@ class _DashboardState extends State<Dashboard> {
     String value,
     IconData icon,
     Color color,
+    VoidCallback onTap,
   ) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 32),
-        const SizedBox(height: 10),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.blueGrey,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.blueGrey,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -268,36 +282,41 @@ class _DashboardState extends State<Dashboard> {
     IconData icon,
     Color color,
     bool isMobile,
+    VoidCallback onTap,
   ) {
-    return CustomCardContainer(
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 26),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.blueGrey,
-                    fontWeight: FontWeight.w500,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: CustomCardContainer(
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 26),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      color: Colors.blueGrey,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -364,6 +383,7 @@ class _DashboardState extends State<Dashboard> {
     return Column(
       children: events.map((e) {
         return ListTile(
+          onTap: () => Navigator.pushNamed(context, 'services'),
           contentPadding: EdgeInsets.zero,
           leading: const CircleAvatar(
             backgroundColor: Colors.blue,

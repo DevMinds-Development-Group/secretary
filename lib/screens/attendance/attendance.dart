@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../colors.dart';
@@ -9,9 +10,9 @@ import '../../providers/member_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../providers/service_provider.dart';
 import '../../widgets/button.dart';
-import '../../widgets/counter.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
+import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/menu.dart';
 
 class Attendance extends StatefulWidget {
@@ -282,9 +283,9 @@ class _AttendanceState extends State<Attendance> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _counterVisitors(),
+                _buildVisitorsTextField(),
                 SizedBox(width: 20),
-                _counterPastoral(),
+                _buildPastoralTextField(),
               ],
             ),
           ],
@@ -301,19 +302,41 @@ class _AttendanceState extends State<Attendance> {
     );
   }
 
-  Counter _counterPastoral() {
-    return Counter(
-      label: 'Visitas Pastorales',
-      initialValue: _pastoralVisitsCount,
-      onCountChanged: (count) => _pastoralVisitsCount = count,
+  // lib/screens/attendance/attendance.dart
+
+  Widget _buildPastoralTextField() {
+    return SizedBox(
+      width: 150, // Ajusta el ancho según necesites
+      child: CustomTextFormField(
+        labelText: 'Visitas Pastorales',
+        keyboardType: TextInputType.number,
+        initialValue: _pastoralVisitsCount.toString(),
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+        ], // Solo números
+        onChanged: (value) {
+          setState(() {
+            _pastoralVisitsCount = int.tryParse(value) ?? 0;
+          });
+        },
+      ),
     );
   }
 
-  Counter _counterVisitors() {
-    return Counter(
-      label: 'Visitas',
-      initialValue: _visitorsCount,
-      onCountChanged: (count) => _visitorsCount = count,
+  Widget _buildVisitorsTextField() {
+    return SizedBox(
+      width: 150,
+      child: CustomTextFormField(
+        labelText: 'Visitas',
+        keyboardType: TextInputType.number,
+        initialValue: _visitorsCount.toString(),
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        onChanged: (value) {
+          setState(() {
+            _visitorsCount = int.tryParse(value) ?? 0;
+          });
+        },
+      ),
     );
   }
 
@@ -326,8 +349,8 @@ class _AttendanceState extends State<Attendance> {
       children: [
         _buildEventDropdown(),
         _buildNetworkDropdown(),
-        _counterVisitors(),
-        _counterPastoral(),
+        _buildVisitorsTextField(),
+        _buildPastoralTextField(),
         Button(
           text: 'Guardar',
           onPressed: _saveAttendance,

@@ -77,7 +77,7 @@ class _NetworkManageState extends State<NetworkManage> {
           : CustomWebTable<NetworkModel>(
               items: networks,
               columnLabels: const ['Red', 'Misión', 'Líderes', 'Acciones'],
-              columnSpacing: MediaQuery.of(context).size.width * 0.1,
+              columnSpacing: 30,
               rowBuilder: (network) {
                 final leaderNames = network.leaders
                     .map((l) => l.name)
@@ -87,31 +87,28 @@ class _NetworkManageState extends State<NetworkManage> {
                     Text(network.name, style: const TextStyle(fontSize: 14)),
                   ),
                   DataCell(
-                    SizedBox(
-                      width: 200,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 250),
                       child: Text(
                         network.mission ?? 'N/A',
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 14),
+                        maxLines: 1,
                       ),
                     ),
                   ),
                   DataCell(
-                    Tooltip(
-                      message: leaderNames.isEmpty
-                          ? "Sin asignar"
-                          : leaderNames,
-                      child: SizedBox(
-                        width: 250,
-                        child: Text(
-                          leaderNames.isEmpty ? "Sin asignar" : leaderNames,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: const TextStyle(fontSize: 14),
-                        ),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 200),
+                      child: Text(
+                        leaderNames.isEmpty ? "Sin asignar" : leaderNames,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ),
                   ),
+
                   DataCell(_buildActions(context, network)),
                 ];
               },

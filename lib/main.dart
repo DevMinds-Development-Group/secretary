@@ -18,6 +18,8 @@ import 'package:provider/provider.dart';
 
 import 'colors.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final authService = AuthService();
@@ -53,6 +55,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Viento Recio',
       initialRoute: '/',
+      navigatorKey: navigatorKey,
       routes: AppRoutes.getRoutes(),
       debugShowCheckedModeBanner: false,
 

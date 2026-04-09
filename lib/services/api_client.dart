@@ -3,6 +3,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../main.dart';
+
 class ApiClient {
   final Dio _dio;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
@@ -31,8 +33,15 @@ class ApiClient {
           );
           return handler.next(response);
         },
-        onError: (DioException e, handler) {
-          print('Error en la petición: ${e.message}');
+        onError: (DioException e, handler) async {
+          if (e.response?.statusCode == 401) {
+            print('TOKEN EXPIRADO: Limpiando sesión...');
+            await _secureStorage.deleteAll();
+            navigatorKey.currentState?.pushNamedAndRemoveUntil(
+              'login',
+              (route) => false,
+            );
+          }
           return handler.next(e);
         },
       ),

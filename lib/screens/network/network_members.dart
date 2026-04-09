@@ -1,3 +1,5 @@
+import 'package:Koinos/screens/create/create_member.dart';
+import 'package:Koinos/widgets/add_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +9,7 @@ import '../../../providers/member_provider.dart';
 import '../../../widgets/custom_appbar.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
+import '../../routes/page_route_builder.dart';
 import '../../widgets/custom_card_container.dart';
 
 class NetworkMembers extends StatefulWidget {
@@ -68,6 +71,17 @@ class _NetworkMembersState extends State<NetworkMembers> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: AddButton(
+              size: Size(isMobile ? 140 : 200, isMobile ? 50 : 45),
+              onPressed: () => Navigator.push(
+                context,
+                createFadeRoute(const CreateMember()),
+              ),
+              title: 'Crear Miembro',
+            ),
+          ),
           isMobile
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
