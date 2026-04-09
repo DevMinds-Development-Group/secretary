@@ -154,6 +154,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                         Expanded(
                           child: _buildRecordsList(records, provider.isLoading),
                         ),
+                        SizedBox(height: 10),
                         if (provider.totalPages > 0 && !provider.isLoading)
                           Pagination(
                             currentPage: provider.currentPage,
@@ -285,77 +286,83 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     if (records.isEmpty)
       return const Center(child: Text("No hay registros encontrados"));
     bool isMobile = MediaQuery.of(context).size.width < 700;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListView.separated(
-        padding: EdgeInsets.all(5),
-        itemCount: records.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final record = records[index];
-          return ListTile(
-            isThreeLine: (isMobile) ? true : false,
-            leading: isMobile
-                ? null
-                : Icon(Icons.assignment_turned_in, color: Colors.green),
-            title: isMobile
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [_buildName(record), _buildNetwork(record)],
-                  )
-                : Row(
-                    children: [
-                      _buildName(record),
-                      const Text(' | ', style: TextStyle(fontSize: 16)),
-                      _buildNetwork(record),
-                    ],
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 20.0),
+      child: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 3),
+          ],
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListView.separated(
+          padding: EdgeInsets.all(5),
+          itemCount: records.length,
+          separatorBuilder: (context, index) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final record = records[index];
+            return ListTile(
+              isThreeLine: (isMobile) ? true : false,
+              leading: isMobile
+                  ? null
+                  : Icon(Icons.assignment_turned_in, color: Colors.green),
+              title: isMobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [_buildName(record), _buildNetwork(record)],
+                    )
+                  : Row(
+                      children: [
+                        _buildName(record),
+                        const Text(' | ', style: TextStyle(fontSize: 16)),
+                        _buildNetwork(record),
+                      ],
+                    ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
+                    style: TextStyle(fontSize: 16),
                   ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
-                  style: TextStyle(fontSize: 16),
-                ),
-                Text(
-                  'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} | Visitas Pastorales: ${record.pastoralVisitsCount}',
-                  style: TextStyle(fontSize: 16),
-                ),
-                if (isMobile) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _iconPdf(record),
-                      _actionButtons(context, record),
-                    ],
+                  Text(
+                    'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} | Visitas Pastorales: ${record.pastoralVisitsCount}',
+                    style: TextStyle(fontSize: 16),
                   ),
+                  if (isMobile) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        _iconPdf(record),
+                        _actionButtons(context, record),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
-            ),
-            trailing: isMobile
-                ? null
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _iconPdf(record),
-                      _actionButtons(context, record),
-                    ],
+              ),
+              trailing: isMobile
+                  ? null
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _iconPdf(record),
+                        _actionButtons(context, record),
+                      ],
+                    ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AttendanceDetail(record: record),
                   ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AttendanceDetail(record: record),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
