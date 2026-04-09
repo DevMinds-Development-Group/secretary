@@ -40,7 +40,8 @@ class _MinistryManageState extends State<MinistryManage> {
         child: Column(
           children: [
             SizedBox(height: isMobile ? 20 : 40),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: ministryProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ministries.isEmpty
@@ -83,14 +84,14 @@ class _MinistryManageState extends State<MinistryManage> {
                 'Pastores',
                 'Acciones',
               ],
-              columnSpacing: MediaQuery.of(context).size.width * 0.1,
+              columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
               rowBuilder: (ministry) => [
                 DataCell(
                   Text(ministry.name, style: const TextStyle(fontSize: 14)),
                 ),
                 DataCell(
-                  SizedBox(
-                    width: 250,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 350),
                     child: Text(
                       ministry.description,
                       overflow: TextOverflow.ellipsis,
@@ -99,19 +100,17 @@ class _MinistryManageState extends State<MinistryManage> {
                   ),
                 ),
                 DataCell(
-                  Tooltip(
-                    message: ministry.leaders.map((l) => l.name).join(', '),
-                    child: SizedBox(
-                      width: 200,
-                      child: Text(
-                        ministry.leaders.map((l) => l.name).join(', '),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: const TextStyle(fontSize: 14),
-                      ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 250),
+                    child: Text(
+                      ministry.leaders.map((l) => l.name).join(', '),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
                 ),
+
                 DataCell(_buildActions(context, ministry)),
               ],
             ),

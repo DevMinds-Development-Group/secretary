@@ -41,17 +41,15 @@ class _NetworkManageState extends State<NetworkManage> {
         child: Column(
           children: [
             SizedBox(height: isMobile ? 20 : 40),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: networkProvider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : networks.isEmpty
                   ? const Center(child: Text('No hay redes para mostrar.'))
                   : Align(
                       alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1200),
-                        child: _buildMainContent(context, isMobile, networks),
-                      ),
+                      child: _buildMainContent(context, isMobile, networks),
                     ),
             ),
           ],
@@ -77,7 +75,7 @@ class _NetworkManageState extends State<NetworkManage> {
           : CustomWebTable<NetworkModel>(
               items: networks,
               columnLabels: const ['Red', 'Misión', 'Líderes', 'Acciones'],
-              columnSpacing: 30,
+              columnSpacing: MediaQuery.of(context).size.width * (0.7 / 7.5),
               rowBuilder: (network) {
                 final leaderNames = network.leaders
                     .map((l) => l.name)
@@ -88,7 +86,7 @@ class _NetworkManageState extends State<NetworkManage> {
                   ),
                   DataCell(
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 250),
+                      constraints: const BoxConstraints(maxWidth: 350),
                       child: Text(
                         network.mission ?? 'N/A',
                         overflow: TextOverflow.ellipsis,
@@ -99,7 +97,7 @@ class _NetworkManageState extends State<NetworkManage> {
                   ),
                   DataCell(
                     ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 200),
+                      constraints: const BoxConstraints(maxWidth: 250),
                       child: Text(
                         leaderNames.isEmpty ? "Sin asignar" : leaderNames,
                         overflow: TextOverflow.ellipsis,

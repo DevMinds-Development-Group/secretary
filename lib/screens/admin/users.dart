@@ -37,7 +37,7 @@ class _UsersState extends State<Users> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     final userProvider = Provider.of<UserProvider>(context);
     final memberProvider = Provider.of<MemberProvider>(context);
-    final List<User> users = userProvider.users;
+    //final List<User> users = userProvider.users;
 
     return Scaffold(
       backgroundColor: backgroundColor,

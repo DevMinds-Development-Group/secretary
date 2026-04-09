@@ -19,7 +19,6 @@ class CustomWebTable<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 3),
@@ -32,11 +31,7 @@ class CustomWebTable<T> extends StatelessWidget {
         borderRadius: BorderRadius.circular(15),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minWidth: MediaQuery.of(context).size.width - 40,
-            ),
+          child: IntrinsicWidth(
             child: Theme(
               data: Theme.of(
                 context,
@@ -49,7 +44,7 @@ class CustomWebTable<T> extends StatelessWidget {
                 headingRowHeight: 45,
                 dataRowMinHeight: 40,
                 dataRowMaxHeight: 50,
-                columnSpacing: 20,
+                columnSpacing: columnSpacing ?? 40,
                 horizontalMargin: 20,
                 columns: columnLabels.map((label) {
                   return DataColumn(
