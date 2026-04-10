@@ -35,16 +35,26 @@ android {
     }
 
     signingConfigs {
-        release {
-            storeFile file("upload-keystore.jks")
-            storePassword System.getenv("APP_KEYSTORE_PASSWORD")
-            keyAlias System.getenv("APP_KEY_ALIAS")
+        create("release") {
+            val keystorePath = System.getenv("APP_KEYSTORE_PATH") ?: "upload-keystore.jks"
+            storeFile = file(keystorePath)
+            storePassword = System.getenv("APP_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("APP_KEY_ALIAS")
+            keyPassword = System.getenv("APP_KEYSTORE_PASSWORD")
         }
     }
 
     buildTypes {
-        release {
-            signingConfig signingConfigs.release
+        getByName("release") {
+            // Importante: Esto vincula la configuración de firma que creamos arriba
+            signingConfig = signingConfigs.getByName("release")
+
+            isMinifyEnabled = false // o true si usas ProGuard
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     applicationVariants.all {
