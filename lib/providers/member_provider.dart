@@ -107,7 +107,7 @@ class MemberProvider with ChangeNotifier {
     required String lastName,
     required String address,
     required String phone,
-    required DateTime birthdate,
+    DateTime? birthdate,
     required String networkId,
   }) async {
     try {
@@ -117,9 +117,9 @@ class MemberProvider with ChangeNotifier {
         "lastName": lastName,
         "address": address,
         "phone": phone,
-        "birthdate": birthdate.toIso8601String().split(
-          'T',
-        )[0], // Formato yyyy-MM-dd
+        "birthdate": birthdate != null
+            ? birthdate.toIso8601String().split('T')[0]
+            : null,
         "enabled": true,
         "networkId": networkId,
       };
@@ -137,7 +137,7 @@ class MemberProvider with ChangeNotifier {
     required String lastName,
     required String address,
     required String phone,
-    required DateTime birthdate,
+    DateTime? birthdate,
     required bool enabled,
     required String networkId,
   }) async {
@@ -148,9 +148,9 @@ class MemberProvider with ChangeNotifier {
         "lastName": lastName,
         "address": address,
         "phone": phone,
-        "birthdate": birthdate.toIso8601String().split(
-          'T',
-        )[0], // Formato yyyy-MM-dd
+        "birthdate": birthdate != null
+            ? birthdate.toIso8601String().split('T')[0]
+            : null,
         "enabled": enabled,
         "networkId": networkId,
       };

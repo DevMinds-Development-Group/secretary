@@ -140,38 +140,44 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
       appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),
       drawer: isMobile ? Drawer(child: Menu()) : null,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  if (!isMobile) Menu(),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _buildHeader(isMobile),
-                        const SizedBox(height: 20),
-                        Expanded(
-                          child: _buildRecordsList(records, provider.isLoading),
-                        ),
-                        SizedBox(height: 10),
-                        if (provider.totalPages > 0 && !provider.isLoading)
-                          Pagination(
-                            currentPage: provider.currentPage,
-                            totalPages: provider.totalPages,
-                            itemsPerPage: provider.pageSize,
-                            onPageChanged: (page) =>
-                                provider.onPageChanged(page),
-                            onItemsPerPageChanged: (size) =>
-                                provider.onItemsPerPageChanged(size),
+        child: Padding(
+          padding: EdgeInsets.all(isMobile ? 15 : 0),
+          child: Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    if (!isMobile) Menu(),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          _buildHeader(isMobile),
+                          const SizedBox(height: 20),
+                          Expanded(
+                            child: _buildRecordsList(
+                              records,
+                              provider.isLoading,
+                            ),
                           ),
-                      ],
+                          SizedBox(height: 10),
+                          if (provider.totalPages > 0 && !provider.isLoading)
+                            Pagination(
+                              currentPage: provider.currentPage,
+                              totalPages: provider.totalPages,
+                              itemsPerPage: provider.pageSize,
+                              onPageChanged: (page) =>
+                                  provider.onPageChanged(page),
+                              onItemsPerPageChanged: (size) =>
+                                  provider.onItemsPerPageChanged(size),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/dashboard_model.dart';
 import '../../providers/dashboard_provider.dart';
+import '../../services/update_service.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/menu.dart';
@@ -20,9 +21,10 @@ class _DashboardState extends State<Dashboard> {
   @override
   void initState() {
     super.initState();
-    // Carga de datos optimizada mediante el nuevo DashboardProvider
     Future.microtask(() {
       context.read<DashboardProvider>().fetchSummary();
+
+      UpdateService().checkForUpdates(context);
     });
   }
 

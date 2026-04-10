@@ -44,8 +44,15 @@ class _NetworkManageState extends State<NetworkManage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: networkProvider.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: primaryColor),
+                  ? Center(
+                      child: Container(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).size.height * 0.4,
+                        ),
+                        child: const CircularProgressIndicator(
+                          color: primaryColor,
+                        ),
+                      ),
                     )
                   : networks.isEmpty
                   ? const Center(child: Text('No hay redes para mostrar.'))

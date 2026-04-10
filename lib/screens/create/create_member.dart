@@ -67,11 +67,9 @@ class _CreateMemberState extends State<CreateMember> {
   Future<void> _saveMember() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedBirthDate == null) {
+    if (_selectedNetworkId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, selecciona la fecha de nacimiento'),
-        ),
+        const SnackBar(content: Text('Por favor, selecciona una red')),
       );
       return;
     }
@@ -88,7 +86,7 @@ class _CreateMemberState extends State<CreateMember> {
         lastName: _lastNameController.text.trim(),
         address: _addressController.text.trim(),
         phone: _phoneController.text.trim(),
-        birthdate: _selectedBirthDate!,
+        birthdate: _selectedBirthDate,
         enabled: widget.memberToEdit!.enabled,
         networkId: _selectedNetworkId!,
       );
@@ -98,7 +96,7 @@ class _CreateMemberState extends State<CreateMember> {
         lastName: _lastNameController.text.trim(),
         address: _addressController.text.trim(),
         phone: _phoneController.text.trim(),
-        birthdate: _selectedBirthDate!,
+        birthdate: _selectedBirthDate,
         networkId: _selectedNetworkId!,
       );
     }
@@ -220,16 +218,6 @@ class _CreateMemberState extends State<CreateMember> {
             labelText: 'Teléfono',
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'El teléfono es obligatorio';
-              }
-              if (value.length < 8) {
-                return 'El teléfono debe tener al menos 8 números';
-              }
-              return null; // Válido
-            },
-
             controller: _phoneController,
           ),
           const SizedBox(height: 16.0),
@@ -238,7 +226,7 @@ class _CreateMemberState extends State<CreateMember> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.calendar_today),
-            title: const Text('Fecha de Nacimiento'),
+            title: const Text('Fecha de Nacimiento (Opcional)'),
             subtitle: Text(
               _selectedBirthDate == null
                   ? 'No seleccionada'
