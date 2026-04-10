@@ -39,7 +39,12 @@ jobs:
 
       # 4. Compilar APK Firmado
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          VERSION_NAME=$(echo "${{ env.VERSION }}" | cut -d'+' -f1)
+          VERSION_CODE=${{ github.run_number }}
+          flutter build apk --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$VERSION_CODE
         env:
           # Estas variables deben coincidir con tu android/app/build.gradle
           APP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
