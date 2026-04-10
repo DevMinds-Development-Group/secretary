@@ -33,7 +33,6 @@ jobs:
       - name: Get Version from pubspec
         id: pubspec
         run: |
-          # Extraemos la versión base del pubspec.yaml
           BASE_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | xargs)
           FULL_VERSION="${BASE_VERSION}+${{ github.run_number }}"
           echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
