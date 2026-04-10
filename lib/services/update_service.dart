@@ -12,24 +12,25 @@ class UpdateService {
   final ApiClient _apiClient = ApiClient();
 
   Future<void> checkForUpdates(BuildContext context) async {
-    // No verificar en Web ni en plataformas que no sean Android
     if (kIsWeb || !Platform.isAndroid) return;
 
     try {
-      // 1. Obtener la versión actual instalada
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
       String currentVersion = packageInfo.version;
+      String currentBuild = packageInfo.buildNumber;
+      String fullCurrent = "$currentVersion+$currentBuild";
 
-      // 2. Consultar al backend (usando la ruta completa que pasaste)
       final response = await _apiClient.dio.get('/app-versions/check');
 
-      // Ajustado a los nombres exactos de tu JSON
-      String latestVersion = response.data['latestVersion'];
+      String latestVersionRaw = response.data['latestVersion'];
+      String latestVersion = latestVersionRaw.startsWith('v')
+          ? latestVersionRaw.substring(1)
+          : latestVersionRaw;
+
       String downloadUrl = response.data['url'];
       String releaseNotes = response.data['releaseNotes'] ?? "";
 
-      // 3. Comparar versiones
-      if (currentVersion != latestVersion) {
+      if (fullCurrent != latestVersion) {
         if (!context.mounted) return;
         _showUpdateDialog(context, downloadUrl, latestVersion, releaseNotes);
       }
