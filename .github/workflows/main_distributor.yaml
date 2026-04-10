@@ -101,6 +101,6 @@ jobs:
                 "versionName": "v${{ env.VERSION }}",
                 "downloadUrl": "https://github.com/DevMinds-Development-Group/secretary/releases/latest/download/app-release.apk",
                 "publicId": "v${{ env.VERSION }}",
-                "releaseNotes": "Actualización menor con resolución de errores y mejoras de rendimiento.",
+                "releaseNotes": "https://github.com/DevMinds-Development-Group/secretary/releases/tag/v${{ env.VERSION }}",
                 "isMandatory": true
               }'

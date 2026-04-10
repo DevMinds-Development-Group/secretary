@@ -1,8 +1,8 @@
-### 🚀 Novedades version 1.1.2+${{ github.run_number }}
+### 🚀 Novedades version 1.1.2
 
 -   **Gestión de Redes:** Ahora puedes añadir nuevos miembros directamente desde el módulo de Redes.
 
--   **Navegación mejorada:** Se habilitó el acceso directo (`onTap`) desde el Dashboard hacia las secciones de **Redes** y **Ministerios**.
+-   **Navegación mejorada:** Se habilitó el acceso directo (`onTap`) desde el Dashboard hacia las secciones de **Redes**, **Ministerios** , **Miembros** y **Servicios**.
 
 -   **Actualizaciones In-App:** Se añadió soporte para detectar y descargar nuevas versiones sin salir de la aplicación.
 
@@ -13,7 +13,7 @@
 
     -   Corregido el error que impedía navegar correctamente entre páginas en el módulo de **Asistencia**.
 
-    -   Se aumentó el límite de visualización a 10 miembros por tarjeta en Redes y Miembros.
+    -   Se aumentó el límite de visualización del número miembros en la tarjeta en Redes y Miembros.
 
 -   **Interfaz de Usuario (UI):**
 
