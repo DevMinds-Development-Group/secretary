@@ -101,6 +101,6 @@ jobs:
                 "versionName": "v${{ env.VERSION }}",
                 "downloadUrl": "https://github.com/DevMinds-Development-Group/secretary/releases/latest/download/app-release.apk",
                 "publicId": "v${{ env.VERSION }}",
-                "releaseNotes": "https://github.com/DevMinds-Development-Group/secretary/releases/tag/v${{ env.VERSION }}",
+                "releaseNotes": "Puedes ver el registro de cambios en la siguiente dirección: https://github.com/DevMinds-Development-Group/secretary/releases/tag/v${{ env.VERSION }}",
                 "isMandatory": true
               }'
