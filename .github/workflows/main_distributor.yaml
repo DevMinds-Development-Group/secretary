@@ -47,6 +47,17 @@ jobs:
           APP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           APP_KEYSTORE_PATH: "upload-keystore.jks"
 
+      - name: Read Changelog
+        id: read_changelog
+        run: |
+          # Leemos el archivo y lo guardamos en una variable de salida
+          # 'EOF' ayuda a preservar el formato multilínea del markdown
+          {
+            echo 'CHANGELOG<<EOF'
+            cat CHANGELOG.md
+            echo 'EOF'
+          } >> $GITHUB_OUTPUT
+
       # 5. Crear Release en GitHub
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -54,10 +65,15 @@ jobs:
           tag_name: v${{ env.VERSION }}
           name: Release ${{ env.VERSION }}
           body: |
-            ## Nueva actualización disponible
-            - Build Number: ${{ github.run_number }}
-            - Commit: ${{ github.sha }}
-            - Descarga el archivo `app-release.apk` abajo para actualizar.
+            ## Detalles del Cambio
+            ${{ steps.read_changelog.outputs.CHANGELOG }}
+
+            ---
+            ### Información Técnica
+            - **Build Number:** ${{ github.run_number }}
+            - **Commit:** ${{ github.sha }}
+      
+            Descarga el archivo `app-release.apk` abajo para actualizar.
           files: build/app/outputs/flutter-apk/app-release.apk
           draft: false
           prerelease: false
