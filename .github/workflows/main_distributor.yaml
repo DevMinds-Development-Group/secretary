@@ -1,0 +1,64 @@
+name: CI/CD Flutter Production
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Configurar Entorno
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x.x'
+          channel: 'stable'
+
+      # 2. Descifrar Keystore
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      # 3. Preparar versión (Extrae del pubspec.yaml)
+      - name: Get Version from pubspec
+        id: pubspec
+        run: |
+          VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      # 4. Compilar APK Firmado
+      - name: Build APK
+        run: flutter build apk --release
+        env:
+          # Estas variables deben coincidir con tu android/app/build.gradle
+          APP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          APP_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          APP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          APP_KEYSTORE_PATH: "upload-keystore.jks"
+
+      # 5. Crear Release en GitHub
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Release ${{ env.VERSION }}
+          body: |
+            ## Nueva actualización disponible
+            - Build Number: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Descarga el archivo `app-release.apk` abajo para actualizar.
+          files: build/app/outputs/flutter-apk/app-release.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
