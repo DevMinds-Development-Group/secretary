@@ -39,7 +39,12 @@ jobs:
 
       # 4. Compilar APK Firmado
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          VERSION_NAME=$(echo "${{ env.VERSION }}" | cut -d'+' -f1)
+          VERSION_CODE=${{ github.run_number }}
+          flutter build apk --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$VERSION_CODE
         env:
           # Estas variables deben coincidir con tu android/app/build.gradle
           APP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -101,6 +106,6 @@ jobs:
                 "versionName": "v${{ env.VERSION }}",
                 "downloadUrl": "https://github.com/DevMinds-Development-Group/secretary/releases/latest/download/app-release.apk",
                 "publicId": "v${{ env.VERSION }}",
-                "releaseNotes": "https://github.com/DevMinds-Development-Group/secretary/releases/tag/v${{ env.VERSION }}",
+                "releaseNotes": "Puedes ver el registro de cambios en la siguiente dirección: https://github.com/DevMinds-Development-Group/secretary/releases/tag/v${{ env.VERSION }}",
                 "isMandatory": true
               }'
