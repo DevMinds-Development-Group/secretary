@@ -41,28 +41,28 @@ class _NetworkManageState extends State<NetworkManage> {
         child: Column(
           children: [
             SizedBox(height: isMobile ? 20 : 40),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: networkProvider.isLoading
-                  ? Center(
-                      child: Container(
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20.0),
+                child: networkProvider.isLoading
+                    ? Padding(
                         padding: EdgeInsets.only(
                           top: MediaQuery.of(context).size.height * 0.4,
                         ),
-                        child: const CircularProgressIndicator(
-                          color: primaryColor,
+                        child: const Center(
+                          child: CircularProgressIndicator(color: primaryColor),
+                        ),
+                      )
+                    : networks.isEmpty
+                    ? const Center(child: Text('No hay redes para mostrar.'))
+                    : Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(),
+                          child: _buildMainContent(context, isMobile, networks),
                         ),
                       ),
-                    )
-                  : networks.isEmpty
-                  ? const Center(child: Text('No hay redes para mostrar.'))
-                  : Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(),
-                        child: _buildMainContent(context, isMobile, networks),
-                      ),
-                    ),
+              ),
             ),
           ],
         ),
@@ -76,11 +76,15 @@ class _NetworkManageState extends State<NetworkManage> {
     List<NetworkModel> networks,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(0),
+      padding: isMobile
+          ? EdgeInsets.only(left: 20, bottom: 15, right: 20)
+          : EdgeInsets.all(20),
       child: isMobile
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: _buildMobileList(context, networks),
+          ? SingleChildScrollView(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _buildMobileList(context, networks),
+              ),
             )
           : CustomWebTable<NetworkModel>(
               items: networks,
@@ -126,13 +130,18 @@ class _NetworkManageState extends State<NetworkManage> {
     return Card(
       color: Colors.white,
       elevation: 5,
+      //margin: EdgeInsets.zero,
       child: ListView.separated(
-        padding: const EdgeInsets.only(left: 5, top: 5),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(left: 5),
         itemCount: networks.length,
-        separatorBuilder: (context, index) => const Divider(),
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final network = networks[index];
-          final leaderNames = network.leaders.map((l) => l.name).join(", ");
+          final leaderNames = network.leaders
+              .map((l) => "${l.name} ${l.lastName ?? ''}".trim())
+              .join(", ");
 
           return ListTile(
             title: Text(
@@ -146,7 +155,7 @@ class _NetworkManageState extends State<NetworkManage> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Misión: ${network.mission ?? "N/A"}\nLíderes: ${leaderNames.isEmpty ? "Sin asignar" : leaderNames}',
+                    '${network.mission ?? "N/A"}\nLíderes: ${leaderNames.isEmpty ? "Sin asignar" : leaderNames}',
                     style: const TextStyle(fontSize: 15),
                   ),
                 ),

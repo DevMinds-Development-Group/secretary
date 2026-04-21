@@ -1,4 +1,4 @@
-package com.vientorecio.app
+package com.koinos.app
 
 import io.flutter.embedding.android.FlutterActivity
 

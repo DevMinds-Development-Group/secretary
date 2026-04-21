@@ -113,6 +113,7 @@ class AttendanceDetail extends StatelessWidget {
                 record.presentMemberIds.length.toString(),
               ),
               _infoItem("Visitas: ", record.visitorsCount.toString()),
+              _infoItem("Nuevos convertidos: ", record.newConvert.toString()),
               _infoItem("TOTAL: ", total.toString()),
               Divider(),
               _infoItem(

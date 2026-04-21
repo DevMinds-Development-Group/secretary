@@ -7,6 +7,7 @@ class AttendanceModel {
   final DateTime date;
   final int visitorsCount;
   final int pastoralVisitsCount;
+  final int newConvert;
   final Set<String> presentMemberIds;
   final String observations;
 
@@ -19,6 +20,7 @@ class AttendanceModel {
     required this.date,
     required this.visitorsCount,
     required this.pastoralVisitsCount,
+    required this.newConvert,
     required this.presentMemberIds,
     this.observations = "",
   });
@@ -49,6 +51,7 @@ class AttendanceModel {
           : DateTime.now(),
       visitorsCount: json['visitorsCount'] ?? 0,
       pastoralVisitsCount: json['pastoralVisitsCount'] ?? 0,
+      newConvert: json['newConvert'] ?? 0,
       observations: json['observations'] ?? '',
       presentMemberIds: extractedIds,
     );
@@ -63,6 +66,7 @@ class AttendanceModel {
           "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
       "visitorsCount": visitorsCount,
       "pastoralVisitsCount": pastoralVisitsCount,
+      "newConvert": newConvert,
       "observations": observations,
       "presentMemberIds": presentMemberIds.toList(),
     };
