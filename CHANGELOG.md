@@ -1,40 +1,15 @@
-### 🚀 Novedades version 1.1.2
+# 🚀 Novedades Koinos - Versión 1.1.3
 
--   **Gestión de Redes:** Ahora puedes añadir nuevos miembros directamente desde el módulo de Redes.
+## ✨ Nuevas Funcionalidades y Mejoras
 
--   **Navegación mejorada:** Se habilitó el acceso directo (`onTap`) desde el Dashboard hacia las secciones de **Redes**, **Ministerios** , **Miembros** y **Servicios**.
+• 📱 **Registro Flexible:** El campo de "Teléfono" ahora es opcional al agregar nuevos miembros.
+• ⛪ **Eventos y Cultos:** Ya puedes registrar "Nuevos Convertidos" en todas las actividades y cultos.
+• 🔒 **Seguridad:** Se añadió un campo de confirmación de contraseña para mayor seguridad en los cambios.
+• 👤 **Perfil:** La información de la versión de Koinos se movió del manual directamente al Perfil de Usuario.
+• 🔢 **Paginación Móvil:** Se optimizó la navegación en celulares utilizando ahora un menú desplegable (dropdown).
 
--   **Actualizaciones In-App:** Se añadió soporte para detectar y descargar nuevas versiones sin salir de la aplicación.
+## 🛠 Correcciones Técnicas
 
-
-### 🛠️ Correcciones y Mejoras
-
--   **Paginación:** * Implementada la paginación en el listado de **Usuarios** para mejorar el rendimiento.
-
-    -   Corregido el error que impedía navegar correctamente entre páginas en el módulo de **Asistencia**.
-
-    -   Se aumentó el límite de visualización del número miembros en la tarjeta en Redes y Miembros.
-
--   **Interfaz de Usuario (UI):**
-
-    -   **Tablas Responsivas:** Se corrigió el tamaño fijo en la tabla de "Gestionar Redes"; ahora los botones de acción son visibles en pantallas grandes.
-
-    -   **Input de Datos:** Se reemplazó el contador (`counter`) por un campo de texto estándar para facilitar la entrada manual de datos.
-
-
-### 🔐 Seguridad y Permisos
-
--   **Gestión de Sesión:** Implementado control de errores **401**. Si el token de acceso expira, la sesión se destruye automáticamente y se redirige al usuario al Login para proteger los datos.
-
--   **Ajuste de Roles:**
-
-    -   Se restringió la visibilidad del botón **"Gestionar Ministerio"** para usuarios con rol de Líder.
-
-    -   Se corrigieron los permisos de acceso: los **Líderes** ahora tienen el acceso correspondiente al módulo de **Miembros**.
-
-
-----------
-
-### Notas técnicas
-
-> El archivo `app-release.apk` adjunto incluye todas estas correcciones. Si experimentas problemas con el inicio de sesión, asegúrate de limpiar la caché de la aplicación debido al cambio en el manejo de tokens.
+• 🔄 **Conexión:** Se mejoró el mensaje de error en el Dashboard y se añadió el botón "Reintentar" para facilitar la reconexión.
+• 🔑 **Acceso:** Se corrigió el error visual (pantallazo 401) que aparecía cuando la sesión expiraba antes de volver al login.
+• 🖥 **Estabilidad:** Solucionado el problema de pantalla en blanco en los módulos de Gestionar Redes y Ministerios.
