@@ -44,8 +44,41 @@ class _DashboardState extends State<Dashboard> {
       return Scaffold(
         appBar: CustomAppBar(title: 'Inicio'),
         body: Center(
-          child: Text(
-            dashboardProvider.error ?? "No se pudieron cargar los datos",
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.cloud_off, size: 80, color: Colors.grey),
+                const SizedBox(height: 20),
+                Text(
+                  dashboardProvider.error ?? "No se pudieron cargar los datos",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.blueGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // BOTÓN DE REINTENTAR
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<DashboardProvider>().fetchSummary();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("Reintentar"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 25,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -230,7 +263,7 @@ class _DashboardState extends State<Dashboard> {
         ),
         drawer: isMobile ? const Drawer(child: Menu()) : null,
         body: isMobile
-            ? mainContent
+            ? SafeArea(child: mainContent)
             : Row(
                 children: [
                   const Menu(),

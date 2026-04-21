@@ -33,6 +33,9 @@ class _AttendanceState extends State<Attendance> {
   String _observations = "";
   final Set<String> _presentMemberIds = {};
   Set<String> _selectedMemberIds = {};
+  int _newConvertController = 0;
+  bool _isManualCount = false;
+  final _totalController = TextEditingController();
 
   @override
   void initState() {
@@ -132,13 +135,6 @@ class _AttendanceState extends State<Attendance> {
       ),
     );
   }
-
-  // @override
-  // void didChangeDependencies() {
-  //   super.didChangeDependencies();
-  //
-  //   _loadRecordForDate(_selectedDate);
-  // }
 
   void _loadRecordForDate(DateTime date) {
     final attendanceProvider = Provider.of<AttendanceProvider>(
@@ -288,6 +284,8 @@ class _AttendanceState extends State<Attendance> {
                 _buildPastoralTextField(),
               ],
             ),
+            SizedBox(height: 20),
+            _buildNewConvertTextField(),
           ],
         ),
         const SizedBox(height: 20),
@@ -323,6 +321,27 @@ class _AttendanceState extends State<Attendance> {
     );
   }
 
+  Widget _buildNewConvertTextField() {
+    return SizedBox(
+      width:
+          MediaQuery.of(context).size.width *
+          0.9, // Ajusta el ancho según necesites
+      child: CustomTextFormField(
+        labelText: 'Nuevos convertidos',
+        keyboardType: TextInputType.number,
+        initialValue: _newConvertController.toString(),
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+        ], // Solo números
+        onChanged: (value) {
+          setState(() {
+            _newConvertController = int.tryParse(value) ?? 0;
+          });
+        },
+      ),
+    );
+  }
+
   Widget _buildVisitorsTextField() {
     return SizedBox(
       width: 150,
@@ -342,7 +361,7 @@ class _AttendanceState extends State<Attendance> {
 
   Widget _buildWebControls(memberProvider) {
     return Wrap(
-      spacing: 40,
+      spacing: 20,
       runSpacing: 20,
       crossAxisAlignment: WrapCrossAlignment.center,
       alignment: WrapAlignment.center,
@@ -351,6 +370,7 @@ class _AttendanceState extends State<Attendance> {
         _buildNetworkDropdown(),
         _buildVisitorsTextField(),
         _buildPastoralTextField(),
+        _buildNewConvertTextField(),
         Button(
           text: 'Guardar',
           onPressed: _saveAttendance,

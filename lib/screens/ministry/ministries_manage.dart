@@ -39,29 +39,35 @@ class _MinistryManageState extends State<MinistryManage> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: ministryProvider.isLoading
-                  ? Padding(
-                      padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).size.height * 0.4,
+            SizedBox(height: isMobile ? 20 : 40),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 20.0),
+                child: ministryProvider.isLoading
+                    ? Padding(
+                        padding: EdgeInsets.only(
+                          top: MediaQuery.of(context).size.height * 0.4,
+                        ),
+                        child: const Center(
+                          child: CircularProgressIndicator(color: primaryColor),
+                        ),
+                      )
+                    : ministries.isEmpty
+                    ? const Center(
+                        child: Text('No hay ministerios para mostrar.'),
+                      )
+                    : Align(
+                        alignment: Alignment.topCenter,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(),
+                          child: _buildMainContent(
+                            context,
+                            isMobile,
+                            ministries,
+                          ),
+                        ),
                       ),
-                      child: const Center(
-                        child: CircularProgressIndicator(color: primaryColor),
-                      ),
-                    )
-                  : ministries.isEmpty
-                  ? const Center(
-                      child: Text('No hay ministerios para mostrar.'),
-                    )
-                  : Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(),
-                        child: _buildMainContent(context, isMobile, ministries),
-                      ),
-                    ),
+              ),
             ),
           ],
         ),
@@ -79,9 +85,11 @@ class _MinistryManageState extends State<MinistryManage> {
           ? EdgeInsets.only(left: 20, bottom: 15, right: 20)
           : EdgeInsets.all(20),
       child: isMobile
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: _buildMobileList(context, ministries),
+          ? SingleChildScrollView(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: _buildMobileList(context, ministries),
+              ),
             )
           : CustomWebTable<MinistryModel>(
               items: ministries,
@@ -130,22 +138,39 @@ class _MinistryManageState extends State<MinistryManage> {
       color: Colors.white,
       elevation: 5,
       child: ListView.separated(
+        shrinkWrap: true,
         padding: const EdgeInsets.only(left: 5),
         itemCount: ministries.length,
-        separatorBuilder: (context, index) => const Divider(),
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final ministry = ministries[index];
+          final pastorNames = ministry.leaders
+              .map((l) => "${l.name} ${l.lastName ?? ''}".trim())
+              .join(", ");
           return ListTile(
             title: Text(
               ministry.name,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(
-              ministry.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            subtitle: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${ministry.description}\nPastores: ${pastorNames.isEmpty ? "Sin asignar" : pastorNames}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Align(
+                  child: _buildActions(context, ministry),
+                  alignment: Alignment.centerRight,
+                ),
+              ],
             ),
-            trailing: _buildActions(context, ministry),
+            isThreeLine: true,
           );
         },
       ),

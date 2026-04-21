@@ -72,18 +72,18 @@ class _PaginationState extends State<Pagination> {
       color: Colors.grey.shade200,
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 16),
       child: isMobile
-          ? Column(
+          ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildPageControls(isMobile),
-                const SizedBox(height: 4),
+                _buildPerPageDropdown(isMobile),
               ],
             )
           : Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (widget.onItemsPerPageChanged != null)
-                  _buildPerPageDropdown(),
+                  _buildPerPageDropdown(isMobile),
                 const SizedBox(width: 15),
                 _buildPageControls(isMobile),
                 const SizedBox(width: 15),
@@ -159,7 +159,7 @@ class _PaginationState extends State<Pagination> {
     );
   }
 
-  Widget _buildPerPageDropdown() {
+  Widget _buildPerPageDropdown(isMobile) {
     final int safeValue =
         widget.availableItemsPerPage.contains(widget.itemsPerPage)
         ? widget.itemsPerPage
@@ -169,10 +169,11 @@ class _PaginationState extends State<Pagination> {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
-        const Text(
-          'Elementos por página:',
-          style: TextStyle(fontSize: 14, color: Colors.black87),
-        ),
+        if (!isMobile)
+          Text(
+            'Elementos por página:',
+            style: TextStyle(fontSize: 14, color: Colors.black87),
+          ),
         const SizedBox(width: 10),
         DropdownButton<int>(
           value: safeValue,

@@ -41,6 +41,13 @@ class ApiClient {
               'login',
               (route) => false,
             );
+            return handler.resolve(
+              Response(
+                requestOptions: e.requestOptions,
+                statusCode: 200,
+                data: {},
+              ),
+            );
           }
           return handler.next(e);
         },
