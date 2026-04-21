@@ -158,7 +158,10 @@ class _CreateMinistryState extends State<CreateMinistry> {
                               .map((p) => p.id)
                               .toList(),
                           initialSelectedItems: _selectedLeaderIds,
-                          displayItem: (id) => leaderProvider.findById(id).name,
+                          displayItem: (id) {
+                            final p = leaderProvider.findById(id);
+                            return '${p.name} ${p.lastName}';
+                          },
                         ),
                       );
                       if (result != null) {

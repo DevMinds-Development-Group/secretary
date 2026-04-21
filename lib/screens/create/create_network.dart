@@ -1,5 +1,3 @@
-// lib/screens/create/create_network.dart
-
 import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

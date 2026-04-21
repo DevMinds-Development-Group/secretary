@@ -46,10 +46,6 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
         context,
         listen: false,
       ).fetchAttendanceHistory();
-      Provider.of<AttendanceProvider>(
-        context,
-        listen: false,
-      ).fetchAttendanceHistory();
     });
   }
 
@@ -334,7 +330,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                     style: TextStyle(fontSize: 16),
                   ),
                   Text(
-                    'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} | Visitas Pastorales: ${record.pastoralVisitsCount}',
+                    'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} \nVisitas Pastorales: ${record.pastoralVisitsCount} \nNuevos convertidos: ${record.newConvert}',
                     style: TextStyle(fontSize: 16),
                   ),
                   if (isMobile) ...[

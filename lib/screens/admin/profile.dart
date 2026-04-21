@@ -1,5 +1,6 @@
 import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
@@ -14,9 +15,12 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  String _appVersion = "Cargando...";
+
   @override
   void initState() {
     super.initState();
+    _getAppVersion();
     // Cargar datos del perfil al iniciar
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authService = Provider.of<AuthService>(context, listen: false);
@@ -26,9 +30,30 @@ class _ProfileState extends State<Profile> {
     });
   }
 
+  Future<void> _getAppVersion() async {
+    try {
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      // Verificamos si el widget sigue presente antes de actualizar el estado
+      if (!mounted) return;
+
+      setState(() {
+        _appVersion = "${packageInfo.version}+${packageInfo.buildNumber}";
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _appVersion = "Error al cargar";
+        });
+      }
+    }
+  }
+
   // Diálogo de cambio de contraseña estilo "CreateUser"
   void _showChangePasswordDialog(dynamic user) {
     final TextEditingController passwordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+        TextEditingController();
+
     final _formKey = GlobalKey<FormState>();
     bool obscurePassword = true;
 
@@ -37,6 +62,7 @@ class _ProfileState extends State<Profile> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -70,6 +96,31 @@ class _ProfileState extends State<Profile> {
                     validator: (v) => (v == null || v.isEmpty)
                         ? 'La contraseña no puede estar vacía.'
                         : null,
+                  ),
+                  SizedBox(height: 15),
+                  TextFormField(
+                    controller: confirmPasswordController,
+                    obscureText: obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: "Confirmar contraseña",
+                      border: const OutlineInputBorder(),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () =>
+                            setState(() => obscurePassword = !obscurePassword),
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty)
+                        return 'Repite la contraseña.';
+                      if (v != passwordController.text)
+                        return 'Las contraseñas no coinciden.'; // Validación clave
+                      return null;
+                    },
                   ),
                 ],
               ),
@@ -254,6 +305,11 @@ class _ProfileState extends State<Profile> {
               member.birthdate != null
                   ? "${member.birthdate.day}/${member.birthdate.month}/${member.birthdate.year}"
                   : 'N/A',
+            ),
+            _buildInfoTile(
+              Icons.settings,
+              'Versión de Koinos',
+              'v${_appVersion}',
             ),
           ],
         ),
