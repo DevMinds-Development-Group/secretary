@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/dashboard_model.dart';
@@ -24,12 +25,12 @@ class DashboardProvider with ChangeNotifier {
 
       if (response.statusCode == 200) {
         _summary = DashboardModel.fromJson(response.data);
-      } else {
-        _error = "Error del servidor: ${response.statusCode}";
+        _error = null;
       }
     } catch (e) {
-      _error = "No se pudo conectar con el servidor para obtener el resumen.";
-      print("DASHBOARD_ERROR: $e");
+      if (e is DioException && e.response?.statusCode != 401) {
+        _error = "Error al cargar dashboard";
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

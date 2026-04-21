@@ -24,48 +24,6 @@ class AttendanceProvider with ChangeNotifier {
   Map<String, AttendanceModel> _records = {};
   Map<String, AttendanceModel> get records => _records;
 
-  Future<bool> saveAttendance({
-    required String serviceId,
-    required DateTime date,
-    List<String>? memberIds,
-    int? totalPresent,
-    String? newConvert,
-  }) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final data = {
-        "serviceId": serviceId,
-        "date": date.toIso8601String().split('T')[0],
-        // Si no hay lista de miembros, enviamos lista vacía
-        "memberIds": memberIds ?? [],
-        // Si es manual usamos totalPresent, si no, contamos los miembros seleccionados
-        "totalPresent": totalPresent ?? (memberIds?.length ?? 0),
-        "newConvert": newConvert,
-      };
-
-      final response = await _apiClient.dio.post(
-        '/event-attendances',
-        data: data,
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        await fetchAttendanceHistory(); // Refrescar historial
-        return true;
-      }
-      return false;
-    } catch (e) {
-      _error = "Error al conectar con el servidor: $e";
-      print("DEBUG ERROR SAVE ATTENDANCE: $e");
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
   Future<void> fetchAttendanceHistory({int page = 0, int? size}) async {
     _isLoading = true;
     _error = null;

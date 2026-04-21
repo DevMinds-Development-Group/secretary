@@ -37,10 +37,12 @@ class ApiClient {
           if (e.response?.statusCode == 401) {
             print('TOKEN EXPIRADO: Limpiando sesión...');
             await _secureStorage.deleteAll();
+
             navigatorKey.currentState?.pushNamedAndRemoveUntil(
               'login',
               (route) => false,
             );
+
             return handler.resolve(
               Response(
                 requestOptions: e.requestOptions,

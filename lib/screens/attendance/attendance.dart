@@ -30,12 +30,10 @@ class _AttendanceState extends State<Attendance> {
   String? _selectedNetworkId;
   int _visitorsCount = 0;
   int _pastoralVisitsCount = 0;
+  int _newConvertCount = 0;
   String _observations = "";
   final Set<String> _presentMemberIds = {};
   Set<String> _selectedMemberIds = {};
-  int _newConvertController = 0;
-  bool _isManualCount = false;
-  final _totalController = TextEditingController();
 
   @override
   void initState() {
@@ -57,6 +55,7 @@ class _AttendanceState extends State<Attendance> {
       _selectedDate = record.date;
       _visitorsCount = record.visitorsCount;
       _pastoralVisitsCount = record.pastoralVisitsCount;
+      _newConvertCount = record.newConvert;
       _observations = record.observations;
 
       _presentMemberIds.clear();
@@ -187,6 +186,7 @@ class _AttendanceState extends State<Attendance> {
       visitorsCount: _visitorsCount,
       pastoralVisitsCount: _pastoralVisitsCount,
       presentMemberIds: _presentMemberIds,
+      newConvert: _newConvertCount,
     );
 
     bool success = await attendanceProvider.saveRecord(newRecord);
@@ -242,8 +242,8 @@ class _AttendanceState extends State<Attendance> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: isMobile
-                        ? _buildMobileControls(memberProvider)
-                        : _buildWebControls(memberProvider),
+                        ? _buildMobileControls(memberProvider, isMobile)
+                        : _buildWebControls(memberProvider, isMobile),
                   ),
 
                   const SizedBox(height: 10),
@@ -258,7 +258,7 @@ class _AttendanceState extends State<Attendance> {
     );
   }
 
-  Widget _buildMobileControls(memberProvider) {
+  Widget _buildMobileControls(memberProvider, isMobile) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -284,8 +284,8 @@ class _AttendanceState extends State<Attendance> {
                 _buildPastoralTextField(),
               ],
             ),
-            SizedBox(height: 20),
-            _buildNewConvertTextField(),
+            SizedBox(height: 15),
+            _buildNewConvertTextField(isMobile),
           ],
         ),
         const SizedBox(height: 20),
@@ -321,21 +321,19 @@ class _AttendanceState extends State<Attendance> {
     );
   }
 
-  Widget _buildNewConvertTextField() {
+  Widget _buildNewConvertTextField(isMobile) {
     return SizedBox(
-      width:
-          MediaQuery.of(context).size.width *
-          0.9, // Ajusta el ancho según necesites
+      width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 150,
       child: CustomTextFormField(
         labelText: 'Nuevos convertidos',
         keyboardType: TextInputType.number,
-        initialValue: _newConvertController.toString(),
+        initialValue: _newConvertCount.toString(),
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
         ], // Solo números
         onChanged: (value) {
           setState(() {
-            _newConvertController = int.tryParse(value) ?? 0;
+            _newConvertCount = int.tryParse(value) ?? 0;
           });
         },
       ),
@@ -359,9 +357,9 @@ class _AttendanceState extends State<Attendance> {
     );
   }
 
-  Widget _buildWebControls(memberProvider) {
+  Widget _buildWebControls(memberProvider, isMobile) {
     return Wrap(
-      spacing: 20,
+      spacing: 15,
       runSpacing: 20,
       crossAxisAlignment: WrapCrossAlignment.center,
       alignment: WrapAlignment.center,
@@ -370,7 +368,7 @@ class _AttendanceState extends State<Attendance> {
         _buildNetworkDropdown(),
         _buildVisitorsTextField(),
         _buildPastoralTextField(),
-        _buildNewConvertTextField(),
+        _buildNewConvertTextField(isMobile),
         Button(
           text: 'Guardar',
           onPressed: _saveAttendance,

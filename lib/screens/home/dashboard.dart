@@ -40,6 +40,11 @@ class _DashboardState extends State<Dashboard> {
       );
     }
 
+    if (dashboardProvider.error != null) {
+      // Solo se mostrará si el error no fue un 401 silenciado
+      return Center(child: Text(dashboardProvider.error!));
+    }
+
     if (summary == null) {
       return Scaffold(
         appBar: CustomAppBar(title: 'Inicio'),
