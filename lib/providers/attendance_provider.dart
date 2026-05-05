@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/attendance_model.dart';
@@ -57,12 +58,28 @@ class AttendanceProvider with ChangeNotifier {
           "DEBUG: Se cargaron ${_recordsList.length} registros desde 'content'",
         );
       }
-    } catch (e) {
-      _error = "Error al cargar historial: $e";
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 500 || e.type != DioExceptionType.cancel) {
+        _error =
+            "Ya pasó el tiempo para tomar asistencia o el servidor no está disponible";
+      } else {
+        _error = "No se pudo cargar el historial. Intente de nuevo.";
+      }
       print("DEBUG ERROR FETCH: $e");
+    } catch (e) {
+      _error =
+          "Ya pasó el tiempo para tomar asistencia o el servidor no está disponible";
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  void clearError() {
+    if (_error != null) {
+      _error = null;
+      // Usamos microtask para evitar errores de "setState/notifyListeners during build"
+      Future.microtask(() => notifyListeners());
     }
   }
 
@@ -99,15 +116,17 @@ class AttendanceProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // IMPORTANTE: Tras guardar con éxito, refrescamos la lista completa
-        // Esto garantiza que veamos el nuevo registro con su ID real del servidor
         await fetchAttendanceHistory();
         return true;
       }
       return false;
+    } on DioException catch (e) {
+      _error =
+          "Ya pasó el tiempo para tomar asistencia o el servidor no está disponible";
+      print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
+      return false;
     } catch (e) {
-      _error = "Error al conectar con el servidor: $e";
-      print("DEBUG ERROR SAVE ATTENDANCE: $e");
+      _error = "Ocurrió un error inesperado al guardar";
       return false;
     } finally {
       _isLoading = false;

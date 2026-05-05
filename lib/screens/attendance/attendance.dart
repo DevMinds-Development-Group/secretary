@@ -191,8 +191,6 @@ class _AttendanceState extends State<Attendance> {
 
     bool success = await attendanceProvider.saveRecord(newRecord);
 
-    if (!mounted) return;
-
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
