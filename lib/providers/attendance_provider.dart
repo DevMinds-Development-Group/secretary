@@ -113,19 +113,22 @@ class AttendanceProvider with ChangeNotifier {
         '/event-attendances',
         data: record.toJson(),
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
+        _error = null;
         await fetchAttendanceHistory();
         return true;
       }
       return false;
     } on DioException catch (e) {
-      _error =
-          "El tiempo para registrar o modificar la asistencia ha expirado. El límite es hasta las 10:00 AM del día siguiente al evento. O el servidor no está disponible";
-      print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
-      return false;
-    } catch (e) {
-      _error = "Ocurrió un error inesperado al guardar";
+      if (e.type == DioExceptionType.connectionError ||
+          e.error == 'SIN_CONEXION') {
+        _error = "SIN_CONEXION";
+      } else {
+        _error =
+            "El tiempo para registrar o modificar la asistencia ha expirado. El límite es hasta las 10:00 AM del día siguiente al evento. O el servidor no está disponible";
+        print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
+      }
+
       return false;
     } finally {
       _isLoading = false;

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/member_model.dart';
@@ -8,25 +9,36 @@ class MinistryProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
   List<MinistryModel> _ministries = [];
   bool _isLoading = false;
+  String? _error;
 
   List<MinistryModel> get ministries => _ministries;
   bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 
   Future<void> fetchMinistries() async {
     _isLoading = true;
+    _ministries = [];
     notifyListeners();
     try {
       final response = await _apiClient.dio.get('/ministries');
-      print("Respuesta API Ministerios: ${response.data}");
-
-      final List<dynamic> data = response.data is List
-          ? response.data
-          : (response.data['content'] ?? []);
-
-      _ministries = data.map((m) => MinistryModel.fromJson(m)).toList();
-      print("Ministerios cargados: ${_ministries.length}");
-    } catch (e) {
-      print("Error cargando ministerios: $e");
+      if (response.statusCode == 200) {
+        _error = null;
+        final List<dynamic> data = response.data['content'] ?? [];
+        _ministries = data.map((m) => MinistryModel.fromJson(m)).toList();
+        print("Ministerios cargados: ${_ministries.length}");
+      }
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "Error al cargar ministerios";
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -50,9 +62,7 @@ class MinistryProvider with ChangeNotifier {
         },
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        await fetchMinistries();
-      }
+      await fetchMinistries();
     } catch (e) {
       print("Error al crear ministerio: $e");
       rethrow;
@@ -81,9 +91,7 @@ class MinistryProvider with ChangeNotifier {
         },
       );
 
-      if (response.statusCode == 200) {
-        await fetchMinistries();
-      }
+      await fetchMinistries();
     } catch (e) {
       print("Error al actualizar ministerio: $e");
       rethrow;
@@ -104,15 +112,12 @@ class MinistryProvider with ChangeNotifier {
     }
     try {
       final response = await _apiClient.dio.delete('/ministries/$id');
-
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception("Error al eliminar");
-      }
+      await fetchMinistries();
     } catch (e) {
-      if (deletedMinistry != null) {
-        _ministries.insert(index, deletedMinistry);
-        notifyListeners();
-      }
+      _error = "No se pudo eliminar el ministerio";
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -134,27 +139,10 @@ class MinistryProvider with ChangeNotifier {
   }
 
   Future<void> addMemberToMinistry(String ministryId, Member member) async {
-    final index = _ministries.indexWhere((m) => m.id == ministryId);
-    if (index != -1) {
-      final alreadyExists = _ministries[index].members.any(
-        (m) => m.id == member.id,
-      );
-      if (alreadyExists) return;
-
-      final currentMembers = List<Member>.from(_ministries[index].members);
-      currentMembers.add(member);
-
-      _ministries[index] = _ministries[index].copyWith(
-        members: currentMembers,
-        membersCount: _ministries[index].membersCount + 1,
-      );
-      notifyListeners();
-    }
     try {
       await _apiClient.dio.post('/ministries/$ministryId/members/${member.id}');
-      await fetchMinistryDetails(ministryId, silent: true);
+      await fetchMinistries();
     } catch (e) {
-      await fetchMinistryDetails(ministryId, silent: true);
       rethrow;
     }
   }
@@ -163,27 +151,12 @@ class MinistryProvider with ChangeNotifier {
     String ministryId,
     Member member,
   ) async {
-    final index = _ministries.indexWhere((m) => m.id == ministryId);
-    if (index != -1) {
-      final currentMembers = List<Member>.from(_ministries[index].members);
-      currentMembers.removeWhere((m) => m.id == member.id);
-
-      _ministries[index] = _ministries[index].copyWith(
-        members: currentMembers,
-        membersCount: _ministries[index].membersCount - 1,
-      );
-      notifyListeners();
-    }
     try {
-      // 2. Petición real al servidor
       await _apiClient.dio.delete(
         '/ministries/$ministryId/members/${member.id}',
       );
-      // Sincronización silenciosa
-      await fetchMinistryDetails(ministryId, silent: true);
+      await fetchMinistries();
     } catch (e) {
-      // Si falla, recargamos para restaurar al miembro
-      await fetchMinistryDetails(ministryId, silent: true);
       rethrow;
     }
   }

@@ -42,7 +42,10 @@ class NetworkProvider with ChangeNotifier {
     }
   }
 
-  // lib/providers/network_provider.dart
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 
   Future<void> addNetwork(String name, String mission) async {
     _isLoading = true;

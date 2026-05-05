@@ -11,6 +11,7 @@ import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/custom_card_container.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
@@ -23,13 +24,40 @@ class NetworkMembers extends StatefulWidget {
 
 class _NetworkMembersState extends State<NetworkMembers> {
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     final networkProvider = context.watch<NetworkProvider>();
     final memberProvider = Provider.of<MemberProvider>(context);
 
-    final List<Member> membersInGroup = memberProvider.allMembers
-        .where((member) => member.networkName == widget.network.name)
+    if (memberProvider.error == "SIN_CONEXION" ||
+        networkProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: widget.network.name),
+        body: NoConnectionWidget(
+          onRefresh: () {
+            memberProvider.clearError();
+            networkProvider.clearError();
+            memberProvider.fetchMembers(page: 0, size: 1000);
+          },
+        ),
+      );
+    }
+
+    final List<Member> membersInGroup = memberProvider.members
+        .where((member) => member.networkId == widget.network.id)
         .toList();
 
     membersInGroup.sort(
@@ -55,8 +83,16 @@ class _NetworkMembersState extends State<NetworkMembers> {
                         _buildNetworkHeader(widget.network, isMobile),
                         SizedBox(height: 20),
                         Expanded(
-                          child: membersInGroup.isEmpty
-                              ? _buildEmptyState(isMobile)
+                          child: memberProvider.isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: primaryColor,
+                                  ),
+                                )
+                              : membersInGroup.isEmpty
+                              ? _buildEmptyState(
+                                  isMobile,
+                                ) // Solo se muestra si terminó de cargar y está vacío
                               : _buildMemberList(membersInGroup, isMobile),
                         ),
                       ],

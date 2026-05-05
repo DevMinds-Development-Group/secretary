@@ -10,6 +10,7 @@ import '../../providers/network_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class CreateMember extends StatefulWidget {
   final Member? memberToEdit;
@@ -131,42 +132,55 @@ class _CreateMemberState extends State<CreateMember> {
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     final memberProvider = context.watch<MemberProvider>();
+    final netProvider = context.watch<NetworkProvider>();
+
+    if (netProvider.error == "SIN_CONEXION" ||
+        memberProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(
+          title: _isEditing ? 'Editar miembro' : 'Crear miembro',
+        ),
+        body: NoConnectionWidget(
+          onRefresh: () {
+            // Intentamos recuperar la verdad del servidor (Redes)
+            netProvider.fetchNetworks();
+          },
+        ),
+      );
+    }
+
+    // 3. PRIORIDAD 2: CARGA INICIAL
+    // Solo se muestra si no hay error y es la primera vez que traemos las redes
+    if (netProvider.isLoading && netProvider.networks.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: CustomAppBar(
+          title: _isEditing ? 'Editar miembro' : 'Crear miembro',
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: 'Crear miembro'),
+      appBar: CustomAppBar(
+        title: _isEditing ? 'Editar miembro' : 'Crear miembro',
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          return isMobile
-              ? _buildMobileLayout(isMobile, memberProvider)
-              : _buildWebLayout(isMobile, memberProvider);
+          return SingleChildScrollView(
+            child: Center(
+              child: Container(
+                width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 600,
+                padding: EdgeInsets.all(isMobile ? 20.0 : 30.0),
+                child: _buildFormFields(context, isMobile, memberProvider),
+              ),
+            ),
+          );
         },
-      ),
-    );
-  }
-
-  Widget _buildMobileLayout(isMobile, memberProvider) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 24.0),
-            _buildFormFields(context, isMobile, memberProvider),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWebLayout(isMobile, memberProvider) {
-    return SingleChildScrollView(
-      child: Center(
-        child: Container(
-          width: 600,
-          padding: EdgeInsets.all(30.0),
-          child: _buildFormFields(context, isMobile, memberProvider),
-        ),
       ),
     );
   }

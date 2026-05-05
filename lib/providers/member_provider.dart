@@ -39,11 +39,16 @@ class MemberProvider with ChangeNotifier {
     }).toList();
   }
 
+  void clearError() {
+    _error = null;
+    notifyListeners(); // Esto le avisa a la UI que ya puede intentar mostrar el formulario otra vez
+  }
+
   Future<void> fetchMembers({bool force = false, int? page, int? size}) async {
     _currentPage = page ?? _currentPage;
     _pageSize = size ?? _pageSize;
     _isLoading = true;
-    _error = null;
+    // _error = null;
     _members = [];
     notifyListeners();
 

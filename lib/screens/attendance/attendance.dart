@@ -14,6 +14,7 @@ import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class Attendance extends StatefulWidget {
   final AttendanceModel? existingRecord;
@@ -216,11 +217,55 @@ class _AttendanceState extends State<Attendance> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-    final memberProvider = Provider.of<MemberProvider>(context);
-    List<Member> members = memberProvider.filteredMembers;
+
+    // Escuchamos todos los providers al inicio
+    final memberProvider = context.watch<MemberProvider>();
+    final serviceProvider = context.watch<ServiceProvider>();
+    final netProvider = context.watch<NetworkProvider>();
+    final attendanceProvider = context.watch<AttendanceProvider>();
+
+    // 1. PRIORIDAD: ERROR DE CONEXIÓN
+    if (memberProvider.error == "SIN_CONEXION" ||
+        serviceProvider.error == "SIN_CONEXION" ||
+        netProvider.error == "SIN_CONEXION" ||
+        attendanceProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Asistencia', isDrawerEnabled: isMobile),
+        body: NoConnectionWidget(
+          onRefresh: () async {
+            memberProvider.clearError();
+            serviceProvider.clearError();
+            netProvider.clearError();
+            attendanceProvider.clearError();
+
+            await Future.wait([
+              memberProvider.fetchMembers(page: 0, size: 1000),
+              serviceProvider.fetchServices(),
+              netProvider.fetchNetworks(),
+            ]);
+          },
+        ),
+      );
+    }
+
+    // 2. PRIORIDAD: CARGA INICIAL
+    if (memberProvider.isLoading ||
+        serviceProvider.isLoading ||
+        netProvider.isLoading) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Asistencia'),
+        body: const Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
+
+    List<Member> membersToShow = memberProvider.members;
 
     if (_selectedNetworkId != null) {
-      members = members
+      membersToShow = membersToShow
           .where((m) => m.networkId == _selectedNetworkId)
           .toList();
     }
@@ -243,10 +288,9 @@ class _AttendanceState extends State<Attendance> {
                         ? _buildMobileControls(memberProvider, isMobile)
                         : _buildWebControls(memberProvider, isMobile),
                   ),
-
                   const SizedBox(height: 10),
-
-                  Expanded(child: _buildMemberList(members, isMobile)),
+                  // Pasamos la lista filtrada correctamente
+                  Expanded(child: _buildMemberList(membersToShow, isMobile)),
                 ],
               ),
             ),

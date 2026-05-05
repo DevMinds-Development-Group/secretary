@@ -70,12 +70,16 @@ class AuthService with ChangeNotifier {
   String? _userRoleDescription;
   String? _rawRole;
   UserProfile? _user;
+  bool _isLoading = false;
+  String? _error;
 
   // Getters
   String? get userName => _userName;
   String? get userRole => _userRoleDescription;
   String? get rawRole => _rawRole;
   UserProfile? get user => _user;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
 
   List<String> _permissions = [];
 
@@ -93,46 +97,48 @@ class AuthService with ChangeNotifier {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   Future<void> fetchUserProfile(String username) async {
+    _isLoading = true;
+    // NOTA: No limpiamos _error aquí para evitar el parpadeo en la UI
+    notifyListeners();
     try {
       final token = await getToken();
-
       final response = await _dio.get(
         '/users/$username',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.statusCode == 200) {
+        _error = null; // ÉXITO: Recién aquí limpiamos el error
         final userData = response.data;
 
-        // Extraer permisos del primer rol
         final roles = userData['roles'] as List?;
         if (roles != null && roles.isNotEmpty) {
           _userRoleDescription = roles[0]['description'];
           _rawRole = roles[0]['name'];
-
           _permissions = List<String>.from(roles[0]['permissions'] ?? []);
-          print("PERMISOS CARGADOS: $_permissions");
         }
 
         _user = UserProfile.fromJson(userData);
-
         _userName = _user!.username;
         _userRoleDescription = _user!.role;
 
         await _secureStorage.write(key: 'user_name', value: _userName ?? "");
-        await _secureStorage.write(
-          key: 'user_role_desc',
-          value: _userRoleDescription ?? "",
-        );
+        await _secureStorage.write(key: 'user_role_desc', value: _userRoleDescription ?? "");
         await _secureStorage.write(key: 'raw_role', value: _rawRole ?? "");
-
-        notifyListeners();
-        print(
-          "PERFIL CARGADO: ${_user?.username}, Miembro: ${_user?.member?.name}",
-        );
+      }
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.message?.contains('SocketException') == true) {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "Error de servidor";
       }
     } catch (e) {
-      print("Error obteniendo perfil: $e");
+      _error = "Error inesperado";
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -200,6 +206,12 @@ class AuthService with ChangeNotifier {
     _userRoleDescription = null;
     _rawRole = null;
     _user = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _error = null;
     notifyListeners();
   }
 }

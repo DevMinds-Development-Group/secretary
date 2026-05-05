@@ -60,6 +60,11 @@ class ServiceProvider with ChangeNotifier {
     }
   }
 
+  void clearError() {
+    _error = null;
+    notifyListeners(); // Esto le avisa a la UI que ya puede intentar mostrar el formulario otra vez
+  }
+
   Future<bool> addService(ServiceModel service) async {
     _isLoading = true;
     _error = null;

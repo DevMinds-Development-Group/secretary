@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class Profile extends StatefulWidget {
   const Profile({Key? key}) : super(key: key);
@@ -21,7 +23,7 @@ class _ProfileState extends State<Profile> {
   void initState() {
     super.initState();
     _getAppVersion();
-    // Cargar datos del perfil al iniciar
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authService = Provider.of<AuthService>(context, listen: false);
       if (authService.userName != null) {
@@ -63,6 +65,7 @@ class _ProfileState extends State<Profile> {
         builder: (context, setState) {
           return AlertDialog(
             backgroundColor: Colors.white,
+            scrollable: true,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -133,13 +136,8 @@ class _ProfileState extends State<Profile> {
                   style: TextStyle(color: Colors.grey),
                 ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
+
+              Button(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final userProvider = context.read<UserProvider>();
@@ -170,10 +168,7 @@ class _ProfileState extends State<Profile> {
                     }
                   }
                 },
-                child: const Text(
-                  "ACTUALIZAR",
-                  style: TextStyle(color: Colors.white),
-                ),
+                text: "Actualizar",
               ),
             ],
           );
@@ -187,6 +182,27 @@ class _ProfileState extends State<Profile> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     final authService = context.watch<AuthService>();
     final user = authService.user;
+
+    if (authService.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Perfil'),
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () =>
+                authService.fetchUserProfile(authService.userName!),
+          ),
+        ),
+      );
+    }
+    if (authService.isLoading || user == null) {
+      return Scaffold(
+        appBar: CustomAppBar(title: 'Perfil'),
+        body: const Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,

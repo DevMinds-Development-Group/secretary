@@ -10,6 +10,7 @@ import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/member_autocomplete_field.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class CreateService extends StatefulWidget {
   final ServiceModel? serviceToEdit;
@@ -111,28 +112,28 @@ class _CreateServiceState extends State<CreateService> {
     7: 'DOMINGO',
   };
 
-  String _getDayName(dynamic day) {
-    if (day == null) return 'LUNES';
-
-    switch (day.toString()) {
-      case '1':
-        return 'LUNES';
-      case '2':
-        return 'MARTES';
-      case '3':
-        return 'MIÉRCOLES';
-      case '4':
-        return 'JUEVES';
-      case '5':
-        return 'VIERNES';
-      case '6':
-        return 'SÁBADO';
-      case '7':
-        return 'DOMINGO';
-      default:
-        return day.toString().toUpperCase(); // Por si ya viene como String
-    }
-  }
+  // String _getDayName(dynamic day) {
+  //   if (day == null) return 'LUNES';
+  //
+  //   switch (day.toString()) {
+  //     case '1':
+  //       return 'LUNES';
+  //     case '2':
+  //       return 'MARTES';
+  //     case '3':
+  //       return 'MIÉRCOLES';
+  //     case '4':
+  //       return 'JUEVES';
+  //     case '5':
+  //       return 'VIERNES';
+  //     case '6':
+  //       return 'SÁBADO';
+  //     case '7':
+  //       return 'DOMINGO';
+  //     default:
+  //       return day.toString().toUpperCase(); // Por si ya viene como String
+  //   }
+  // }
 
   // BUSINESS RULES (Visibility logic)
   bool get shouldShowDate => !recurring;
@@ -217,6 +218,27 @@ class _CreateServiceState extends State<CreateService> {
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     final serviceProvider = context.watch<ServiceProvider>();
+    final memberProvider = context.watch<MemberProvider>();
+
+    if (serviceProvider.error == "SIN_CONEXION" ||
+        memberProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(
+          title: _isEditing ? 'Editar servicio' : 'Crear servicio',
+        ),
+        body: NoConnectionWidget(
+          onRefresh: () {
+            serviceProvider.clearError();
+            memberProvider.clearError();
+            if (_isEditing) {
+              serviceProvider.fetchServices();
+            }
+          },
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(
