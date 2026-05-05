@@ -22,12 +22,12 @@ class AttendanceProvider with ChangeNotifier {
   int get totalPages => _totalPages;
   int get pageSize => _pageSize;
 
-  Map<String, AttendanceModel> _records = {};
-  Map<String, AttendanceModel> get records => _records;
-
   Future<void> fetchAttendanceHistory({int page = 0, int? size}) async {
+    if (size != null) _pageSize = size;
+
     _isLoading = true;
     _error = null;
+    _recordsList = [];
     notifyListeners();
 
     try {
@@ -59,16 +59,15 @@ class AttendanceProvider with ChangeNotifier {
         );
       }
     } on DioException catch (e) {
-      if (e.response?.statusCode == 500 || e.type != DioExceptionType.cancel) {
-        _error =
-            "Ya pasó el tiempo para tomar asistencia o el servidor no está disponible";
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION";
       } else {
-        _error = "No se pudo cargar el historial. Intente de nuevo.";
+        _error = "No se pudo cargar el historial de asistencias";
       }
       print("DEBUG ERROR FETCH: $e");
     } catch (e) {
-      _error =
-          "Ya pasó el tiempo para tomar asistencia o el servidor no está disponible";
+      _error = "Ocurrió un error inesperado al consultar el servidor";
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -122,7 +121,7 @@ class AttendanceProvider with ChangeNotifier {
       return false;
     } on DioException catch (e) {
       _error =
-          "Ya pasó el tiempo para tomar asistencia o el servidor no está disponible";
+          "El tiempo para registrar o modificar la asistencia ha expirado. El límite es hasta las 10:00 AM del día siguiente al evento. O el servidor no está disponible";
       print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
       return false;
     } catch (e) {
@@ -155,7 +154,7 @@ class AttendanceProvider with ChangeNotifier {
       final response = await _apiClient.dio.delete('/event-attendances/$id');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        _recordsList.removeWhere((record) => record.id == id);
+        await fetchAttendanceHistory();
         return true;
       }
       return false;

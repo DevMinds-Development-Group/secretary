@@ -10,6 +10,7 @@ import '../widgets/add_button.dart';
 import '../widgets/custom_appbar.dart';
 import '../widgets/custom_card_container.dart';
 import '../widgets/menu.dart';
+import '../widgets/no_connection_widget.dart';
 import '../widgets/pagination.dart';
 import '../widgets/search_text_field.dart';
 import '../widgets/showDeleteConfirmationDialog.dart';
@@ -33,8 +34,7 @@ class _MembersState extends State<Members> {
   }
 
   void _handleDelete(BuildContext context, Member member) async {
-    final memberProvider = Provider.of<MemberProvider>(context, listen: false);
-
+    final memberProvider = Provider.of<MemberProvider>(context);
     final success = await memberProvider.deleteMember(member.id);
 
     if (context.mounted) {
@@ -66,6 +66,16 @@ class _MembersState extends State<Members> {
 
     final memberProvider = Provider.of<MemberProvider>(context);
     final List<Member> filteredMembers = memberProvider.filteredMembers;
+
+    if (memberProvider.error == 'SIN_CONEXION') {
+      return Scaffold(
+        appBar: CustomAppBar(title: 'Miembros'), // O tu AppBar actual
+        body: NoConnectionWidget(
+          // O el widget que uses para reintentar
+          onRefresh: () => memberProvider.fetchMembers(),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,

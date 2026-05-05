@@ -69,10 +69,10 @@ class _AttendanceState extends State<Attendance> {
     final networkProvider = Provider.of<NetworkProvider>(context);
     final networks = networkProvider.networks;
 
-    if (_selectedNetworkId != null &&
-        !networks.any((net) => net.id == _selectedNetworkId)) {
-      _selectedNetworkId = null;
-    }
+    // if (_selectedNetworkId != null &&
+    //     !networks.any((net) => net.id == _selectedNetworkId)) {
+    //   _selectedNetworkId = null;
+    // }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -84,7 +84,7 @@ class _AttendanceState extends State<Attendance> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedNetworkId,
-          //hint: const Text("Seleccionar Red"),
+          hint: const Text("Seleccionar Red"),
           isExpanded: false,
           items: [
             const DropdownMenuItem(value: null, child: Text("Todas las Redes")),

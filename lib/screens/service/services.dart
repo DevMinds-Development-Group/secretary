@@ -114,7 +114,24 @@ class _ServicesState extends State<Services> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final permissions = UserPermissions(context.read<AuthService>());
+    final servicesProvider = context.watch<ServiceProvider>();
 
+    if (servicesProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(
+          title: 'Servicios',
+          isDrawerEnabled: isMobile,
+          showBackButton: true,
+        ),
+        drawer: isMobile ? Drawer(child: Menu()) : null,
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () => servicesProvider.fetchServices(),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(
@@ -204,7 +221,7 @@ class _ServicesState extends State<Services> {
       );
     }
     if (provider.error == "SIN_CONEXION") {
-      return noConnectionWidget(onRefresh: () => provider.fetchServices());
+      return NoConnectionWidget(onRefresh: () => provider.fetchServices());
     }
 
     if (provider.error != null) {

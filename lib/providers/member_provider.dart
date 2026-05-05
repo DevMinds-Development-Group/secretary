@@ -44,6 +44,7 @@ class MemberProvider with ChangeNotifier {
     _pageSize = size ?? _pageSize;
     _isLoading = true;
     _error = null;
+    _members = [];
     notifyListeners();
 
     Future.microtask(() => notifyListeners());
@@ -67,7 +68,8 @@ class MemberProvider with ChangeNotifier {
         _pageSize = response.data['size'];
       }
     } on DioException catch (e) {
-      if (e.error == 'SIN_CONEXION') {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
         _error = 'SIN_CONEXION';
       } else {
         _error = 'Error al cargar miembros';
@@ -180,17 +182,21 @@ class MemberProvider with ChangeNotifier {
       final response = await _apiClient.dio.delete('/members/$id');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        _members.removeWhere((m) => m.id == id);
+        await fetchMembers();
         notifyListeners();
         return true;
       }
       return false;
     } on DioException catch (e) {
       print("Error al eliminar miembro: ${e.response?.data ?? e.message}");
+      _error = e.response?.data['message'] ?? "Error al actualizar el miembro";
       return false;
     } catch (e) {
       print("Error inesperado: $e");
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 

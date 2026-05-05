@@ -69,7 +69,7 @@ class _DashboardState extends State<Dashboard> {
     }
 
     if (provider.error == "SIN_CONEXION") {
-      return noConnectionWidget(onRefresh: () => provider.fetchSummary());
+      return NoConnectionWidget(onRefresh: () => provider.fetchSummary());
     }
 
     if (provider.error != null && summary == null) {

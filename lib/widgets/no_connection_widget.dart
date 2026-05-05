@@ -1,7 +1,7 @@
 import 'package:Koinos/widgets/retry_button.dart';
 import 'package:flutter/material.dart';
 
-Widget noConnectionWidget({required VoidCallback onRefresh}) {
+Widget NoConnectionWidget({required VoidCallback onRefresh}) {
   return Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,

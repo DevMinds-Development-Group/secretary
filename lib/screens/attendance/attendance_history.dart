@@ -21,7 +21,9 @@ import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/date.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../../widgets/pagination.dart';
+import '../../widgets/retry_button.dart';
 import '../../widgets/search_text_field.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import 'attendance.dart';
@@ -112,6 +114,19 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final provider = Provider.of<AttendanceProvider>(context);
+
+    if (provider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),
+        drawer: isMobile ? const Drawer(child: Menu()) : null,
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () => provider.fetchAttendanceHistory(),
+          ),
+        ),
+      );
+    }
 
     final records = provider.recordsList.where((r) {
       final matchesSearch =
@@ -300,14 +315,11 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
             Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
             const SizedBox(height: 16),
             const Text(
-              "No pudimos cargar las asistencias",
+              "Error al cargar las asistencias",
               style: TextStyle(color: Colors.blueGrey, fontSize: 16),
             ),
             const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () => provider.fetchAttendanceHistory(),
-              child: const Text("Intentar de nuevo"),
-            ),
+            RetryButton(onRefresh: () => provider.fetchAttendanceHistory()),
           ],
         ),
       );
