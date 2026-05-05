@@ -119,7 +119,7 @@ class _CreateMemberState extends State<CreateMember> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Error al guardar los datos. Revisa la consola.'),
+            content: Text('Error al guardar los datos.'),
             backgroundColor: negativeColor,
           ),
         );

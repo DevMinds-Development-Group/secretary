@@ -131,6 +131,8 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
       return matchesSearch && matchesDate;
     }).toList();
 
+    records.sort((a, b) => b.date.compareTo(a.date));
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),

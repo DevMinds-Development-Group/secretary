@@ -36,6 +36,7 @@ class AttendanceProvider with ChangeNotifier {
           'pageNo': page,
           'pageSize': _pageSize,
           'sortBy': 'date',
+          'sortType': 'DESC',
         },
       );
 

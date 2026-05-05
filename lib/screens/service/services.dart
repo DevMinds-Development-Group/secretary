@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/retry_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,6 +13,7 @@ import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_service.dart';
 
@@ -193,13 +195,17 @@ class _ServicesState extends State<Services> {
     bool isMobile,
     permissions,
   ) {
-    if (provider.isLoading)
+    if (provider.isLoading) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
           child: CircularProgressIndicator(color: primaryColor),
         ),
       );
+    }
+    if (provider.error == "SIN_CONEXION") {
+      return noConnectionWidget(onRefresh: () => provider.fetchServices());
+    }
 
     if (provider.error != null) {
       return Center(
@@ -207,10 +213,7 @@ class _ServicesState extends State<Services> {
           children: [
             const Icon(Icons.error_outline, color: negativeColor, size: 40),
             Text(provider.error!),
-            TextButton(
-              onPressed: () => provider.fetchServices(),
-              child: const Text('Reintentar'),
-            ),
+            RetryButton(onRefresh: () => provider.fetchServices()),
           ],
         ),
       );

@@ -46,6 +46,8 @@ class MemberProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    Future.microtask(() => notifyListeners());
+
     try {
       final response = await _apiClient.dio.get(
         '/members',
@@ -64,8 +66,14 @@ class MemberProvider with ChangeNotifier {
       if (response.data['size'] != null) {
         _pageSize = response.data['size'];
       }
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION') {
+        _error = 'SIN_CONEXION';
+      } else {
+        _error = 'Error al cargar miembros';
+      }
     } catch (e) {
-      _error = 'Error al cargar miembros: ${e}';
+      _error = 'Ocurrió un error inesperado';
     } finally {
       _isLoading = false;
       notifyListeners();
