@@ -12,6 +12,7 @@ import '../../widgets/add_button.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../create/create_network.dart';
 import 'network_manage.dart';
 import 'network_members.dart';
@@ -45,6 +46,19 @@ class _NetworksState extends State<Networks> {
     final List<NetworkModel> networks = networkProvider.networks;
     final memberProvider = context.watch<MemberProvider>();
     final permissions = UserPermissions(context.read<AuthService>());
+
+    if (networkProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Redes', isDrawerEnabled: isMobile),
+        drawer: isMobile ? const Drawer(child: Menu()) : null,
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () => networkProvider.fetchNetworks(),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,

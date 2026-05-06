@@ -92,7 +92,6 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  // --- MÉTODO updateUser (VERSIÓN CORRECTA Y ASÍNCRONA) ---
   Future<bool> updateUser({
     required String username,
     String? password,
@@ -100,8 +99,8 @@ class UserProvider with ChangeNotifier {
     String? memberId,
   }) async {
     _error = null;
-    //_isLoading = true;
-    //notifyListeners();
+    _isLoading = true;
+    notifyListeners();
     try {
       await _apiClient.dio.put(
         '/users',
@@ -115,33 +114,34 @@ class UserProvider with ChangeNotifier {
 
       return true;
     } on DioException catch (e) {
-      _error =
-          'Error al actualizar usuario: ${e.response?.data['message'] ?? e.message}';
-      print(_error);
-      _isLoading = false;
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = 'Error al actualizar usuario';
+      }
+      print("DEBUG ERROR: ${e.type} - ${e.error} - Message: ${e.message}");
       notifyListeners();
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
   Future<bool> deleteUser(String username) async {
     _error = null;
-    // No necesitamos un `isLoading` aquí, la UI lo manejará de forma local.
-
     try {
-      // Hacemos la petición DELETE al endpoint específico del usuario.
       await _apiClient.dio.delete('/users/$username');
 
-      // Si la petición es exitosa (no lanza excepción), eliminamos el usuario
-      // de nuestra lista local para que la UI se actualice instantáneamente.
       _users.removeWhere((user) => user.username == username);
-      notifyListeners(); // Notificamos a la UI para que se redibuje sin el usuario.
+      notifyListeners();
       return true;
     } on DioException catch (e) {
       _error =
           'Error al eliminar usuario: ${e.response?.data['message'] ?? e.message}';
       print(_error);
-      notifyListeners(); // Notificamos por si queremos mostrar el error en algún sitio.
+      notifyListeners();
       return false;
     }
   }

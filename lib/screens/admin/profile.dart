@@ -1,11 +1,14 @@
 import 'package:Koinos/colors.dart';
+import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class Profile extends StatefulWidget {
   const Profile({Key? key}) : super(key: key);
@@ -21,9 +24,10 @@ class _ProfileState extends State<Profile> {
   void initState() {
     super.initState();
     _getAppVersion();
-    // Cargar datos del perfil al iniciar
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authService = Provider.of<AuthService>(context, listen: false);
+
       if (authService.userName != null) {
         authService.fetchUserProfile(authService.userName!);
       }
@@ -63,6 +67,7 @@ class _ProfileState extends State<Profile> {
         builder: (context, setState) {
           return AlertDialog(
             backgroundColor: Colors.white,
+            scrollable: true,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -133,47 +138,53 @@ class _ProfileState extends State<Profile> {
                   style: TextStyle(color: Colors.grey),
                 ),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
+
+              Button(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final userProvider = context.read<UserProvider>();
+                    // 1. Quitamos authService de aquí si no se usa para evitar triggers extra
 
-                    // Usamos la lógica de updateUser que ya funciona en CreateUser
                     bool success = await userProvider.updateUser(
                       username: user.username,
                       password: passwordController.text,
-                      roleIds:
-                          [], // El backend suele ignorar si va vacío o mantiene el actual
+                      roleIds: [],
                       memberId: user.memberId,
                     );
 
-                    if (mounted) {
-                      Navigator.pop(context);
+                    if (!mounted) return;
+
+                    Navigator.of(context, rootNavigator: true).pop();
+
+                    if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            success
-                                ? "Contraseña actualizada con éxito"
-                                : "Error: ${userProvider.error ?? 'No se pudo actualizar'}",
-                          ),
-                          backgroundColor: success
-                              ? Colors.green
-                              : negativeColor,
+                        const SnackBar(
+                          content: Text("Contraseña actualizada con éxito"),
+                          backgroundColor: Colors.green,
                         ),
                       );
+                    } else {
+                      String mensajeError =
+                          (userProvider.error == "SIN_CONEXION")
+                          ? "Sin conexión a internet. Inténtalo más tarde."
+                          : (userProvider.error ?? "Error al actualizar");
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(mensajeError),
+                          backgroundColor: negativeColor,
+                        ),
+                      );
+
+                      if (userProvider.error == "SIN_CONEXION") {
+                        context.read<AuthService>().fetchUserProfile(
+                          user.username,
+                        );
+                      }
                     }
                   }
                 },
-                child: const Text(
-                  "ACTUALIZAR",
-                  style: TextStyle(color: Colors.white),
-                ),
+                text: "Actualizar",
               ),
             ],
           );
@@ -188,6 +199,29 @@ class _ProfileState extends State<Profile> {
     final authService = context.watch<AuthService>();
     final user = authService.user;
 
+    if (authService.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Perfil'),
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () async {
+              authService.clearError();
+              await authService.fetchUserProfile(authService.userName!);
+            },
+          ),
+        ),
+      );
+    }
+    if (authService.isLoading || user == null) {
+      return Scaffold(
+        appBar: CustomAppBar(title: 'Perfil'),
+        body: const Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Perfil'),
@@ -201,9 +235,9 @@ class _ProfileState extends State<Profile> {
                   child: Column(
                     children: [
                       _buildProfileHeader(user, isMobile),
-                      const SizedBox(height: 20.0),
+                      //const SizedBox(height: 20.0),
                       _buildContactInfoCard(user),
-                      const SizedBox(height: 15.0),
+                      const SizedBox(height: 10.0),
                       _buildAccountActionsCard(user),
                     ],
                   ),
@@ -213,33 +247,22 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  Widget _buildProfileHeader(user, isMobile) {
+  Widget _buildProfileHeader(UserProfile user, isMobile) {
     final String? memberName = user.member?.name;
     final String? memberLastName = user.member?.lastName;
     final String username = user.username ?? 'Usuario';
 
-    // Determinamos qué inicial mostrar
-    String initial = '?';
-    if (memberName != null && memberName.isNotEmpty) {
-      initial = memberName.substring(0, 1).toUpperCase();
-    } else if (username.isNotEmpty) {
-      initial = username.substring(0, 1).toUpperCase();
-    }
+    final String displayName = (user.member != null)
+        ? "${user.member!.name} ${user.member!.lastName}"
+        : user.username;
 
     return Column(
       children: [
-        SizedBox(height: 20),
-        CircleAvatar(
-          maxRadius: isMobile ? 30 : 40,
-          backgroundColor: negativeColor.withOpacity(0.1),
-          child: Text(
-            initial,
-            style: TextStyle(
-              fontSize: isMobile ? 28 : 32,
-              color: negativeColor.withOpacity(0.9),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        //SizedBox(height: 20),
+        MemberProfileImage(
+          imageUrl: user.member?.profilePictureUrl ?? user.profilePictureUrl,
+          name: displayName,
+          radius: 50,
         ),
         const SizedBox(height: 15.0),
         Text(
@@ -318,6 +341,8 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _buildAccountActionsCard(user) {
+    final authService = context.read<AuthService>();
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -328,7 +353,23 @@ class _ProfileState extends State<Profile> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(15),
-          onTap: () => _showChangePasswordDialog(user),
+          onTap: () async {
+            if (authService.error == "SIN_CONEXION") {
+              await authService.fetchUserProfile(authService.userName!);
+            }
+            if (authService.error == "SIN_CONEXION") {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "No puedes cambiar la contraseña sin conexión a internet.",
+                  ),
+                  backgroundColor: negativeColor,
+                ),
+              );
+              return;
+            }
+            _showChangePasswordDialog(user);
+          },
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 15),
             child: Row(

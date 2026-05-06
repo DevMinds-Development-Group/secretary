@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/retry_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,6 +13,7 @@ import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_service.dart';
 
@@ -112,7 +114,24 @@ class _ServicesState extends State<Services> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final permissions = UserPermissions(context.read<AuthService>());
+    final servicesProvider = context.watch<ServiceProvider>();
 
+    if (servicesProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(
+          title: 'Servicios',
+          isDrawerEnabled: isMobile,
+          showBackButton: true,
+        ),
+        drawer: isMobile ? Drawer(child: Menu()) : null,
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () => servicesProvider.fetchServices(),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(
@@ -193,13 +212,17 @@ class _ServicesState extends State<Services> {
     bool isMobile,
     permissions,
   ) {
-    if (provider.isLoading)
+    if (provider.isLoading) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
           child: CircularProgressIndicator(color: primaryColor),
         ),
       );
+    }
+    if (provider.error == "SIN_CONEXION") {
+      return NoConnectionWidget(onRefresh: () => provider.fetchServices());
+    }
 
     if (provider.error != null) {
       return Center(
@@ -207,10 +230,7 @@ class _ServicesState extends State<Services> {
           children: [
             const Icon(Icons.error_outline, color: negativeColor, size: 40),
             Text(provider.error!),
-            TextButton(
-              onPressed: () => provider.fetchServices(),
-              child: const Text('Reintentar'),
-            ),
+            RetryButton(onRefresh: () => provider.fetchServices()),
           ],
         ),
       );

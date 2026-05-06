@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class Attendance extends StatefulWidget {
   final AttendanceModel? existingRecord;
@@ -69,10 +71,10 @@ class _AttendanceState extends State<Attendance> {
     final networkProvider = Provider.of<NetworkProvider>(context);
     final networks = networkProvider.networks;
 
-    if (_selectedNetworkId != null &&
-        !networks.any((net) => net.id == _selectedNetworkId)) {
-      _selectedNetworkId = null;
-    }
+    // if (_selectedNetworkId != null &&
+    //     !networks.any((net) => net.id == _selectedNetworkId)) {
+    //   _selectedNetworkId = null;
+    // }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -84,7 +86,7 @@ class _AttendanceState extends State<Attendance> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedNetworkId,
-          //hint: const Text("Seleccionar Red"),
+          hint: const Text("Seleccionar Red"),
           isExpanded: false,
           items: [
             const DropdownMenuItem(value: null, child: Text("Todas las Redes")),
@@ -191,8 +193,6 @@ class _AttendanceState extends State<Attendance> {
 
     bool success = await attendanceProvider.saveRecord(newRecord);
 
-    if (!mounted) return;
-
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -218,11 +218,55 @@ class _AttendanceState extends State<Attendance> {
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
-    final memberProvider = Provider.of<MemberProvider>(context);
-    List<Member> members = memberProvider.filteredMembers;
+
+    // Escuchamos todos los providers al inicio
+    final memberProvider = context.watch<MemberProvider>();
+    final serviceProvider = context.watch<ServiceProvider>();
+    final netProvider = context.watch<NetworkProvider>();
+    final attendanceProvider = context.watch<AttendanceProvider>();
+
+    // 1. PRIORIDAD: ERROR DE CONEXIÓN
+    if (memberProvider.error == "SIN_CONEXION" ||
+        serviceProvider.error == "SIN_CONEXION" ||
+        netProvider.error == "SIN_CONEXION" ||
+        attendanceProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Asistencia', isDrawerEnabled: isMobile),
+        body: NoConnectionWidget(
+          onRefresh: () async {
+            memberProvider.clearError();
+            serviceProvider.clearError();
+            netProvider.clearError();
+            attendanceProvider.clearError();
+
+            await Future.wait([
+              memberProvider.fetchMembers(page: 0, size: 1000),
+              serviceProvider.fetchServices(),
+              netProvider.fetchNetworks(),
+            ]);
+          },
+        ),
+      );
+    }
+
+    // 2. PRIORIDAD: CARGA INICIAL
+    if (memberProvider.isLoading ||
+        serviceProvider.isLoading ||
+        netProvider.isLoading) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Asistencia'),
+        body: const Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
+
+    List<Member> membersToShow = memberProvider.members;
 
     if (_selectedNetworkId != null) {
-      members = members
+      membersToShow = membersToShow
           .where((m) => m.networkId == _selectedNetworkId)
           .toList();
     }
@@ -245,10 +289,9 @@ class _AttendanceState extends State<Attendance> {
                         ? _buildMobileControls(memberProvider, isMobile)
                         : _buildWebControls(memberProvider, isMobile),
                   ),
-
                   const SizedBox(height: 10),
-
-                  Expanded(child: _buildMemberList(members, isMobile)),
+                  // Pasamos la lista filtrada correctamente
+                  Expanded(child: _buildMemberList(membersToShow, isMobile)),
                 ],
               ),
             ),
@@ -392,7 +435,7 @@ class _AttendanceState extends State<Attendance> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: CustomCardContainer(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.all(isMobile ? 5 : 20),
         child: ListView.separated(
           separatorBuilder: (context, index) => const Divider(height: 10),
           itemCount: members.length,
@@ -400,36 +443,8 @@ class _AttendanceState extends State<Attendance> {
             final member = members[index];
             final bool isPresent = _presentMemberIds.contains(member.id);
 
-            return ListTile(
-              leading: isMobile
-                  ? null
-                  : CircleAvatar(
-                      backgroundColor: isPresent
-                          ? accentColor.withOpacity(0.1)
-                          : negativeColor.withOpacity(0.1),
-                      child: Text(
-                        member.name.isNotEmpty
-                            ? member.name.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: isPresent ? accentColor : negativeColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-              title: Text('${member.name} ${member.lastName}'),
-              trailing: Checkbox(
-                value: isPresent,
-                onChanged: (bool? value) {
-                  setState(() {
-                    if (value == true) {
-                      _presentMemberIds.add(member.id);
-                    } else {
-                      _presentMemberIds.remove(member.id);
-                    }
-                  });
-                },
-              ),
+            // 1. Envolvemos todo en GestureDetector para capturar el toque en la tarjeta
+            return GestureDetector(
               onTap: () {
                 setState(() {
                   if (isPresent) {
@@ -439,6 +454,70 @@ class _AttendanceState extends State<Attendance> {
                   }
                 });
               },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  // Opcional: cambiar el color si está seleccionado para dar feedback visual
+                  color: isPresent
+                      ? primaryColor.withOpacity(0.05)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isPresent
+                        ? primaryColor.withOpacity(0.3)
+                        : Colors.transparent,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 2. Foto o Inicial
+                    MemberProfileImage(
+                      imageUrl: member.photoUrl,
+                      name: member.name,
+                      radius: 25,
+                    ),
+                    const SizedBox(width: 15),
+
+                    // 3. Nombre del miembro
+                    Expanded(
+                      child: Text(
+                        '${member.name} ${member.lastName}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: isPresent
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isPresent ? primaryColor : Colors.black87,
+                        ),
+                      ),
+                    ),
+
+                    // 4. Checkbox a la derecha
+                    Checkbox(
+                      activeColor: primaryColor,
+                      value: isPresent,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            _presentMemberIds.add(member.id);
+                          } else {
+                            _presentMemberIds.remove(member.id);
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         ),

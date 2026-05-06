@@ -1,5 +1,7 @@
 // lib/services/api_client.dart
 
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -51,6 +53,19 @@ class ApiClient {
               ),
             );
           }
+          if (e.type == DioExceptionType.connectionError ||
+              e.type == DioExceptionType.connectionTimeout ||
+              e.error is SocketException) {
+            // Enviamos un error con un mensaje específico que el Provider reconocerá
+            return handler.next(
+              DioException(
+                requestOptions: e.requestOptions,
+                error: 'SIN_CONEXION',
+                type: DioExceptionType.unknown,
+              ),
+            );
+          }
+
           return handler.next(e);
         },
       ),

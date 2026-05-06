@@ -21,7 +21,9 @@ import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/date.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../../widgets/pagination.dart';
+import '../../widgets/retry_button.dart';
 import '../../widgets/search_text_field.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import 'attendance.dart';
@@ -113,6 +115,19 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     final isMobile = MediaQuery.of(context).size.width < 700;
     final provider = Provider.of<AttendanceProvider>(context);
 
+    if (provider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),
+        drawer: isMobile ? const Drawer(child: Menu()) : null,
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () => provider.fetchAttendanceHistory(),
+          ),
+        ),
+      );
+    }
+
     final records = provider.recordsList.where((r) {
       final matchesSearch =
           (r.definitionName?.toLowerCase().contains(
@@ -130,6 +145,8 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
 
       return matchesSearch && matchesDate;
     }).toList();
+
+    records.sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -281,12 +298,39 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
   }
 
   Widget _buildRecordsList(List<AttendanceModel> records, bool isLoading) {
-    if (isLoading)
+    if (isLoading) {
       return const Center(
         child: CircularProgressIndicator(color: primaryColor),
       );
-    if (records.isEmpty)
+    }
+
+    final provider = Provider.of<AttendanceProvider>(context, listen: false);
+
+    // 1. Manejo de error amigable y SnackBar controlado
+    if (provider.error != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            const Text(
+              "Error al cargar las asistencias",
+              style: TextStyle(color: Colors.blueGrey, fontSize: 16),
+            ),
+            const SizedBox(height: 10),
+            RetryButton(onRefresh: () => provider.fetchAttendanceHistory()),
+          ],
+        ),
+      );
+    }
+
+    // 2. Si no hay error pero la lista está vacía
+    if (records.isEmpty) {
       return const Center(child: Text("No hay registros encontrados"));
+    }
+
+    // 3. Contenido principal (ListView)
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 20.0),
@@ -299,20 +343,19 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: ListView.separated(
-          padding: EdgeInsets.all(5),
+          padding: const EdgeInsets.all(5),
           itemCount: records.length,
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final record = records[index];
             return ListTile(
-              isThreeLine: (isMobile) ? true : false,
+              isThreeLine: isMobile,
               leading: isMobile
                   ? null
-                  : Icon(Icons.assignment_turned_in, color: Colors.green),
+                  : const Icon(Icons.assignment_turned_in, color: Colors.green),
               title: isMobile
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [_buildName(record), _buildNetwork(record)],
                     )
                   : Row(
@@ -327,11 +370,11 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
                 children: [
                   Text(
                     DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
-                    style: TextStyle(fontSize: 16),
+                    style: const TextStyle(fontSize: 16),
                   ),
                   Text(
-                    'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount} \nVisitas Pastorales: ${record.pastoralVisitsCount} \nNuevos convertidos: ${record.newConvert}',
-                    style: TextStyle(fontSize: 16),
+                    'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount}',
+                    style: const TextStyle(fontSize: 14),
                   ),
                   if (isMobile) ...[
                     const SizedBox(height: 8),

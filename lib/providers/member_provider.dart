@@ -1,4 +1,6 @@
 // lib/providers/member_provider.dart
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
@@ -39,12 +41,93 @@ class MemberProvider with ChangeNotifier {
     }).toList();
   }
 
+  void clearError() {
+    _error = null;
+    notifyListeners(); // Esto le avisa a la UI que ya puede intentar mostrar el formulario otra vez
+  }
+
+  Future<String?> addMemberAndGetId({
+    required String name,
+    required String lastName,
+    required String address,
+    required String phone,
+    DateTime? birthdate,
+    required String networkId,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final Map<String, dynamic> data = {
+        "name": name,
+        "lastName": lastName,
+        "address": address,
+        "phone": phone,
+        "birthdate": birthdate != null
+            ? birthdate.toIso8601String().split('T')[0]
+            : null,
+        "enabled": true,
+        "networkId": networkId,
+      };
+
+      // Realizamos la petición POST
+      final response = await _apiClient.dio.post('/members', data: data);
+
+      // Si el backend devuelve el objeto creado con su ID
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return response.data['id'].toString();
+      }
+      return null;
+    } on DioException catch (e) {
+      _error = e.response?.data['message'] ?? 'Error al crear miembro';
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // lib/providers/member_provider.dart
+
+  Future<bool> uploadMemberPhoto(String memberId, File imageFile) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      // 1. El campo debe llamarse 'file' según tu curl
+      FormData formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: 'profile_$memberId.jpg',
+        ),
+      });
+
+      final response = await _apiClient.dio.post(
+        '/members/$memberId/profile-picture',
+        data: formData,
+      );
+
+      await fetchMembers();
+
+      return response.statusCode == 200 || response.statusCode == 201;
+    } on DioException catch (e) {
+      print("Error detalle: ${e.response?.data}");
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchMembers({bool force = false, int? page, int? size}) async {
     _currentPage = page ?? _currentPage;
     _pageSize = size ?? _pageSize;
     _isLoading = true;
-    _error = null;
+    // _error = null;
+    _members = [];
     notifyListeners();
+
+    Future.microtask(() => notifyListeners());
 
     try {
       final response = await _apiClient.dio.get(
@@ -53,6 +136,7 @@ class MemberProvider with ChangeNotifier {
           'pageNo': _currentPage,
           'pageSize': _pageSize,
           'sortType': 'asc',
+          'searchTerm': _searchQuery,
         },
       );
 
@@ -64,8 +148,15 @@ class MemberProvider with ChangeNotifier {
       if (response.data['size'] != null) {
         _pageSize = response.data['size'];
       }
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = 'SIN_CONEXION';
+      } else {
+        _error = 'Error al cargar miembros';
+      }
     } catch (e) {
-      _error = 'Error al cargar miembros: ${e}';
+      _error = 'Ocurrió un error inesperado';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -98,22 +189,23 @@ class MemberProvider with ChangeNotifier {
 
   void search(String query) {
     _searchQuery = query;
+    _currentPage = 0;
+    fetchMembers();
     notifyListeners();
   }
 
   Future<bool> addMember({
     required String name,
-    String? secondName,
     required String lastName,
     required String address,
     required String phone,
     DateTime? birthdate,
     required String networkId,
+    File? imageFile,
   }) async {
     try {
       final data = {
         "name": name,
-        "secondName": secondName,
         "lastName": lastName,
         "address": address,
         "phone": phone,
@@ -123,6 +215,16 @@ class MemberProvider with ChangeNotifier {
         "enabled": true,
         "networkId": networkId,
       };
+      FormData formData = FormData.fromMap(data);
+
+      if (imageFile != null) {
+        formData.files.add(
+          MapEntry(
+            'profilePictureUrl', // Asegúrate de que este nombre coincida con lo que espera tu Backend
+            await MultipartFile.fromFile(imageFile.path, filename: 'photo.jpg'),
+          ),
+        );
+      }
 
       await _apiClient.dio.post('/members', data: data);
       return true;
@@ -140,6 +242,7 @@ class MemberProvider with ChangeNotifier {
     DateTime? birthdate,
     required bool enabled,
     required String networkId,
+    File? imageFile,
   }) async {
     try {
       final data = {
@@ -154,6 +257,11 @@ class MemberProvider with ChangeNotifier {
         "enabled": enabled,
         "networkId": networkId,
       };
+
+      if (imageFile != null) {
+        bool photoOk = await uploadMemberPhoto(id, imageFile);
+        if (!photoOk) return false; // Si la foto falla, fallamos el proceso
+      }
 
       await _apiClient.dio.put('/members', data: data);
 
@@ -172,17 +280,21 @@ class MemberProvider with ChangeNotifier {
       final response = await _apiClient.dio.delete('/members/$id');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        _members.removeWhere((m) => m.id == id);
+        await fetchMembers();
         notifyListeners();
         return true;
       }
       return false;
     } on DioException catch (e) {
       print("Error al eliminar miembro: ${e.response?.data ?? e.message}");
+      _error = e.response?.data['message'] ?? "Error al actualizar el miembro";
       return false;
     } catch (e) {
       print("Error inesperado: $e");
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
