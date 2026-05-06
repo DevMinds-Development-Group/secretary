@@ -26,6 +26,17 @@ class _ProfileState extends State<Profile> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authService = Provider.of<AuthService>(context, listen: false);
+
+      // authService.addListener(() {
+      //   if (authService.error == "SIN_CONEXION" && mounted) {
+      //     // Esto cierra el diálogo si está abierto (Navigator.pop)
+      //     // Usamos canPop para no cerrar la pantalla principal por error
+      //     if (Navigator.of(context).canPop()) {
+      //       Navigator.of(context).pop();
+      //     }
+      //   }
+      // });
+
       if (authService.userName != null) {
         authService.fetchUserProfile(authService.userName!);
       }
@@ -141,30 +152,50 @@ class _ProfileState extends State<Profile> {
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final userProvider = context.read<UserProvider>();
+                    // 1. Quitamos authService de aquí si no se usa para evitar triggers extra
 
-                    // Usamos la lógica de updateUser que ya funciona en CreateUser
                     bool success = await userProvider.updateUser(
                       username: user.username,
                       password: passwordController.text,
-                      roleIds:
-                          [], // El backend suele ignorar si va vacío o mantiene el actual
+                      roleIds: [],
                       memberId: user.memberId,
                     );
 
-                    if (mounted) {
-                      Navigator.pop(context);
+                    if (!mounted) return;
+
+                    // 2. IMPORTANTE: Solo un Navigator.pop() para cerrar el diálogo
+                    // independientemente de si falló o tuvo éxito.
+                    Navigator.of(context, rootNavigator: true).pop();
+
+                    if (success) {
+                      // ÉXITO: Un solo SnackBar verde
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            success
-                                ? "Contraseña actualizada con éxito"
-                                : "Error: ${userProvider.error ?? 'No se pudo actualizar'}",
-                          ),
-                          backgroundColor: success
-                              ? Colors.green
-                              : negativeColor,
+                        const SnackBar(
+                          content: Text("Contraseña actualizada con éxito"),
+                          backgroundColor: Colors.green,
                         ),
                       );
+                    } else {
+                      // ERROR: Determinamos el mensaje según el tipo de error
+                      String mensajeError =
+                          (userProvider.error == "SIN_CONEXION")
+                          ? "Sin conexión a internet. Inténtalo más tarde."
+                          : (userProvider.error ?? "Error al actualizar");
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(mensajeError),
+                          backgroundColor: negativeColor,
+                        ),
+                      );
+
+                      // 3. Si fue error de red, disparamos la actualización del perfil
+                      // para que el fondo muestre el NoConnectionWidget automáticamente
+                      if (userProvider.error == "SIN_CONEXION") {
+                        context.read<AuthService>().fetchUserProfile(
+                          user.username,
+                        );
+                      }
                     }
                   }
                 },
@@ -189,8 +220,10 @@ class _ProfileState extends State<Profile> {
         appBar: CustomAppBar(title: 'Perfil'),
         body: Center(
           child: NoConnectionWidget(
-            onRefresh: () =>
-                authService.fetchUserProfile(authService.userName!),
+            onRefresh: () async {
+              authService.clearError();
+              await authService.fetchUserProfile(authService.userName!);
+            },
           ),
         ),
       );
@@ -334,6 +367,8 @@ class _ProfileState extends State<Profile> {
   }
 
   Widget _buildAccountActionsCard(user) {
+    final authService = context.read<AuthService>();
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -344,7 +379,23 @@ class _ProfileState extends State<Profile> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(15),
-          onTap: () => _showChangePasswordDialog(user),
+          onTap: () async {
+            if (authService.error == "SIN_CONEXION") {
+              await authService.fetchUserProfile(authService.userName!);
+            }
+            if (authService.error == "SIN_CONEXION") {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    "No puedes cambiar la contraseña sin conexión a internet.",
+                  ),
+                  backgroundColor: negativeColor,
+                ),
+              );
+              return;
+            }
+            _showChangePasswordDialog(user);
+          },
           child: const Padding(
             padding: EdgeInsets.symmetric(vertical: 15),
             child: Row(

@@ -98,7 +98,7 @@ class AuthService with ChangeNotifier {
 
   Future<void> fetchUserProfile(String username) async {
     _isLoading = true;
-    // NOTA: No limpiamos _error aquí para evitar el parpadeo en la UI
+    _error = null;
     notifyListeners();
     try {
       final token = await getToken();
@@ -108,7 +108,8 @@ class AuthService with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        _error = null; // ÉXITO: Recién aquí limpiamos el error
+        _error = null;
+        _user = UserProfile.fromJson(response.data);
         final userData = response.data;
 
         final roles = userData['roles'] as List?;
@@ -123,19 +124,19 @@ class AuthService with ChangeNotifier {
         _userRoleDescription = _user!.role;
 
         await _secureStorage.write(key: 'user_name', value: _userName ?? "");
-        await _secureStorage.write(key: 'user_role_desc', value: _userRoleDescription ?? "");
+        await _secureStorage.write(
+          key: 'user_role_desc',
+          value: _userRoleDescription ?? "",
+        );
         await _secureStorage.write(key: 'raw_role', value: _rawRole ?? "");
       }
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.receiveTimeout ||
           e.message?.contains('SocketException') == true) {
         _error = "SIN_CONEXION";
       } else {
         _error = "Error de servidor";
       }
-    } catch (e) {
-      _error = "Error inesperado";
     } finally {
       _isLoading = false;
       notifyListeners();

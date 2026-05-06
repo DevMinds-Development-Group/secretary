@@ -11,6 +11,7 @@ import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
 
@@ -43,25 +44,34 @@ class _MinistryMembersState extends State<MinistryMembers> {
     final ministryProvider = context.watch<MinistryProvider>();
     final memberProvider = context.watch<MemberProvider>();
     final permissions = UserPermissions(context.read<AuthService>());
-    final memberIds = ministryProvider.getMemberIdsForMinistry(
-      widget.ministry.id,
-    );
+
     final currentMinistry = ministryProvider.ministries.firstWhere(
       (m) => m.id == widget.ministry.id,
       orElse: () => widget.ministry,
     );
-    //final members = currentMinistry.members;
-    final allMembers = memberProvider.members;
+    final List<Member> membersInGroup = currentMinistry.members ?? [];
+
+    List<Member> sortedMembers = List.from(membersInGroup);
+    sortedMembers.sort(
+      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+    );
 
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
-    final List<Member> membersInGroup = memberProvider.members.where((member) {
-      return currentMinistry.members.any((m) => m.id == member.id);
-    }).toList();
-
-    membersInGroup.sort(
-      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-    );
+    if (ministryProvider.error == "SIN_CONEXION" ||
+        memberProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        appBar: CustomAppBar(title: widget.ministry.name),
+        body: NoConnectionWidget(
+          onRefresh: () {
+            ministryProvider.clearError();
+            memberProvider.clearError();
+            ministryProvider.fetchMinistryDetails(widget.ministry.id);
+            memberProvider.fetchMembers(page: 0, size: 1000);
+          },
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -97,7 +107,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
                                 : null,
                             onPressed: () => _showAddMemberDialog(
                               context,
-                              allMembers,
+                              memberProvider.members,
                               isMobile,
                               currentMinistry,
                             ),
@@ -108,10 +118,16 @@ class _MinistryMembersState extends State<MinistryMembers> {
                       _buildMinistryHeader(currentMinistry, isMobile),
                     if (isMobile) const SizedBox(height: 15),
                     Expanded(
-                      child: membersInGroup.isEmpty
+                      child: ministryProvider.isLoading
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: primaryColor,
+                              ),
+                            )
+                          : sortedMembers.isEmpty
                           ? _buildEmptyState(isMobile)
                           : _buildMemberList(
-                              membersInGroup,
+                              sortedMembers,
                               isMobile,
                               currentMinistry,
                               permissions,
