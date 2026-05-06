@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -213,48 +214,72 @@ class _MembersState extends State<Members> {
           itemBuilder: (context, index) {
             final member = members[index];
 
-            return ListTile(
-              leading: isMobile
-                  ? null
-                  : CircleAvatar(
-                      backgroundColor: negativeColor.withOpacity(0.1),
-                      child: Text(
-                        member.name.isNotEmpty
-                            ? member.name.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: negativeColor.withOpacity(0.9),
-                          fontWeight: FontWeight.bold,
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      MemberProfileImage(
+                        imageUrl: member.photoUrl,
+                        name: member.name,
+                        radius: 25,
+                      ),
+                      const SizedBox(width: 15),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${member.name} ${member.lastName}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              member.networkName ?? 'Sin Red',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-              title: SizedBox(
-                width: MediaQuery.of(context).size.width * 0.7,
-                child: Text(
-                  '${member.name} ${member.lastName}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
+                    ],
                   ),
-                ),
-              ),
 
-              subtitle: Text(
-                member.networkName ?? '',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                overflow: TextOverflow.ellipsis,
-              ),
-              trailing: ActionButtons(
-                onEdit: () {
-                  Navigator.push(
-                    context,
-                    createFadeRoute(CreateMember(memberToEdit: member)),
-                  );
-                },
-                onDelete: () {
-                  _showDelete(context, member); // Tu función que ya tienes
-                },
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ActionButtons(
+                      onEdit: () {
+                        Navigator.push(
+                          context,
+                          createFadeRoute(CreateMember(memberToEdit: member)),
+                        );
+                      },
+                      onDelete: () => _showDelete(context, member),
+                    ),
+                  ),
+                ],
               ),
             );
           },

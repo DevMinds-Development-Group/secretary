@@ -190,6 +190,7 @@ class MemberProvider with ChangeNotifier {
   void search(String query) {
     _searchQuery = query;
     _currentPage = 0;
+    fetchMembers();
     notifyListeners();
   }
 

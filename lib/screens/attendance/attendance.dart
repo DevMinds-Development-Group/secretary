@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -434,7 +435,7 @@ class _AttendanceState extends State<Attendance> {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: CustomCardContainer(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.all(isMobile ? 5 : 20),
         child: ListView.separated(
           separatorBuilder: (context, index) => const Divider(height: 10),
           itemCount: members.length,
@@ -442,36 +443,8 @@ class _AttendanceState extends State<Attendance> {
             final member = members[index];
             final bool isPresent = _presentMemberIds.contains(member.id);
 
-            return ListTile(
-              leading: isMobile
-                  ? null
-                  : CircleAvatar(
-                      backgroundColor: isPresent
-                          ? accentColor.withOpacity(0.1)
-                          : negativeColor.withOpacity(0.1),
-                      child: Text(
-                        member.name.isNotEmpty
-                            ? member.name.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: TextStyle(
-                          color: isPresent ? accentColor : negativeColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-              title: Text('${member.name} ${member.lastName}'),
-              trailing: Checkbox(
-                value: isPresent,
-                onChanged: (bool? value) {
-                  setState(() {
-                    if (value == true) {
-                      _presentMemberIds.add(member.id);
-                    } else {
-                      _presentMemberIds.remove(member.id);
-                    }
-                  });
-                },
-              ),
+            // 1. Envolvemos todo en GestureDetector para capturar el toque en la tarjeta
+            return GestureDetector(
               onTap: () {
                 setState(() {
                   if (isPresent) {
@@ -481,6 +454,70 @@ class _AttendanceState extends State<Attendance> {
                   }
                 });
               },
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  // Opcional: cambiar el color si está seleccionado para dar feedback visual
+                  color: isPresent
+                      ? primaryColor.withOpacity(0.05)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isPresent
+                        ? primaryColor.withOpacity(0.3)
+                        : Colors.transparent,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 2. Foto o Inicial
+                    MemberProfileImage(
+                      imageUrl: member.photoUrl,
+                      name: member.name,
+                      radius: 25,
+                    ),
+                    const SizedBox(width: 15),
+
+                    // 3. Nombre del miembro
+                    Expanded(
+                      child: Text(
+                        '${member.name} ${member.lastName}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: isPresent
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isPresent ? primaryColor : Colors.black87,
+                        ),
+                      ),
+                    ),
+
+                    // 4. Checkbox a la derecha
+                    Checkbox(
+                      activeColor: primaryColor,
+                      value: isPresent,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            _presentMemberIds.add(member.id);
+                          } else {
+                            _presentMemberIds.remove(member.id);
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
             );
           },
         ),
