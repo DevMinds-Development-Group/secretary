@@ -34,7 +34,7 @@ class _MembersState extends State<Members> {
   }
 
   void _handleDelete(BuildContext context, Member member) async {
-    final memberProvider = Provider.of<MemberProvider>(context);
+    final memberProvider = Provider.of<MemberProvider>(context, listen: false);
     final success = await memberProvider.deleteMember(member.id);
 
     if (context.mounted) {
