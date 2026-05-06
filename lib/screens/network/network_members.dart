@@ -11,6 +11,8 @@ import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/custom_card_container.dart';
+import '../../widgets/member_profile_image.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
@@ -23,13 +25,40 @@ class NetworkMembers extends StatefulWidget {
 
 class _NetworkMembersState extends State<NetworkMembers> {
   @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     final networkProvider = context.watch<NetworkProvider>();
     final memberProvider = Provider.of<MemberProvider>(context);
 
-    final List<Member> membersInGroup = memberProvider.allMembers
-        .where((member) => member.networkName == widget.network.name)
+    if (memberProvider.error == "SIN_CONEXION" ||
+        networkProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: widget.network.name),
+        body: NoConnectionWidget(
+          onRefresh: () {
+            memberProvider.clearError();
+            networkProvider.clearError();
+            memberProvider.fetchMembers(page: 0, size: 1000);
+          },
+        ),
+      );
+    }
+
+    final List<Member> membersInGroup = memberProvider.members
+        .where((member) => member.networkId == widget.network.id)
         .toList();
 
     membersInGroup.sort(
@@ -55,8 +84,16 @@ class _NetworkMembersState extends State<NetworkMembers> {
                         _buildNetworkHeader(widget.network, isMobile),
                         SizedBox(height: 20),
                         Expanded(
-                          child: membersInGroup.isEmpty
-                              ? _buildEmptyState(isMobile)
+                          child: memberProvider.isLoading
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: primaryColor,
+                                  ),
+                                )
+                              : membersInGroup.isEmpty
+                              ? _buildEmptyState(
+                                  isMobile,
+                                ) // Solo se muestra si terminó de cargar y está vacío
                               : _buildMemberList(membersInGroup, isMobile),
                         ),
                       ],
@@ -121,7 +158,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
   // Widget para la lista de miembros (Estilo Members.dart)
   Widget _buildMemberList(List<Member> members, bool isMobile) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
+      padding: EdgeInsets.zero,
       child: CustomCardContainer(
         padding: EdgeInsets.all(10),
         child: ListView.separated(
@@ -130,24 +167,61 @@ class _NetworkMembersState extends State<NetworkMembers> {
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final member = members[index];
-            return ListTile(
-              leading: CircleAvatar(
-                backgroundColor: circleColor,
-                child: Text(
-                  member.name[0].toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+            return Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
                   ),
-                ),
+                ],
               ),
-              title: Text(
-                '${member.name} ${member.lastName}',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [Text(member.address), Text(member.phone)],
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  MemberProfileImage(
+                    imageUrl: member.photoUrl,
+                    name: member.name,
+                    radius: 25,
+                  ),
+                  const SizedBox(width: 15),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${member.name} ${member.lastName}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          member.phone,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[800],
+                          ),
+                        ),
+                        Text(
+                          member.address,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[900],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             );
           },

@@ -12,6 +12,7 @@ import '../../widgets/add_button.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 import '../create/create_ministry.dart';
 import 'ministries_manage.dart';
 import 'ministry_members.dart';
@@ -27,16 +28,14 @@ class _MinistriesState extends State<Ministries> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => Provider.of<MinistryProvider>(
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MinistryProvider>(context, listen: false).fetchMinistries();
+      Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMinistries(),
-    );
-    Provider.of<MemberProvider>(
-      context,
-      listen: false,
-    ).fetchMembers(page: 0, size: 1000);
+      ).fetchMembers(page: 0, size: 1000);
+    });
   }
 
   @override
@@ -46,6 +45,23 @@ class _MinistriesState extends State<Ministries> {
     final List<MinistryModel> ministries = ministryProvider.ministries;
     final memberProvider = context.watch<MemberProvider>();
     // final permissions = UserPermissions(context.read<AuthService>());
+
+    if (ministryProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(title: 'Ministerios', isDrawerEnabled: isMobile),
+        drawer: isMobile ? Drawer(child: Menu()) : null,
+        body: Center(
+          child: NoConnectionWidget(
+            onRefresh: () async {
+              ministryProvider.clearError();
+
+              await ministryProvider.fetchMinistries();
+            },
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,

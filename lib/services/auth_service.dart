@@ -8,12 +8,14 @@ class UserProfile {
   final String role;
   final String? memberId;
   final MemberProfile? member;
+  final String? profilePictureUrl;
 
   UserProfile({
     required this.username,
     required this.role,
     this.memberId,
     this.member,
+    this.profilePictureUrl,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class UserProfile {
       username: json['username'],
       role: roleDesc,
       memberId: json['memberId'],
+      profilePictureUrl: json['profilePictureUrl'],
       member: json['member'] != null
           ? MemberProfile.fromJson(json['member'])
           : null,
@@ -40,6 +43,7 @@ class MemberProfile {
   final String? address;
   final String? networkName;
   final DateTime? birthdate;
+  final String? profilePictureUrl;
 
   MemberProfile({
     required this.name,
@@ -48,6 +52,7 @@ class MemberProfile {
     this.address,
     this.networkName,
     this.birthdate,
+    this.profilePictureUrl,
   });
 
   factory MemberProfile.fromJson(Map<String, dynamic> json) {
@@ -60,6 +65,7 @@ class MemberProfile {
       birthdate: json['birthdate'] != null
           ? DateTime.parse(json['birthdate'])
           : null,
+      profilePictureUrl: json['profilePictureUrl'],
     );
   }
 }
@@ -70,12 +76,16 @@ class AuthService with ChangeNotifier {
   String? _userRoleDescription;
   String? _rawRole;
   UserProfile? _user;
+  bool _isLoading = false;
+  String? _error;
 
   // Getters
   String? get userName => _userName;
   String? get userRole => _userRoleDescription;
   String? get rawRole => _rawRole;
   UserProfile? get user => _user;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
 
   List<String> _permissions = [];
 
@@ -93,29 +103,29 @@ class AuthService with ChangeNotifier {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   Future<void> fetchUserProfile(String username) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
     try {
       final token = await getToken();
-
       final response = await _dio.get(
         '/users/$username',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.statusCode == 200) {
+        _error = null;
+        _user = UserProfile.fromJson(response.data);
         final userData = response.data;
 
-        // Extraer permisos del primer rol
         final roles = userData['roles'] as List?;
         if (roles != null && roles.isNotEmpty) {
           _userRoleDescription = roles[0]['description'];
           _rawRole = roles[0]['name'];
-
           _permissions = List<String>.from(roles[0]['permissions'] ?? []);
-          print("PERMISOS CARGADOS: $_permissions");
         }
 
         _user = UserProfile.fromJson(userData);
-
         _userName = _user!.username;
         _userRoleDescription = _user!.role;
 
@@ -125,14 +135,17 @@ class AuthService with ChangeNotifier {
           value: _userRoleDescription ?? "",
         );
         await _secureStorage.write(key: 'raw_role', value: _rawRole ?? "");
-
-        notifyListeners();
-        print(
-          "PERFIL CARGADO: ${_user?.username}, Miembro: ${_user?.member?.name}",
-        );
       }
-    } catch (e) {
-      print("Error obteniendo perfil: $e");
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.message?.contains('SocketException') == true) {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "Error de servidor";
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -200,6 +213,12 @@ class AuthService with ChangeNotifier {
     _userRoleDescription = null;
     _rawRole = null;
     _user = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _error = null;
     notifyListeners();
   }
 }

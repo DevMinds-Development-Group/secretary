@@ -45,13 +45,24 @@ class ServiceProvider with ChangeNotifier {
           "DEBUG: Lista sincronizada con el servidor. Total: ${_services.length}",
         );
       }
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION"; // Usamos una clave para la UI
+      } else {
+        _error = "Error al cargar servicios";
+      }
     } catch (e) {
-      _error = "Error al cargar servicios: $e";
-      print("DEBUG ERROR FETCH: $e");
+      _error = "Ocurrió un error inesperado";
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void clearError() {
+    _error = null;
+    notifyListeners(); // Esto le avisa a la UI que ya puede intentar mostrar el formulario otra vez
   }
 
   Future<bool> addService(ServiceModel service) async {

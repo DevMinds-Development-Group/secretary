@@ -1,4 +1,5 @@
 // lib/providers/network_provider.dart
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/network_model.dart';
@@ -7,13 +8,17 @@ import '../services/api_client.dart';
 class NetworkProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
   List<NetworkModel> _networks = [];
+  String? _error;
   bool _isLoading = false;
 
   List<NetworkModel> get networks => _networks;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   Future<void> fetchNetworks() async {
     _isLoading = true;
+    _error = null;
+    _networks = [];
     notifyListeners();
     try {
       final response = await _apiClient.dio.get('/networks');
@@ -22,15 +27,25 @@ class NetworkProvider with ChangeNotifier {
           : (response.data['content'] ?? []);
 
       _networks = data.map((n) => NetworkModel.fromJson(n)).toList();
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "Error al cargar las redes del servidor.";
+      }
     } catch (e) {
-      print("Error cargando redes: $e");
+      _error = "Error inesperado";
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // lib/providers/network_provider.dart
+  void clearError() {
+    _error = null;
+    notifyListeners();
+  }
 
   Future<void> addNetwork(String name, String mission) async {
     _isLoading = true;

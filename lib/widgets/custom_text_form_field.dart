@@ -71,6 +71,8 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
     return InputDecoration(
       labelText: widget.labelText,
       hintText: widget.hintText,
+      filled: true,
+      fillColor: Colors.white,
       prefixText: widget.prefixText,
       labelStyle: TextStyle(color: secondaryColor.withOpacity(0.9)),
       hintStyle: TextStyle(color: secondaryColor.withOpacity(0.7)),

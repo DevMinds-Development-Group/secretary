@@ -27,10 +27,15 @@ class DashboardProvider with ChangeNotifier {
         _summary = DashboardModel.fromJson(response.data);
         _error = null;
       }
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode != 401) {
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION"; // Usamos una clave para la UI
+      } else {
         _error = "Error al cargar dashboard";
       }
+    } catch (e) {
+      _error = "Ocurrió un error inesperado";
     } finally {
       _isLoading = false;
       notifyListeners();

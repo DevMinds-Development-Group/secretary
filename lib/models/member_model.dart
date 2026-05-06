@@ -11,7 +11,7 @@ class Member {
   final String? networkId;
   final String? networkName;
   final DateTime? createdDate;
-  final String? profilePictureUrl;
+  final String? photoUrl;
   Member({
     required this.id,
     required this.name,
@@ -23,7 +23,7 @@ class Member {
     this.networkId,
     this.networkName,
     this.createdDate,
-    this.profilePictureUrl,
+    this.photoUrl,
   });
 
   @override
@@ -54,6 +54,7 @@ class Member {
       createdDate: json['createdDate'] != null
           ? DateTime.parse(json['createdDate'])
           : null,
+      photoUrl: json['profilePictureUrl'],
     );
   }
 }

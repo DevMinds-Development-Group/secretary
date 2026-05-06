@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/retry_button.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,7 @@ import '../../services/update_service.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/menu.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -23,7 +25,6 @@ class _DashboardState extends State<Dashboard> {
     super.initState();
     Future.microtask(() {
       context.read<DashboardProvider>().fetchSummary();
-
       UpdateService().checkForUpdates(context);
     });
   }
@@ -34,62 +35,72 @@ class _DashboardState extends State<Dashboard> {
     final dashboardProvider = context.watch<DashboardProvider>();
     final summary = dashboardProvider.summary;
 
-    if (dashboardProvider.isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: primaryColor)),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: CustomAppBar(
+          title: 'Inicio',
+          isDrawerEnabled: isMobile,
+          showBackButton: false,
+        ),
+        drawer: isMobile ? const Drawer(child: Menu()) : null,
+        body: Row(
+          children: [
+            if (!isMobile) const Menu(),
+            Expanded(
+              child: _buildBodyContent(dashboardProvider, summary, isMobile),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBodyContent(
+    DashboardProvider provider,
+    DashboardModel? summary,
+    bool isMobile,
+  ) {
+    if (provider.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
       );
     }
 
-    if (dashboardProvider.error != null) {
-      // Solo se mostrará si el error no fue un 401 silenciado
-      return Center(child: Text(dashboardProvider.error!));
+    if (provider.error == "SIN_CONEXION") {
+      return NoConnectionWidget(onRefresh: () => provider.fetchSummary());
     }
 
-    if (summary == null) {
-      return Scaffold(
-        appBar: CustomAppBar(title: 'Inicio'),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.cloud_off, size: 80, color: Colors.grey),
-                const SizedBox(height: 20),
-                Text(
-                  dashboardProvider.error ?? "No se pudieron cargar los datos",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.blueGrey,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                // BOTÓN DE REINTENTAR
-                ElevatedButton.icon(
-                  onPressed: () {
-                    context.read<DashboardProvider>().fetchSummary();
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text("Reintentar"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 25,
-                      vertical: 12,
-                    ),
-                  ),
-                ),
-              ],
+    if (provider.error != null && summary == null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.cloud_off, size: 80, color: Colors.grey),
+            const SizedBox(height: 20),
+            Text(
+              provider.error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, color: Colors.blueGrey),
             ),
-          ),
+            const SizedBox(height: 20),
+            RetryButton(onRefresh: () => provider.fetchSummary()),
+          ],
         ),
       );
     }
 
-    // --- LISTA DE WIDGETS DE MÉTRICAS (Usando datos del Provider) ---
+    // 4. Si el resumen es nulo por alguna otra razón
+    if (summary == null) {
+      return const Center(child: Text("No hay datos disponibles"));
+    }
+
+    // 5. Contenido principal (Si todo está bien)
+    return _buildMainContent(summary, isMobile);
+  }
+
+  Widget _buildMainContent(DashboardModel summary, bool isMobile) {
     final List<Widget> metricItems = [
       _buildMetricItem(
         "Total Miembros",
@@ -114,7 +125,7 @@ class _DashboardState extends State<Dashboard> {
       ),
     ];
 
-    final Widget mainContent = CustomScrollView(
+    return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
@@ -122,7 +133,6 @@ class _DashboardState extends State<Dashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Cards de métricas principales
                 CustomCardContainer(
                   padding: const EdgeInsets.symmetric(
                     vertical: 25,
@@ -156,10 +166,7 @@ class _DashboardState extends State<Dashboard> {
                               .toList(),
                         ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // Redes y Ministerios
                 isMobile
                     ? Column(
                         children: [
@@ -168,7 +175,6 @@ class _DashboardState extends State<Dashboard> {
                             summary.totalNetworks.toString(),
                             Icons.group,
                             negativeColor,
-                            isMobile,
                             () => Navigator.pushNamed(context, 'networks'),
                           ),
                           const SizedBox(height: 20),
@@ -177,7 +183,6 @@ class _DashboardState extends State<Dashboard> {
                             summary.totalMinistries.toString(),
                             Icons.description_outlined,
                             Colors.indigo,
-                            isMobile,
                             () => Navigator.pushNamed(context, 'ministries'),
                           ),
                         ],
@@ -190,27 +195,22 @@ class _DashboardState extends State<Dashboard> {
                               summary.totalNetworks.toString(),
                               Icons.group,
                               negativeColor,
-                              isMobile,
                               () => Navigator.pushNamed(context, 'networks'),
                             ),
                           ),
-                          SizedBox(width: 20),
+                          const SizedBox(width: 20),
                           Expanded(
                             child: _buildSmallInfoCard(
                               'Ministerios',
                               summary.totalMinistries.toString(),
                               Icons.description_outlined,
                               Colors.indigo,
-                              isMobile,
                               () => Navigator.pushNamed(context, 'ministries'),
                             ),
                           ),
                         ],
                       ),
-
                 const SizedBox(height: 20),
-
-                // Gráficos y Lista de Eventos
                 if (!isMobile)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +218,7 @@ class _DashboardState extends State<Dashboard> {
                       Expanded(
                         flex: 2,
                         child: _buildSection(
-                          "Actividad de los miembros",
+                          "Actividad",
                           _buildPieChart(
                             summary.activeMembers,
                             summary.inactiveMembers,
@@ -237,7 +237,7 @@ class _DashboardState extends State<Dashboard> {
                   )
                 else ...[
                   _buildSection(
-                    "Actividad de los miembros",
+                    "Actividad",
                     _buildPieChart(
                       summary.activeMembers,
                       summary.inactiveMembers,
@@ -256,27 +256,6 @@ class _DashboardState extends State<Dashboard> {
         ),
       ],
     );
-
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(
-          title: 'Inicio',
-          isDrawerEnabled: isMobile,
-          showBackButton: false,
-        ),
-        drawer: isMobile ? const Drawer(child: Menu()) : null,
-        body: isMobile
-            ? SafeArea(child: mainContent)
-            : Row(
-                children: [
-                  const Menu(),
-                  Expanded(child: mainContent),
-                ],
-              ),
-      ),
-    );
   }
 
   // --- WIDGETS AUXILIARES ---
@@ -290,30 +269,27 @@ class _DashboardState extends State<Dashboard> {
   ) {
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.blueGrey,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.blueGrey,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
             ),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -323,7 +299,6 @@ class _DashboardState extends State<Dashboard> {
     String value,
     IconData icon,
     Color color,
-    bool isMobile,
     VoidCallback onTap,
   ) {
     return InkWell(
@@ -334,28 +309,25 @@ class _DashboardState extends State<Dashboard> {
           children: [
             Icon(icon, color: color, size: 26),
             const SizedBox(width: 12),
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      color: Colors.blueGrey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.blueGrey,
+                    fontWeight: FontWeight.w500,
                   ),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         ),
@@ -416,31 +388,36 @@ class _DashboardState extends State<Dashboard> {
   }
 
   Widget _buildServicesList(List<WeeklyEvent> events) {
-    if (events.isEmpty) {
+    if (events.isEmpty)
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Text("No hay eventos programados."),
       );
-    }
     return Column(
-      children: events.map((e) {
-        return ListTile(
-          onTap: () => Navigator.pushNamed(context, 'services'),
-          contentPadding: EdgeInsets.zero,
-          leading: const CircleAvatar(
-            backgroundColor: Colors.blue,
-            child: Icon(Icons.calendar_today, color: Colors.white, size: 18),
-          ),
-          title: Text(
-            e.name,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          subtitle: Text(
-            "${e.startTime} • ${e.type}",
-            style: const TextStyle(color: Colors.blueGrey),
-          ),
-        );
-      }).toList(),
+      children: events
+          .map(
+            (e) => ListTile(
+              onTap: () => Navigator.pushNamed(context, 'services'),
+              contentPadding: EdgeInsets.zero,
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(
+                  Icons.calendar_today,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              title: Text(
+                e.name,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                "${e.startTime} • ${e.type}",
+                style: const TextStyle(color: Colors.blueGrey),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 

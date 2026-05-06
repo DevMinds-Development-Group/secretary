@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../models/attendance_model.dart';
@@ -21,12 +22,12 @@ class AttendanceProvider with ChangeNotifier {
   int get totalPages => _totalPages;
   int get pageSize => _pageSize;
 
-  Map<String, AttendanceModel> _records = {};
-  Map<String, AttendanceModel> get records => _records;
-
   Future<void> fetchAttendanceHistory({int page = 0, int? size}) async {
+    if (size != null) _pageSize = size;
+
     _isLoading = true;
     _error = null;
+    _recordsList = [];
     notifyListeners();
 
     try {
@@ -36,6 +37,7 @@ class AttendanceProvider with ChangeNotifier {
           'pageNo': page,
           'pageSize': _pageSize,
           'sortBy': 'date',
+          'sortType': 'DESC',
         },
       );
 
@@ -56,12 +58,27 @@ class AttendanceProvider with ChangeNotifier {
           "DEBUG: Se cargaron ${_recordsList.length} registros desde 'content'",
         );
       }
-    } catch (e) {
-      _error = "Error al cargar historial: $e";
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "No se pudo cargar el historial de asistencias";
+      }
       print("DEBUG ERROR FETCH: $e");
+    } catch (e) {
+      _error = "Ocurrió un error inesperado al consultar el servidor";
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  void clearError() {
+    if (_error != null) {
+      _error = null;
+      // Usamos microtask para evitar errores de "setState/notifyListeners during build"
+      Future.microtask(() => notifyListeners());
     }
   }
 
@@ -96,17 +113,22 @@ class AttendanceProvider with ChangeNotifier {
         '/event-attendances',
         data: record.toJson(),
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // IMPORTANTE: Tras guardar con éxito, refrescamos la lista completa
-        // Esto garantiza que veamos el nuevo registro con su ID real del servidor
+        _error = null;
         await fetchAttendanceHistory();
         return true;
       }
       return false;
-    } catch (e) {
-      _error = "Error al conectar con el servidor: $e";
-      print("DEBUG ERROR SAVE ATTENDANCE: $e");
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError ||
+          e.error == 'SIN_CONEXION') {
+        _error = "SIN_CONEXION";
+      } else {
+        _error =
+            "El tiempo para registrar o modificar la asistencia ha expirado. El límite es hasta las 10:00 AM del día siguiente al evento. O el servidor no está disponible";
+        print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
+      }
+
       return false;
     } finally {
       _isLoading = false;
@@ -135,7 +157,7 @@ class AttendanceProvider with ChangeNotifier {
       final response = await _apiClient.dio.delete('/event-attendances/$id');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        _recordsList.removeWhere((record) => record.id == id);
+        await fetchAttendanceHistory();
         return true;
       }
       return false;

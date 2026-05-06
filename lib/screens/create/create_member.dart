@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +13,8 @@ import '../../providers/network_provider.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/member_profile_image.dart';
+import '../../widgets/no_connection_widget.dart';
 
 class CreateMember extends StatefulWidget {
   final Member? memberToEdit;
@@ -20,6 +25,7 @@ class CreateMember extends StatefulWidget {
 }
 
 class _CreateMemberState extends State<CreateMember> {
+  // --- Propiedades y Controladores ---
   final _formKey = GlobalKey<FormState>();
   bool _isSaving = false;
 
@@ -27,31 +33,34 @@ class _CreateMemberState extends State<CreateMember> {
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
+
   DateTime? _selectedBirthDate;
   String? _selectedNetworkId;
-
-  String? _selectedNetwork;
+  File? _selectedImage;
+  bool _photoDeleted = false;
 
   bool get _isEditing => widget.memberToEdit != null;
 
+  // --- Ciclo de Vida ---
   @override
   void initState() {
     super.initState();
+    _initializeData();
+  }
 
+  void _initializeData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
     });
 
     if (_isEditing) {
       final m = widget.memberToEdit!;
-
       _nameController.text = m.name;
       _lastNameController.text = m.lastName;
       _phoneController.text = m.phone;
       _addressController.text = m.address;
-      _selectedNetwork = m.networkName;
       _selectedBirthDate = m.birthdate;
-      _selectedNetworkId = widget.memberToEdit!.networkId;
+      _selectedNetworkId = m.networkId;
     }
   }
 
@@ -64,154 +73,200 @@ class _CreateMemberState extends State<CreateMember> {
     super.dispose();
   }
 
+  // --- Selección de Imagen ---
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final XFile? file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
+    if (file != null) {
+      setState(() {
+        _selectedImage = File(file.path);
+        _photoDeleted = false;
+      });
+    }
+  }
+
+  // --- Lógica de Negocio ---
   Future<void> _saveMember() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedNetworkId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, selecciona una red')),
-      );
+      _showSnackBar('Por favor, selecciona una red', isError: true);
       return;
     }
 
     setState(() => _isSaving = true);
     final memberProvider = Provider.of<MemberProvider>(context, listen: false);
 
+    String? memberId;
     bool success = false;
 
-    if (_isEditing) {
-      success = await memberProvider.updateMember(
-        id: widget.memberToEdit!.id,
-        name: _nameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        address: _addressController.text.trim(),
-        phone: _phoneController.text.trim(),
-        birthdate: _selectedBirthDate,
-        enabled: widget.memberToEdit!.enabled,
-        networkId: _selectedNetworkId!,
-      );
-    } else {
-      success = await memberProvider.addMember(
-        name: _nameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        address: _addressController.text.trim(),
-        phone: _phoneController.text.trim(),
-        birthdate: _selectedBirthDate,
-        networkId: _selectedNetworkId!,
-      );
-    }
-
-    if (mounted) {
-      setState(() => _isSaving = false);
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isEditing
-                  ? 'Miembro actualizado con éxito'
-                  : 'Miembro creado con éxito',
-            ),
-            backgroundColor: Colors.green,
-          ),
+    try {
+      if (_isEditing) {
+        success = await memberProvider.updateMember(
+          id: widget.memberToEdit!.id,
+          name: _nameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          address: _addressController.text.trim(),
+          phone: _phoneController.text.trim(),
+          birthdate: _selectedBirthDate,
+          enabled: widget.memberToEdit!.enabled,
+          networkId: _selectedNetworkId!,
         );
-        await memberProvider.fetchMembers(); // Refrescar la lista
-        Navigator.pop(context);
+        memberId = widget.memberToEdit!.id;
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al guardar los datos. Revisa la consola.'),
-            backgroundColor: negativeColor,
-          ),
+        memberId = await memberProvider.addMemberAndGetId(
+          name: _nameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          address: _addressController.text.trim(),
+          phone: _phoneController.text.trim(),
+          birthdate: _selectedBirthDate,
+          networkId: _selectedNetworkId!,
         );
+        success = memberId != null;
       }
+
+      // Si se guardó el texto y hay una foto seleccionada, subirla
+      if (success && _selectedImage != null) {
+        await memberProvider.uploadMemberPhoto(memberId!, _selectedImage!);
+      }
+
+      if (mounted && success) {
+        await memberProvider.fetchMembers(page: 0);
+        _showSnackBar(_isEditing ? 'Miembro actualizado' : 'Miembro creado');
+        Navigator.pop(context);
+      } else if (mounted) {
+        _showSnackBar('Error al guardar los datos.', isError: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? negativeColor : Colors.green,
+      ),
+    );
+  }
+
+  // --- Construcción de Interfaz ---
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
+    final netProvider = context.watch<NetworkProvider>();
     final memberProvider = context.watch<MemberProvider>();
+
+    if (netProvider.error == "SIN_CONEXION" ||
+        memberProvider.error == "SIN_CONEXION") {
+      return Scaffold(
+        appBar: CustomAppBar(
+          title: _isEditing ? 'Editar miembro' : 'Crear miembro',
+        ),
+        body: NoConnectionWidget(onRefresh: () => netProvider.fetchNetworks()),
+      );
+    }
+
+    if (netProvider.isLoading && netProvider.networks.isEmpty) {
+      return Scaffold(
+        appBar: CustomAppBar(
+          title: _isEditing ? 'Editar miembro' : 'Crear miembro',
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(color: primaryColor),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: CustomAppBar(title: 'Crear miembro'),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return isMobile
-              ? _buildMobileLayout(isMobile, memberProvider)
-              : _buildWebLayout(isMobile, memberProvider);
-        },
+      appBar: CustomAppBar(
+        title: _isEditing ? 'Editar miembro' : 'Crear miembro',
       ),
-    );
-  }
-
-  Widget _buildMobileLayout(isMobile, memberProvider) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 24.0),
-            _buildFormFields(context, isMobile, memberProvider),
-          ],
+      body: SingleChildScrollView(
+        child: Center(
+          child: Container(
+            width: isMobile ? MediaQuery.of(context).size.width * 0.9 : 600,
+            padding: EdgeInsets.all(isMobile ? 20.0 : 30.0),
+            child: _buildForm(isMobile, memberProvider),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildWebLayout(isMobile, memberProvider) {
-    return SingleChildScrollView(
-      child: Center(
-        child: Container(
-          width: 600,
-          padding: EdgeInsets.all(30.0),
-          child: _buildFormFields(context, isMobile, memberProvider),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFormFields(BuildContext context, isMobile, memberProvider) {
+  Widget _buildForm(bool isMobile, MemberProvider mp) {
     return Form(
       key: _formKey,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          // Sección de foto interactiva
           Center(
-            child: Image.asset('assets/02.png', height: isMobile ? 100 : 120),
+            child: Stack(
+              children: [
+                MemberProfileImage(
+                  imageUrl: _photoDeleted
+                      ? null
+                      : widget.memberToEdit?.photoUrl,
+                  localFile: _selectedImage,
+                  radius: 50,
+                ),
+                if (_selectedImage != null ||
+                    (widget.memberToEdit?.photoUrl != null && !_photoDeleted))
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _selectedImage = null;
+                        _photoDeleted = true;
+                      }),
+                      child: const CircleAvatar(
+                        radius: 10,
+                        backgroundColor: Colors.red,
+                        child: Icon(
+                          Icons.delete,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          SizedBox(height: isMobile ? 20 : 30.0),
+          TextButton.icon(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.edit, color: Colors.black54),
+            label: Text("Subir foto", style: TextStyle(color: Colors.black54)),
+          ),
+          const SizedBox(height: 10.0),
           CustomTextFormField(
             labelText: 'Nombre',
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'El nombre es obligatorio';
-              }
-              if (value.length < 3) {
-                return 'El nombre debe tener al menos 3 caracteres';
-              }
-              return null; // Válido
-            },
             controller: _nameController,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'El nombre es obligatorio'
+                : null,
           ),
           const SizedBox(height: 16.0),
           CustomTextFormField(
             labelText: 'Apellidos',
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Los apellidos son obligatorios';
-              }
-              return null; // Válido
-            },
             controller: _lastNameController,
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Los apellidos son obligatorios'
+                : null,
           ),
           const SizedBox(height: 16.0),
           CustomTextFormField(
             labelText: 'Dirección',
-            validator: (value) => (value == null || value.trim().isEmpty)
+            controller: _addressController,
+            validator: (v) => (v == null || v.trim().isEmpty)
                 ? 'La dirección es obligatoria'
                 : null,
-            controller: _addressController,
           ),
           const SizedBox(height: 16.0),
           CustomTextFormField(
@@ -221,42 +276,17 @@ class _CreateMemberState extends State<CreateMember> {
             controller: _phoneController,
           ),
           const SizedBox(height: 16.0),
-          DropDownNetwork(),
+          _buildNetworkDropdown(),
           const SizedBox(height: 16.0),
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('Fecha de Nacimiento (Opcional)'),
-            subtitle: Text(
-              _selectedBirthDate == null
-                  ? 'No seleccionada'
-                  : DateFormat(
-                      'dd/MM/yyyy',
-                      'es_ES',
-                    ).format(_selectedBirthDate!),
-            ),
-            onTap: () async {
-              final DateTime? picked = await showDatePicker(
-                context: context,
-                initialDate: _selectedBirthDate ?? DateTime.now(),
-                firstDate: DateTime(1920),
-                lastDate: DateTime.now(),
-              );
-              if (picked != null) {
-                setState(() {
-                  _selectedBirthDate = picked;
-                });
-              }
-            },
-          ),
-          const SizedBox(height: 30.0),
+          _buildDatePicker(),
+          const SizedBox(height: 10.0),
           Button(
             size: Size(
-              isMobile ? MediaQuery.of(context).size.width * 0.9 : 140,
-              45,
+              isMobile ? MediaQuery.of(context).size.width * 0.9 : 180,
+              50,
             ),
-            text: widget.memberToEdit != null ? 'Actualizar' : 'Guardar',
-            isLoading: memberProvider.isLoading,
+            text: _isEditing ? 'Actualizar' : 'Guardar',
+            isLoading: _isSaving,
             onPressed: _saveMember,
           ),
         ],
@@ -264,12 +294,13 @@ class _CreateMemberState extends State<CreateMember> {
     );
   }
 
-  Widget DropDownNetwork() {
+  Widget _buildNetworkDropdown() {
     return Consumer<NetworkProvider>(
-      builder: (context, netProvider, child) {
+      builder: (context, netProvider, _) {
         return DropdownButtonFormField<String>(
           value: _selectedNetworkId,
           hint: const Text('Seleccionar red'),
+          decoration: const InputDecoration(border: OutlineInputBorder()),
           items: netProvider.networks.map((net) {
             return DropdownMenuItem(value: net.id, child: Text(net.name));
           }).toList(),
@@ -277,6 +308,28 @@ class _CreateMemberState extends State<CreateMember> {
           validator: (value) =>
               value == null ? 'Debe seleccionar una red' : null,
         );
+      },
+    );
+  }
+
+  Widget _buildDatePicker() {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.calendar_today, color: primaryColor),
+      title: const Text('Fecha de Nacimiento (Opcional)'),
+      subtitle: Text(
+        _selectedBirthDate == null
+            ? 'No seleccionada'
+            : DateFormat('dd/MM/yyyy', 'es_ES').format(_selectedBirthDate!),
+      ),
+      onTap: () async {
+        final DateTime? picked = await showDatePicker(
+          context: context,
+          initialDate: _selectedBirthDate ?? DateTime.now(),
+          firstDate: DateTime(1920),
+          lastDate: DateTime.now(),
+        );
+        if (picked != null) setState(() => _selectedBirthDate = picked);
       },
     );
   }
