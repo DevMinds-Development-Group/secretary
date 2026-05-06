@@ -11,6 +11,7 @@ import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
 import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
+import '../../widgets/member_profile_image.dart';
 import '../../widgets/no_connection_widget.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
@@ -311,65 +312,94 @@ class _MinistryMembersState extends State<MinistryMembers> {
     MinistryModel currentMinistry,
     permissions,
   ) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 20.0),
-      child: CustomCardContainer(
-        child: ListView.separated(
-          shrinkWrap: true,
-          itemCount: members.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final member = members[index];
-            return ListTile(
-              leading: isMobile
-                  ? null
-                  : CircleAvatar(
-                      backgroundColor: Colors.blue[400],
-                      child: Text(
-                        member.name[0].toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      itemCount: members.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final member = members[index];
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              MemberProfileImage(
+                imageUrl: member.photoUrl,
+                name: member.name,
+                radius: 25,
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start, // Alineado a la izquierda
+                  children: [
+                    Text(
+                      '${member.name} ${member.lastName}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
                       ),
                     ),
-              title: Text('${member.name} ${member.lastName}'),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [Text(member.address), Text(member.phone)],
+                    Text(
+                      member.phone,
+                      style: TextStyle(
+                        color: Colors.blue[800],
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      member.address,
+                      style: TextStyle(color: Colors.grey[900], fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-              trailing: permissions.canSeeMembers
-                  ? IconButton(
-                      icon: const Icon(Icons.delete, color: negativeColor),
-                      onPressed: () {
-                        showDeleteConfirmationDialog(
-                          context: context,
-                          itemName: '${member.name} ${member.lastName}',
-                          onConfirm: () async {
-                            try {
-                              await Provider.of<MinistryProvider>(
-                                context,
-                                listen: false,
-                              ).removeMemberFromMinistry(
-                                currentMinistry.id,
-                                member,
-                              );
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Error al eliminar miembro'),
-                                ),
-                              );
-                            }
-                          },
-                        );
+              if (permissions.canSeeMembers)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: negativeColor),
+                  onPressed: () {
+                    showDeleteConfirmationDialog(
+                      context: context,
+                      itemName: '${member.name} ${member.lastName}',
+                      onConfirm: () async {
+                        try {
+                          await Provider.of<MinistryProvider>(
+                            context,
+                            listen: false,
+                          ).removeMemberFromMinistry(
+                            currentMinistry.id,
+                            member,
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Error al eliminar miembro'),
+                            ),
+                          );
+                        }
                       },
-                    )
-                  : null,
-            );
-          },
-        ),
-      ),
+                    );
+                  },
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

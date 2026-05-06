@@ -1,3 +1,4 @@
+import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -60,18 +61,15 @@ class _MenuState extends State<Menu> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 10),
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.red.shade200,
-                  child: Text(
-                    displayName.isNotEmpty ? displayName[0].toUpperCase() : "U",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 24,
-                    ),
-                  ),
+                MemberProfileImage(
+                  imageUrl:
+                      user?.member?.profilePictureUrl ??
+                      user?.profilePictureUrl,
+                  name:
+                      displayName, // Usamos el nombre que ya calculamos arriba
+                  radius: 35,
                 ),
+
                 const SizedBox(height: 10),
                 Text(
                   displayName,

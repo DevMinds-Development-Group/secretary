@@ -8,12 +8,14 @@ class UserProfile {
   final String role;
   final String? memberId;
   final MemberProfile? member;
+  final String? profilePictureUrl;
 
   UserProfile({
     required this.username,
     required this.role,
     this.memberId,
     this.member,
+    this.profilePictureUrl,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -26,6 +28,7 @@ class UserProfile {
       username: json['username'],
       role: roleDesc,
       memberId: json['memberId'],
+      profilePictureUrl: json['profilePictureUrl'],
       member: json['member'] != null
           ? MemberProfile.fromJson(json['member'])
           : null,
@@ -40,6 +43,7 @@ class MemberProfile {
   final String? address;
   final String? networkName;
   final DateTime? birthdate;
+  final String? profilePictureUrl;
 
   MemberProfile({
     required this.name,
@@ -48,6 +52,7 @@ class MemberProfile {
     this.address,
     this.networkName,
     this.birthdate,
+    this.profilePictureUrl,
   });
 
   factory MemberProfile.fromJson(Map<String, dynamic> json) {
@@ -60,6 +65,7 @@ class MemberProfile {
       birthdate: json['birthdate'] != null
           ? DateTime.parse(json['birthdate'])
           : null,
+      profilePictureUrl: json['profilePictureUrl'],
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:Koinos/colors.dart';
+import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -26,16 +27,6 @@ class _ProfileState extends State<Profile> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authService = Provider.of<AuthService>(context, listen: false);
-
-      // authService.addListener(() {
-      //   if (authService.error == "SIN_CONEXION" && mounted) {
-      //     // Esto cierra el diálogo si está abierto (Navigator.pop)
-      //     // Usamos canPop para no cerrar la pantalla principal por error
-      //     if (Navigator.of(context).canPop()) {
-      //       Navigator.of(context).pop();
-      //     }
-      //   }
-      // });
 
       if (authService.userName != null) {
         authService.fetchUserProfile(authService.userName!);
@@ -163,12 +154,9 @@ class _ProfileState extends State<Profile> {
 
                     if (!mounted) return;
 
-                    // 2. IMPORTANTE: Solo un Navigator.pop() para cerrar el diálogo
-                    // independientemente de si falló o tuvo éxito.
                     Navigator.of(context, rootNavigator: true).pop();
 
                     if (success) {
-                      // ÉXITO: Un solo SnackBar verde
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Contraseña actualizada con éxito"),
@@ -176,7 +164,6 @@ class _ProfileState extends State<Profile> {
                         ),
                       );
                     } else {
-                      // ERROR: Determinamos el mensaje según el tipo de error
                       String mensajeError =
                           (userProvider.error == "SIN_CONEXION")
                           ? "Sin conexión a internet. Inténtalo más tarde."
@@ -189,8 +176,6 @@ class _ProfileState extends State<Profile> {
                         ),
                       );
 
-                      // 3. Si fue error de red, disparamos la actualización del perfil
-                      // para que el fondo muestre el NoConnectionWidget automáticamente
                       if (userProvider.error == "SIN_CONEXION") {
                         context.read<AuthService>().fetchUserProfile(
                           user.username,
@@ -250,9 +235,9 @@ class _ProfileState extends State<Profile> {
                   child: Column(
                     children: [
                       _buildProfileHeader(user, isMobile),
-                      const SizedBox(height: 20.0),
+                      //const SizedBox(height: 20.0),
                       _buildContactInfoCard(user),
-                      const SizedBox(height: 15.0),
+                      const SizedBox(height: 10.0),
                       _buildAccountActionsCard(user),
                     ],
                   ),
@@ -262,33 +247,22 @@ class _ProfileState extends State<Profile> {
     );
   }
 
-  Widget _buildProfileHeader(user, isMobile) {
+  Widget _buildProfileHeader(UserProfile user, isMobile) {
     final String? memberName = user.member?.name;
     final String? memberLastName = user.member?.lastName;
     final String username = user.username ?? 'Usuario';
 
-    // Determinamos qué inicial mostrar
-    String initial = '?';
-    if (memberName != null && memberName.isNotEmpty) {
-      initial = memberName.substring(0, 1).toUpperCase();
-    } else if (username.isNotEmpty) {
-      initial = username.substring(0, 1).toUpperCase();
-    }
+    final String displayName = (user.member != null)
+        ? "${user.member!.name} ${user.member!.lastName}"
+        : user.username;
 
     return Column(
       children: [
-        SizedBox(height: 20),
-        CircleAvatar(
-          maxRadius: isMobile ? 30 : 40,
-          backgroundColor: negativeColor.withOpacity(0.1),
-          child: Text(
-            initial,
-            style: TextStyle(
-              fontSize: isMobile ? 28 : 32,
-              color: negativeColor.withOpacity(0.9),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+        //SizedBox(height: 20),
+        MemberProfileImage(
+          imageUrl: user.member?.profilePictureUrl ?? user.profilePictureUrl,
+          name: displayName,
+          radius: 50,
         ),
         const SizedBox(height: 15.0),
         Text(
