@@ -81,21 +81,19 @@ class _MinistryMembersState extends State<MinistryMembers> {
             ? widget.ministry.name
             : 'Miembros de ${currentMinistry.name}',
       ),
-      body: ministryProvider.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: primaryColor),
-            ) // Mostrar carga
-          : SafeArea(
-              child: Center(
-                child: Column(
-                  children: [
-                    SizedBox(height: isMobile ? 5 : 20),
-                    if (isMobile)
-                      _buildMinistryHeader(currentMinistry, isMobile),
-                    if (permissions.canSeeMembers)
-                      Padding(
-                        padding: const EdgeInsets.all(0),
-                        child: Align(
+      body: SafeArea(
+        child: ministryProvider.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              ) // Mostrar carga
+            : Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 5),
+                child: Center(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20),
+                      if (permissions.canSeeMembers)
+                        Align(
                           alignment: isMobile
                               ? Alignment.center
                               : Alignment.centerRight,
@@ -114,30 +112,30 @@ class _MinistryMembersState extends State<MinistryMembers> {
                             ),
                           ),
                         ),
-                      ),
-                    if (!isMobile)
+                      SizedBox(height: 20),
                       _buildMinistryHeader(currentMinistry, isMobile),
-                    if (isMobile) const SizedBox(height: 15),
-                    Expanded(
-                      child: ministryProvider.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: primaryColor,
+                      SizedBox(height: 20),
+                      Expanded(
+                        child: ministryProvider.isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: primaryColor,
+                                ),
+                              )
+                            : sortedMembers.isEmpty
+                            ? _buildEmptyState(isMobile)
+                            : _buildMemberList(
+                                sortedMembers,
+                                isMobile,
+                                currentMinistry,
+                                permissions,
                               ),
-                            )
-                          : sortedMembers.isEmpty
-                          ? _buildEmptyState(isMobile)
-                          : _buildMemberList(
-                              sortedMembers,
-                              isMobile,
-                              currentMinistry,
-                              permissions,
-                            ),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -229,7 +227,6 @@ class _MinistryMembersState extends State<MinistryMembers> {
 
   Widget _buildMinistryHeader(MinistryModel ministry, bool isMobile) {
     return CustomCardContainer(
-      margin: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -312,94 +309,105 @@ class _MinistryMembersState extends State<MinistryMembers> {
     MinistryModel currentMinistry,
     permissions,
   ) {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      itemCount: members.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final member = members[index];
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+    return Padding(
+      padding: EdgeInsets.zero,
+      child: CustomCardContainer(
+        padding: EdgeInsets.all(10),
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: members.length,
+          separatorBuilder: (context, index) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final member = members[index];
+            return Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              MemberProfileImage(
-                imageUrl: member.photoUrl,
-                name: member.name,
-                radius: 25,
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Alineado a la izquierda
-                  children: [
-                    Text(
-                      '${member.name} ${member.lastName}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  MemberProfileImage(
+                    imageUrl: member.photoUrl,
+                    name: member.name,
+                    radius: 25,
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${member.name} ${member.lastName}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          member.phone,
+                          style: TextStyle(
+                            color: Colors.blue[800],
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          member.address,
+                          style: TextStyle(
+                            color: Colors.grey[900],
+                            fontSize: 13,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (permissions.canSeeMembers)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: negativeColor,
                       ),
-                    ),
-                    Text(
-                      member.phone,
-                      style: TextStyle(
-                        color: Colors.blue[800],
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      member.address,
-                      style: TextStyle(color: Colors.grey[900], fontSize: 13),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (permissions.canSeeMembers)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: negativeColor),
-                  onPressed: () {
-                    showDeleteConfirmationDialog(
-                      context: context,
-                      itemName: '${member.name} ${member.lastName}',
-                      onConfirm: () async {
-                        try {
-                          await Provider.of<MinistryProvider>(
-                            context,
-                            listen: false,
-                          ).removeMemberFromMinistry(
-                            currentMinistry.id,
-                            member,
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Error al eliminar miembro'),
-                            ),
-                          );
-                        }
+                      onPressed: () {
+                        showDeleteConfirmationDialog(
+                          context: context,
+                          itemName: '${member.name} ${member.lastName}',
+                          onConfirm: () async {
+                            try {
+                              await Provider.of<MinistryProvider>(
+                                context,
+                                listen: false,
+                              ).removeMemberFromMinistry(
+                                currentMinistry.id,
+                                member,
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Error al eliminar miembro'),
+                                ),
+                              );
+                            }
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
-            ],
-          ),
-        );
-      },
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }

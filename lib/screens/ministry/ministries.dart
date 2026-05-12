@@ -67,79 +67,81 @@ class _MinistriesState extends State<Ministries> {
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Ministerios', isDrawerEnabled: isMobile),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isMobile) Menu(),
-          Expanded(
-            child: ministryProvider.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: primaryColor),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(context, isMobile),
-                        const SizedBox(height: 24),
-                        Expanded(
-                          child: GridView.builder(
-                            shrinkWrap: true,
-                            gridDelegate:
-                                SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: isMobile
-                                      ? 350.0
-                                      : 400.0, // Ancho máximo de cada elemento
-                                  childAspectRatio: 2.5,
-                                  crossAxisSpacing:
-                                      20, // Espacio entre columnas
-                                  mainAxisSpacing: isMobile
-                                      ? 10
-                                      : 20, // Espacio entre filas
-                                ),
-                            itemCount: ministries.length,
-                            itemBuilder: (context, index) {
-                              final ministry = ministries[index];
-                              final leaderNames = ministry.leaders
-                                  .map(
-                                    (leader) =>
-                                        '${leader.name} ${leader.lastName}',
-                                  )
-                                  .join(', ');
-                              // final membersInNetwork = memberProvider.members
-                              //     .where((m) => m.networkName == ministry.name)
-                              //     .toList();
-                              final memberCount = ministryProvider
-                                  .getMemberCountForMinistry(ministry.id);
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          MinistryMembers(ministry: ministry),
-                                    ),
-                                  );
-                                },
-                                child: _buildMinistryCard(
-                                  title: ministry.name,
-                                  details: ministry.description,
-                                  leaderNames: leaderNames.isEmpty
-                                      ? 'Sin líderes'
-                                      : leaderNames,
-                                  icon: Icons.group,
-                                  memberCount: memberCount,
-                                ),
-                              );
-                            },
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMobile) Menu(),
+            Expanded(
+              child: ministryProvider.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(context, isMobile),
+                          const SizedBox(height: 24),
+                          Expanded(
+                            child: GridView.builder(
+                              shrinkWrap: true,
+                              gridDelegate:
+                                  SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: isMobile
+                                        ? 350.0
+                                        : 400.0, // Ancho máximo de cada elemento
+                                    childAspectRatio: 2.5,
+                                    crossAxisSpacing:
+                                        20, // Espacio entre columnas
+                                    mainAxisSpacing: isMobile
+                                        ? 10
+                                        : 20, // Espacio entre filas
+                                  ),
+                              itemCount: ministries.length,
+                              itemBuilder: (context, index) {
+                                final ministry = ministries[index];
+                                final leaderNames = ministry.leaders
+                                    .map(
+                                      (leader) =>
+                                          '${leader.name} ${leader.lastName}',
+                                    )
+                                    .join(', ');
+                                // final membersInNetwork = memberProvider.members
+                                //     .where((m) => m.networkName == ministry.name)
+                                //     .toList();
+                                final memberCount = ministryProvider
+                                    .getMemberCountForMinistry(ministry.id);
+                                return InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            MinistryMembers(ministry: ministry),
+                                      ),
+                                    );
+                                  },
+                                  child: _buildMinistryCard(
+                                    title: ministry.name,
+                                    details: ministry.description,
+                                    leaderNames: leaderNames.isEmpty
+                                        ? 'Sin líderes'
+                                        : leaderNames,
+                                    icon: Icons.group,
+                                    memberCount: memberCount,
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

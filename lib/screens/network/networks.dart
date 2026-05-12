@@ -64,64 +64,51 @@ class _NetworksState extends State<Networks> {
       backgroundColor: backgroundColor,
       appBar: CustomAppBar(title: 'Redes', isDrawerEnabled: isMobile),
       drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isMobile) Menu(),
-          Expanded(
-            child: networkProvider.isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: primaryColor),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(context, isMobile),
+      body: SafeArea(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!isMobile) Menu(),
+            Expanded(
+              child: networkProvider.isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(color: primaryColor),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(context, isMobile),
 
-                        const SizedBox(height: 24),
+                          const SizedBox(height: 24),
 
-                        Expanded(
-                          child: GridView.builder(
-                            gridDelegate:
-                                SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: isMobile ? 350.0 : 400.0,
-                                  childAspectRatio: 2.5,
-                                  crossAxisSpacing: 20,
-                                  mainAxisSpacing: isMobile ? 10 : 20,
-                                ),
-                            itemCount: networks.length,
-                            itemBuilder: (context, index) {
-                              final network = networkProvider.networks[index];
-                              final membersInNetwork = memberProvider.members
-                                  .where((m) => m.networkName == network.name)
-                                  .toList();
-                              final leaderNames = network.leaders
-                                  .map(
-                                    (leader) =>
-                                        '${leader.name} ${leader.lastName}',
-                                  )
-                                  .join(', ');
-                              final memberCount = membersInNetwork.length;
+                          Expanded(
+                            child: GridView.builder(
+                              gridDelegate:
+                                  SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: isMobile
+                                        ? 350.0
+                                        : 400.0,
+                                    childAspectRatio: 2.5,
+                                    crossAxisSpacing: 20,
+                                    mainAxisSpacing: isMobile ? 10 : 20,
+                                  ),
+                              itemCount: networks.length,
+                              itemBuilder: (context, index) {
+                                final network = networkProvider.networks[index];
+                                final membersInNetwork = memberProvider.members
+                                    .where((m) => m.networkName == network.name)
+                                    .toList();
+                                final leaderNames = network.leaders
+                                    .map(
+                                      (leader) =>
+                                          '${leader.name} ${leader.lastName}',
+                                    )
+                                    .join(', ');
+                                final memberCount = membersInNetwork.length;
 
-                              return InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          NetworkMembers(network: network),
-                                    ),
-                                  );
-                                },
-                                child: _buildGroupCard(
-                                  title: network.name,
-                                  leaderNames: leaderNames.isEmpty
-                                      ? 'Sin líderes'
-                                      : leaderNames,
-                                  memberCount: memberCount,
-                                  icon: Icons.group,
+                                return InkWell(
                                   onTap: () {
                                     Navigator.push(
                                       context,
@@ -131,16 +118,33 @@ class _NetworksState extends State<Networks> {
                                       ),
                                     );
                                   },
-                                ),
-                              );
-                            },
+                                  child: _buildGroupCard(
+                                    title: network.name,
+                                    leaderNames: leaderNames.isEmpty
+                                        ? 'Sin líderes'
+                                        : leaderNames,
+                                    memberCount: memberCount,
+                                    icon: Icons.group,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              NetworkMembers(network: network),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

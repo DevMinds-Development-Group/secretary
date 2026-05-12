@@ -81,6 +81,23 @@ class _NetworkMembersState extends State<NetworkMembers> {
                     child: Column(
                       children: [
                         SizedBox(height: 20),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: AddButton(
+                            size: Size(
+                              isMobile
+                                  ? MediaQuery.of(context).size.width * 0.9
+                                  : 200,
+                              isMobile ? 50 : 45,
+                            ),
+                            onPressed: () => Navigator.push(
+                              context,
+                              createFadeRoute(const CreateMember()),
+                            ),
+                            title: 'Crear Miembro',
+                          ),
+                        ),
+                        SizedBox(height: 20),
                         _buildNetworkHeader(widget.network, isMobile),
                         SizedBox(height: 20),
                         Expanded(
@@ -110,21 +127,6 @@ class _NetworkMembersState extends State<NetworkMembers> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: AddButton(
-              size: Size(
-                isMobile ? MediaQuery.of(context).size.width * 0.85 : 200,
-                isMobile ? 50 : 45,
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                createFadeRoute(const CreateMember()),
-              ),
-              title: 'Crear Miembro',
-            ),
-          ),
-          SizedBox(height: isMobile ? 15 : 0),
           isMobile
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +157,6 @@ class _NetworkMembersState extends State<NetworkMembers> {
     );
   }
 
-  // Widget para la lista de miembros (Estilo Members.dart)
   Widget _buildMemberList(List<Member> members, bool isMobile) {
     return Padding(
       padding: EdgeInsets.zero,
