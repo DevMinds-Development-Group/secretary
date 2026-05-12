@@ -36,11 +36,18 @@ class _TotalAttendancesState extends State<TotalAttendances> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<AttendanceProvider>(
-        context,
-        listen: false,
-      ).fetchAttendanceHistory();
+      _refreshReports();
     });
+  }
+
+  void _refreshReports() {
+    final startStr = DateFormat('yyyy-MM-dd').format(_startDate);
+    final endStr = DateFormat('yyyy-MM-dd').format(_endDate);
+
+    Provider.of<AttendanceProvider>(
+      context,
+      listen: false,
+    ).fetchGeneralReports(start: startStr, end: endStr);
   }
 
   @override
@@ -135,9 +142,11 @@ class _TotalAttendancesState extends State<TotalAttendances> {
       endDate: _endDate,
       onStartDateSelected: (date) {
         setState(() => _startDate = date);
+        _refreshReports();
       },
       onEndDateSelected: (date) {
         setState(() => _endDate = date);
+        _refreshReports();
       },
     );
   }

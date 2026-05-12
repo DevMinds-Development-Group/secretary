@@ -77,7 +77,6 @@ class AttendanceProvider with ChangeNotifier {
   void clearError() {
     if (_error != null) {
       _error = null;
-      // Usamos microtask para evitar errores de "setState/notifyListeners during build"
       Future.microtask(() => notifyListeners());
     }
   }
@@ -175,5 +174,41 @@ class AttendanceProvider with ChangeNotifier {
     return _recordsList.where((record) {
       return record.id.toLowerCase().contains(query.toLowerCase());
     }).toList();
+  }
+
+  Future<void> fetchGeneralReports({
+    required String start,
+    required String end,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    _recordsList = [];
+    notifyListeners();
+
+    try {
+      final response = await _apiClient.dio.get(
+        '/general-attendances/events',
+        queryParameters: {'start': start, 'end': end},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> rawData = response.data ?? [];
+
+        _recordsList = rawData
+            .map((item) => AttendanceModel.fromJson(item))
+            .toList();
+
+        _recordsList.sort((a, b) => b.date.compareTo(a.date));
+      }
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION') {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "No se pudieron cargar los reportes generales";
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
