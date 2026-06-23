@@ -170,6 +170,10 @@ class _TotalAttendancesState extends State<TotalAttendances> {
           record: record,
           isToday: isToday(record.date),
           onPdf: () => _downloadGeneralPdf(record),
+          showLeadingDay: false,
+          showDetails: false,
+          directActions: true,
+          showCountPill: false,
         );
       },
     );

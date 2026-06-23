@@ -16,6 +16,18 @@ class AttendanceCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
+  /// Muestra el número de día grande a la izquierda.
+  final bool showLeadingDay;
+
+  /// Muestra la línea de desglose ("X miembros · Y visitas · Red").
+  final bool showDetails;
+
+  /// Renderiza las acciones como botones de icono directos en lugar del menú `⋮`.
+  final bool directActions;
+
+  /// Muestra la pastilla con el total de asistentes.
+  final bool showCountPill;
+
   const AttendanceCard({
     super.key,
     required this.record,
@@ -24,6 +36,10 @@ class AttendanceCard extends StatelessWidget {
     this.onPdf,
     this.onEdit,
     this.onDelete,
+    this.showLeadingDay = true,
+    this.showDetails = true,
+    this.directActions = false,
+    this.showCountPill = true,
   });
 
   bool get _hasMenu =>
@@ -59,18 +75,20 @@ class AttendanceCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 48,
-                child: Text(
-                  '${record.date.day}',
-                  textAlign: TextAlign.center,
-                  style: textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: isToday ? infoColor : primaryColor,
+              if (showLeadingDay) ...[
+                SizedBox(
+                  width: 48,
+                  child: Text(
+                    '${record.date.day}',
+                    textAlign: TextAlign.center,
+                    style: textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isToday ? infoColor : primaryColor,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: Spacing.md),
+                const SizedBox(width: Spacing.md),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,19 +106,26 @@ class AttendanceCard extends StatelessWidget {
                       '${_weekday(record.date)}, ${record.date.day} ${_month(record.date)} ${record.date.year}',
                       style: textTheme.labelMedium?.copyWith(color: fgMuted),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$present miembros · $visitors visitas · ${record.networkName ?? 'Sin red'}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodySmall?.copyWith(color: fgMuted),
-                    ),
+                    if (showDetails) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        '$present miembros · $visitors visitas · ${record.networkName ?? 'Sin red'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodySmall?.copyWith(color: fgMuted),
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: Spacing.sm),
-              _countPill(total),
-              if (_hasMenu) _menu(),
+              if (showCountPill) ...[
+                const SizedBox(width: Spacing.sm),
+                _countPill(total),
+              ],
+              if (directActions)
+                ..._directActions()
+              else if (_hasMenu)
+                _menu(),
             ],
           ),
         ),
@@ -122,6 +147,38 @@ class AttendanceCard extends StatelessWidget {
         style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 15),
       ),
     );
+  }
+
+  List<Widget> _directActions() {
+    return [
+      if (onPdf != null)
+        IconButton(
+          tooltip: 'Descargar PDF',
+          icon: Icon(
+            Icons.download_rounded,
+            color: isToday ? infoColor : primaryColor,
+          ),
+          onPressed: onPdf,
+        ),
+      if (onEdit != null)
+        IconButton(
+          tooltip: 'Editar',
+          icon: Icon(
+            Icons.edit_outlined,
+            color: isToday ? infoColor : secondaryText,
+          ),
+          onPressed: onEdit,
+        ),
+      if (onDelete != null)
+        IconButton(
+          tooltip: 'Eliminar',
+          icon: Icon(
+            Icons.delete_outline,
+            color: isToday ? infoColor : errorColor,
+          ),
+          onPressed: onDelete,
+        ),
+    ];
   }
 
   Widget _menu() {
