@@ -474,25 +474,30 @@ class _CreateServiceState extends State<CreateService> {
                               const SizedBox(height: 20),
                             ],
                             SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Button(
-                                  size: Size(
-                                    isMobile
-                                        ? MediaQuery.of(context).size.width *
-                                              0.7
-                                        : 130,
-                                    isMobile ? 50 : 45,
-                                  ),
+                            if (isMobile)
+                              SizedBox(
+                                width: double.infinity,
+                                child: Button(
+                                  size: const Size.fromHeight(50),
                                   text: widget.serviceToEdit != null
                                       ? 'Actualizar'
                                       : 'Guardar',
                                   isLoading: serviceProvider.isLoading,
                                   onPressed: _saveEvent,
                                 ),
-                              ],
-                            ),
+                              )
+                            else
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: Button(
+                                  size: const Size(140, 45),
+                                  text: widget.serviceToEdit != null
+                                      ? 'Actualizar'
+                                      : 'Guardar',
+                                  isLoading: serviceProvider.isLoading,
+                                  onPressed: _saveEvent,
+                                ),
+                              ),
                           ],
                         ),
                       ),
