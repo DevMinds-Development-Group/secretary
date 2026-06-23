@@ -45,16 +45,10 @@ class NavShell extends StatelessWidget {
     final secondary = isSecondary || current == null;
 
     if (compact) {
-      // Móvil: las sub-páginas (formularios/detalle) muestran solo back + título
-      // (sin barra inferior); las primarias muestran la NavigationBar.
-      if (secondary) {
-        return Scaffold(
-          appBar: _buildAppBar(primary: false),
-          body: body,
-          floatingActionButton: floatingActionButton,
-        );
-      }
-      return _buildCompact(context, visible);
+      // Móvil: la NavigationBar inferior aparece en TODAS las pantallas
+      // (incluidos formularios/detalle). En secundarias la AppBar muestra
+      // back + título.
+      return _buildCompact(context, visible, secondary: secondary);
     }
 
     // Web/expandido: el riel aparece en TODAS las pantallas (incluidos
@@ -96,8 +90,9 @@ class NavShell extends StatelessWidget {
   // ---------------------------------------------------------------------------
   Widget _buildCompact(
     BuildContext context,
-    List<NavItem> visible,
-  ) {
+    List<NavItem> visible, {
+    bool secondary = false,
+  }) {
     final primary = visible
         .where((i) => kNavItems.indexOf(i) < kPrimaryCount)
         .toList();
@@ -124,7 +119,7 @@ class NavShell extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: _buildAppBar(primary: true),
+      appBar: _buildAppBar(primary: !secondary),
       body: body,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: NavigationBar(
