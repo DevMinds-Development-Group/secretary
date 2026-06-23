@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../colors.dart';
-import '../routes/routes.dart';
 import '../services/auth_service.dart';
 import '../theme/motion.dart';
 import '../utils/user_permissions.dart';
 import '../utils/window_size.dart';
 import 'nav_destinations.dart';
+import 'user_menu.dart';
 
 /// Shell de navegación adaptativo (Material 3):
 /// - compacto (móvil): `NavigationBar` inferior + hoja "Más".
@@ -54,20 +54,26 @@ class NavShell extends StatelessWidget {
           floatingActionButton: floatingActionButton,
         );
       }
-      return _buildCompact(context, visible, authService);
+      return _buildCompact(context, visible);
     }
 
     // Web/expandido: el riel aparece en TODAS las pantallas (incluidos
     // formularios y detalle). En secundarias la AppBar muestra back + título.
-    return _buildRail(context, visible, authService, secondary: secondary);
+    return _buildRail(context, visible, secondary: secondary);
   }
 
   // ---------------------------------------------------------------------------
   // Header (AppBar minimalista). Primario = logo; secundario = back + título.
   // ---------------------------------------------------------------------------
   PreferredSizeWidget _buildAppBar({required bool primary}) {
+    final trailingActions = <Widget>[
+      ...?actions,
+      const UserMenu(),
+      const SizedBox(width: 4),
+    ];
+
     if (!primary) {
-      return AppBar(title: Text(title), actions: actions);
+      return AppBar(title: Text(title), actions: trailingActions);
     }
     // Navbar primaria: solo el logo (sin título), centrado sobre la columna del
     // riel (80px) para que navbar y riel se lean como una sola pieza.
@@ -81,7 +87,7 @@ class NavShell extends StatelessWidget {
               fit: BoxFit.contain,
             ),
       ),
-      actions: actions,
+      actions: trailingActions,
     );
   }
 
@@ -91,7 +97,6 @@ class NavShell extends StatelessWidget {
   Widget _buildCompact(
     BuildContext context,
     List<NavItem> visible,
-    AuthService authService,
   ) {
     final primary = visible
         .where((i) => kNavItems.indexOf(i) < kPrimaryCount)
@@ -129,7 +134,7 @@ class NavShell extends StatelessWidget {
           if (index < primary.length) {
             _go(context, primary[index]);
           } else {
-            _showMoreSheet(context, overflow, authService);
+            _showMoreSheet(context, overflow);
           }
         },
       ),
@@ -141,8 +146,7 @@ class NavShell extends StatelessWidget {
   // ---------------------------------------------------------------------------
   Widget _buildRail(
     BuildContext context,
-    List<NavItem> visible,
-    AuthService authService, {
+    List<NavItem> visible, {
     bool secondary = false,
   }) {
     return Scaffold(
@@ -153,9 +157,6 @@ class NavShell extends StatelessWidget {
         current: current,
         body: body,
         onSelect: (item) => _go(context, item),
-        onProfile: () => Navigator.pushNamed(context, AppRoutes.profile),
-        onHelp: () => Navigator.pushNamed(context, AppRoutes.user_help),
-        onLogout: () => _confirmLogout(context, authService),
       ),
     );
   }
@@ -171,7 +172,6 @@ class NavShell extends StatelessWidget {
   void _showMoreSheet(
     BuildContext context,
     List<NavItem> overflow,
-    AuthService authService,
   ) {
     showModalBottomSheet(
       context: context,
@@ -191,68 +191,8 @@ class NavShell extends StatelessWidget {
                     _go(context, item);
                   },
                 ),
-              const Divider(),
-              ListTile(
-                leading: const Icon(Icons.person_outline),
-                title: const Text('Mi perfil'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  Navigator.pushNamed(context, AppRoutes.profile);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.help_outline),
-                title: const Text('Manual de usuario'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  Navigator.pushNamed(context, AppRoutes.user_help);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout, color: errorColor),
-                title: const Text('Cerrar sesión'),
-                onTap: () {
-                  Navigator.pop(sheetContext);
-                  _confirmLogout(context, authService);
-                },
-              ),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  void _confirmLogout(BuildContext context, AuthService authService) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Confirmar', textAlign: TextAlign.center),
-          content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('Cancelar', style: TextStyle(color: secondaryText)),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                await authService.signOut();
-                if (context.mounted) {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.auth_wrapper,
-                    (route) => false,
-                  );
-                }
-              },
-              child: const Text(
-                'Cerrar Sesión',
-                style: TextStyle(color: errorColor),
-              ),
-            ),
-          ],
         );
       },
     );
@@ -268,18 +208,12 @@ class _NavRail extends StatefulWidget {
   final NavSection? current;
   final Widget body;
   final void Function(NavItem) onSelect;
-  final VoidCallback onProfile;
-  final VoidCallback onHelp;
-  final VoidCallback onLogout;
 
   const _NavRail({
     required this.items,
     required this.current,
     required this.body,
     required this.onSelect,
-    required this.onProfile,
-    required this.onHelp,
-    required this.onLogout,
   });
 
   @override
@@ -365,35 +299,6 @@ class _NavRailState extends State<_NavRail> {
                                 label: Text(item.label),
                               ),
                           ],
-                          trailing: Expanded(
-                            child: Align(
-                              alignment: Alignment.bottomCenter,
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      tooltip: 'Mi perfil',
-                                      icon: const Icon(Icons.person_outline),
-                                      onPressed: widget.onProfile,
-                                    ),
-                                    IconButton(
-                                      tooltip: 'Manual de usuario',
-                                      icon: const Icon(Icons.help_outline),
-                                      onPressed: widget.onHelp,
-                                    ),
-                                    IconButton(
-                                      tooltip: 'Cerrar sesión',
-                                      color: errorColor,
-                                      icon: const Icon(Icons.logout),
-                                      onPressed: widget.onLogout,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
                         ),
                       ),
                     ),
