@@ -1,8 +1,12 @@
+import 'package:Koinos/screens/reports/supervision_dashboard.dart';
 import 'package:Koinos/screens/reports/total_attendances.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../colors.dart';
 import '../../routes/page_route_builder.dart';
+import '../../services/auth_service.dart';
+import '../../utils/user_permissions.dart';
 import '../../widgets/body_width.dart';
 import '../../widgets/nav_destinations.dart';
 import '../../widgets/nav_shell.dart';
@@ -21,6 +25,7 @@ class Reports extends StatelessWidget {
   }
 
   Widget _buildLayout(BuildContext context, bool isMobile) {
+    final permissions = UserPermissions(context.read<AuthService>());
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 32.0),
       child: BodyWidth(
@@ -33,6 +38,12 @@ class Reports extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         children: [
           _buildCard(context, Icons.how_to_reg_rounded, 'Asistencias'),
+          if (permissions.canSeeSupervision)
+            _buildCard(
+              context,
+              Icons.supervisor_account_rounded,
+              'Supervisión',
+            ),
           //_buildCard(context, Icons.groups_rounded, 'Membresía'),
           //_buildCard(context, Icons.waves, 'Bautizos'),
           //_buildCard(context, Icons.favorite_border, 'Matrimonios'),
@@ -57,6 +68,12 @@ class Reports extends StatelessWidget {
               Navigator.push(
                 context,
                 createFadeRoute(const TotalAttendances()),
+              );
+              break;
+            case 'Supervisión':
+              Navigator.push(
+                context,
+                createFadeRoute(const SupervisionDashboard()),
               );
               break;
             case 'Membresía':

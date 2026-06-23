@@ -1,4 +1,5 @@
 import 'package:Koinos/providers/announcement_provider.dart';
+import 'package:Koinos/providers/apostol_dashboard_provider.dart';
 import 'package:Koinos/providers/attendance_provider.dart';
 import 'package:Koinos/providers/dashboard_provider.dart';
 import 'package:Koinos/providers/leader_provider.dart';
@@ -39,6 +40,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => LeaderProvider()),
         ChangeNotifierProvider(create: (context) => AnnouncementProvider()),
         ChangeNotifierProvider(create: (context) => DashboardProvider()),
+        ChangeNotifierProvider(create: (context) => ApostolDashboardProvider()),
         ChangeNotifierProvider.value(value: authService),
       ],
       child: const MyApp(),

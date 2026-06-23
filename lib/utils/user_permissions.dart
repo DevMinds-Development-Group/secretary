@@ -56,6 +56,10 @@ class UserPermissions {
 
   bool get canSeeAdmin => ['ROLE_ADMIN'].contains(role);
 
+  // Supervisión: administradores, apóstoles y pastores.
+  bool get canSeeSupervision =>
+      ['ROLE_ADMIN', 'ROLE_APOSTOL', 'ROLE_PASTOR'].contains(role);
+
   // Ejemplo de permiso de acción (No solo ver, sino HACER)
   bool get canCreateMember => ['ROLE_ADMIN', 'ROLE_SECRETARIO'].contains(role);
 }
