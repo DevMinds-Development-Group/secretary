@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../colors.dart';
+import '../utils/app_log.dart';
+
 class Pagination extends StatefulWidget {
   final int currentPage;
   final int totalPages;
@@ -69,7 +72,7 @@ class _PaginationState extends State<Pagination> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
     return Container(
-      color: Colors.grey.shade200,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 16),
       child: isMobile
           ? Row(
@@ -100,10 +103,10 @@ class _PaginationState extends State<Pagination> {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.blue[700]),
+          icon: Icon(Icons.arrow_back, color: primaryColor),
           onPressed: widget.currentPage > 0
               ? () {
-                  print('--- PAGINATION WIDGET: Botón Atras presionado ---');
+                  appLog('--- PAGINATION WIDGET: Botón Atras presionado ---');
                   widget.onPageChanged(widget.currentPage - 1);
                 }
               : null,
@@ -117,10 +120,10 @@ class _PaginationState extends State<Pagination> {
           ),
         ),
         IconButton(
-          icon: Icon(Icons.arrow_forward, color: Colors.blue[700]),
+          icon: Icon(Icons.arrow_forward, color: primaryColor),
           onPressed: widget.currentPage < widget.totalPages - 1
               ? () {
-                  print(
+                  appLog(
                     '--- PAGINATION WIDGET: Botón Siguiente presionado ---',
                   );
                   widget.onPageChanged(widget.currentPage + 1);
@@ -135,9 +138,9 @@ class _PaginationState extends State<Pagination> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
+        Text(
           'Ir a página:',
-          style: TextStyle(fontSize: 14, color: Colors.black87),
+          style: TextStyle(fontSize: 14, color: secondaryText),
         ),
         const SizedBox(width: 10),
         SizedBox(
@@ -148,9 +151,11 @@ class _PaginationState extends State<Pagination> {
             textAlign: TextAlign.center,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: const InputDecoration(
-              contentPadding: EdgeInsets.symmetric(vertical: 2.0),
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             onFieldSubmitted: (value) => _goToPage(),
           ),
@@ -172,7 +177,7 @@ class _PaginationState extends State<Pagination> {
         if (!isMobile)
           Text(
             'Elementos por página:',
-            style: TextStyle(fontSize: 14, color: Colors.black87),
+            style: TextStyle(fontSize: 14, color: secondaryText),
           ),
         const SizedBox(width: 10),
         DropdownButton<int>(
@@ -200,9 +205,11 @@ class _PaginationState extends State<Pagination> {
         onPressed: _goToPage,
         child: const Text('Ir'),
         style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.blue[900],
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+          foregroundColor: infoColor,
+          backgroundColor: primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ),
     );

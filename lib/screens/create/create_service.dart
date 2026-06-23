@@ -6,10 +6,12 @@ import '../../models/member_model.dart';
 import '../../models/service_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/service_provider.dart';
+import '../../theme/design_constants.dart';
+import '../../utils/app_log.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/member_autocomplete_field.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 
 class CreateService extends StatefulWidget {
@@ -95,7 +97,7 @@ class _CreateServiceState extends State<CreateService> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print("!!! EJECUTANDO CARGA DE MIEMBROS DESDE CREATE_SERVICE !!!");
+      appLog("!!! EJECUTANDO CARGA DE MIEMBROS DESDE CREATE_SERVICE !!!");
       Provider.of<MemberProvider>(context, listen: false).fetchMembers();
     });
   }
@@ -199,7 +201,7 @@ class _CreateServiceState extends State<CreateService> {
                   ? 'Servicio actualizado con éxito'
                   : 'Servicio creado con éxito',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: accentColor,
           ),
         );
         Navigator.pop(context);
@@ -222,11 +224,9 @@ class _CreateServiceState extends State<CreateService> {
 
     if (serviceProvider.error == "SIN_CONEXION" ||
         memberProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(
-          title: _isEditing ? 'Editar servicio' : 'Crear servicio',
-        ),
+      return NavShell(
+        isSecondary: true,
+        title: _isEditing ? 'Editar servicio' : 'Crear servicio',
         body: NoConnectionWidget(
           onRefresh: () {
             serviceProvider.clearError();
@@ -239,11 +239,9 @@ class _CreateServiceState extends State<CreateService> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: _isEditing ? 'Editar servicio' : 'Crear servicio',
-      ),
+    return NavShell(
+      isSecondary: true,
+      title: _isEditing ? 'Editar servicio' : 'Crear servicio',
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -257,17 +255,23 @@ class _CreateServiceState extends State<CreateService> {
                         : 600,
                   ),
                   child: Card(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.surface,
                     elevation: 10,
                     child: Padding(
                       padding: const EdgeInsets.all(30.0),
                       child: Form(
                         key: _formKey,
+                        autovalidateMode:
+                            AutovalidateMode.onUserInteraction,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             CustomTextFormField(
                               labelText: 'Nombre del Servicio',
+                              isRequired: true,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) =>
+                                  FocusScope.of(context).nextFocus(),
                               initialValue: name,
                               validator: (val) =>
                                   val!.isEmpty ? 'Campo requerido' : null,
@@ -276,6 +280,7 @@ class _CreateServiceState extends State<CreateService> {
                             const SizedBox(height: 20),
                             CustomTextFormField(
                               labelText: 'Descripción',
+                              textInputAction: TextInputAction.done,
                               initialValue: description,
                               onChanged: (val) =>
                                   setState(() => description = val),
@@ -284,14 +289,14 @@ class _CreateServiceState extends State<CreateService> {
                             _buildLabel(
                               Icons.category,
                               'Tipo de Actividad',
-                              Colors.cyan,
+                              primaryColor,
                             ),
                             DropdownButtonFormField<String>(
                               value: type,
                               isExpanded: true,
                               decoration: _inputDecoration(''),
-                              style: const TextStyle(
-                                color: Colors.black,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontSize: 15,
                               ),
                               items: serviceTypes
@@ -332,7 +337,7 @@ class _CreateServiceState extends State<CreateService> {
                                     onChanged: (bool val) {
                                       setState(() {
                                         recurring = val;
-                                        print(
+                                        appLog(
                                           "DEBUG: Switch cambiado a $recurring",
                                         );
                                         if (recurring) {
@@ -371,7 +376,7 @@ class _CreateServiceState extends State<CreateService> {
                                       ),
                                       const Icon(
                                         Icons.event,
-                                        color: Colors.grey,
+                                        color: secondaryText,
                                       ),
                                     ],
                                   ),
@@ -384,7 +389,7 @@ class _CreateServiceState extends State<CreateService> {
                               _buildLabel(
                                 Icons.calendar_month,
                                 'Día programado',
-                                Colors.indigo,
+                                primaryColor,
                               ),
                               DropdownButtonFormField<int>(
                                 style: _headerStyle(),
@@ -409,7 +414,7 @@ class _CreateServiceState extends State<CreateService> {
                             _buildLabel(
                               Icons.access_time,
                               'Hora de inicio',
-                              Colors.deepPurpleAccent,
+                              primaryColor,
                             ),
                             InkWell(
                               onTap: () => _selectTime(context),
@@ -520,18 +525,24 @@ class _CreateServiceState extends State<CreateService> {
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: secondaryBackground,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.black54),
+        borderRadius: BorderRadius.circular(
+          DesignConstants.borderRadiusDropdown,
+        ),
+        borderSide: const BorderSide(color: alternateColor, width: 2),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
-        borderSide: const BorderSide(color: Colors.black54),
+        borderRadius: BorderRadius.circular(
+          DesignConstants.borderRadiusDropdown,
+        ),
+        borderSide: const BorderSide(color: alternateColor, width: 2),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(
+          DesignConstants.borderRadiusDropdown,
+        ),
         borderSide: const BorderSide(color: primaryColor, width: 1),
       ),
     );
@@ -539,9 +550,9 @@ class _CreateServiceState extends State<CreateService> {
 
   BoxDecoration _boxDecorationStyle() {
     return BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(5),
-      border: Border.all(color: Colors.black54),
+      color: secondaryBackground,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: alternateColor),
     );
   }
 }
@@ -558,6 +569,6 @@ TextStyle _headerStyle() {
   return TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w600,
-    color: Colors.black87,
+    color: primaryText,
   );
 }

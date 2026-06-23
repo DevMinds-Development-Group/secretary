@@ -1,12 +1,9 @@
-import 'dart:io' show File;
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:intl/intl.dart'; // Asegúrate de tener intl en pubspec.yaml
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -14,18 +11,22 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/attendance_model.dart';
 import '../../providers/attendance_provider.dart';
+import '../../theme/design_constants.dart';
 import '../../utils/download_stub.dart'
     if (dart.library.html) '../../utils/download_web.dart';
-import '../../widgets/action_buttons.dart';
+import '../../utils/window_size.dart';
+import '../../widgets/attendance_card.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/date.dart';
-import '../../widgets/menu.dart';
-import '../../widgets/no_connection_widget.dart';
+import '../../widgets/nav_destinations.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/pagination.dart';
-import '../../widgets/retry_button.dart';
 import '../../widgets/search_text_field.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
 import 'attendance.dart';
 import 'attendance_details.dart';
 
@@ -96,7 +97,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Descarga completada!'),
-            backgroundColor: Colors.green,
+            backgroundColor: accentColor,
           ),
         );
       }
@@ -110,181 +111,8 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-    final provider = Provider.of<AttendanceProvider>(context);
-
-    if (provider.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),
-        drawer: isMobile ? const Drawer(child: Menu()) : null,
-        body: Center(
-          child: NoConnectionWidget(
-            onRefresh: () => provider.fetchAttendanceHistory(),
-          ),
-        ),
-      );
-    }
-
-    final records = provider.recordsList.where((r) {
-      final matchesSearch =
-          (r.definitionName?.toLowerCase().contains(
-                _searchQuery.toLowerCase(),
-              ) ??
-              false) ||
-          (r.networkName?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
-              false);
-
-      final matchesDate =
-          _filterDate == null ||
-          (r.date.year == _filterDate!.year &&
-              r.date.month == _filterDate!.month &&
-              r.date.day == _filterDate!.day);
-
-      return matchesSearch && matchesDate;
-    }).toList();
-
-    records.sort((a, b) => b.date.compareTo(a.date));
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Asistencias', isDrawerEnabled: isMobile),
-      drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(isMobile ? 15 : 0),
-          child: Column(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    if (!isMobile) Menu(),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildHeader(isMobile),
-                          const SizedBox(height: 20),
-                          Expanded(
-                            child: _buildRecordsList(
-                              records,
-                              provider.isLoading,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          if (provider.totalPages > 0 && !provider.isLoading)
-                            Pagination(
-                              currentPage: provider.currentPage,
-                              totalPages: provider.totalPages,
-                              itemsPerPage: provider.pageSize,
-                              onPageChanged: (page) =>
-                                  provider.onPageChanged(page),
-                              onItemsPerPageChanged: (size) =>
-                                  provider.onItemsPerPageChanged(size),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(bool isMobile) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 5 : 16),
-      child: isMobile
-          ? Column(
-              children: [
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.95,
-                  child: SearchTextField(
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                  ),
-                ),
-                const SizedBox(height: 15),
-                SizedBox(
-                  child: _dateWidget(),
-                  width: MediaQuery.of(context).size.width * 0.95,
-                  height: 60,
-                ),
-                const SizedBox(height: 15),
-                Button(
-                  text: 'Tomar Asistencia',
-                  size: Size(
-                    MediaQuery.of(context).size.width * 0.95,
-                    isMobile ? 50 : 45,
-                  ),
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Attendance(),
-                      ),
-                    );
-                    if (mounted) {
-                      Provider.of<AttendanceProvider>(
-                        context,
-                        listen: false,
-                      ).fetchAttendanceHistory();
-                    }
-                  },
-                  icon: Icons.how_to_reg,
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                Expanded(
-                  child: SearchTextField(
-                    onChanged: (val) => setState(() => _searchQuery = val),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                _dateWidget(),
-                const SizedBox(width: 15),
-                Button(
-                  text: 'Tomar Asistencia',
-                  size: Size(220, isMobile ? 50 : 45),
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const Attendance(),
-                      ),
-                    );
-                    if (mounted) {
-                      Provider.of<AttendanceProvider>(
-                        context,
-                        listen: false,
-                      ).fetchAttendanceHistory();
-                    }
-                  },
-                  icon: Icons.how_to_reg,
-                ),
-              ],
-            ),
-    );
-  }
-
-  DateWidget _dateWidget() {
-    return DateWidget(
-      initialDate: _filterDate ?? DateTime.now(),
-      onDateSelected: (newDate) {
-        setState(() => _filterDate = newDate);
-      },
-    );
-  }
-
   void _handleDelete(BuildContext context, AttendanceModel record) async {
     final provider = Provider.of<AttendanceProvider>(context, listen: false);
-
     final success = await provider.deleteRecord(record.id);
 
     if (context.mounted) {
@@ -297,166 +125,201 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
     }
   }
 
-  Widget _buildRecordsList(List<AttendanceModel> records, bool isLoading) {
-    if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: primaryColor),
-      );
+  void _confirmDelete(AttendanceModel record) {
+    showDeleteConfirmationDialog(
+      context: context,
+      itemName:
+          'Asistencia del ${record.date.day}/${record.date.month}',
+      onConfirm: () => _handleDelete(context, record),
+    );
+  }
+
+  Future<void> _editRecord(AttendanceModel record) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => Attendance(existingRecord: record)),
+    );
+    if (mounted) {
+      Provider.of<AttendanceProvider>(
+        context,
+        listen: false,
+      ).fetchAttendanceHistory();
     }
+  }
 
-    final provider = Provider.of<AttendanceProvider>(context, listen: false);
-
-    // 1. Manejo de error amigable y SnackBar controlado
-    if (provider.error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 60, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            const Text(
-              "Error al cargar las asistencias",
-              style: TextStyle(color: Colors.blueGrey, fontSize: 16),
-            ),
-            const SizedBox(height: 10),
-            RetryButton(onRefresh: () => provider.fetchAttendanceHistory()),
-          ],
-        ),
-      );
+  Future<void> _takeAttendance() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const Attendance()),
+    );
+    if (mounted) {
+      Provider.of<AttendanceProvider>(
+        context,
+        listen: false,
+      ).fetchAttendanceHistory();
     }
+  }
 
-    // 2. Si no hay error pero la lista está vacía
-    if (records.isEmpty) {
-      return const Center(child: Text("No hay registros encontrados"));
-    }
+  void _openDetails(AttendanceModel record) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AttendanceDetail(record: record)),
+    );
+  }
 
-    // 3. Contenido principal (ListView)
-    bool isMobile = MediaQuery.of(context).size.width < 700;
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10.0 : 20.0),
-      child: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 3),
-          ],
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: ListView.separated(
-          padding: const EdgeInsets.all(5),
-          itemCount: records.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final record = records[index];
-            return ListTile(
-              isThreeLine: isMobile,
-              leading: isMobile
-                  ? null
-                  : const Icon(Icons.assignment_turned_in, color: Colors.green),
-              title: isMobile
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [_buildName(record), _buildNetwork(record)],
-                    )
-                  : Row(
-                      children: [
-                        _buildName(record),
-                        const Text(' | ', style: TextStyle(fontSize: 16)),
-                        _buildNetwork(record),
-                      ],
-                    ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  Text(
-                    'Presentes: ${record.presentMemberIds.length} | Visitas: ${record.visitorsCount}',
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  if (isMobile) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        _iconPdf(record),
-                        _actionButtons(context, record),
-                      ],
-                    ),
-                  ],
-                ],
+  bool _isToday(DateTime d) {
+    final now = DateTime.now();
+    return d.year == now.year && d.month == now.month && d.day == now.day;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isCompact = context.isCompact;
+    final provider = Provider.of<AttendanceProvider>(context);
+
+    final records = provider.recordsList.where((r) {
+      final q = _searchQuery.toLowerCase();
+      final matchesSearch =
+          (r.definitionName?.toLowerCase().contains(q) ?? false) ||
+              (r.networkName?.toLowerCase().contains(q) ?? false);
+      final matchesDate = _filterDate == null ||
+          (r.date.year == _filterDate!.year &&
+              r.date.month == _filterDate!.month &&
+              r.date.day == _filterDate!.day);
+      return matchesSearch && matchesDate;
+    }).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+
+    return NavShell(
+      current: NavSection.attendance,
+      title: 'Asistencia',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: Spacing.xl),
+          BodyWidth(child: _buildHeader(isCompact)),
+          const SizedBox(height: Spacing.lg),
+          Expanded(
+            child: BodyWidth(child: _buildRecordsList(records, provider)),
+          ),
+          if (provider.totalPages > 0 && !provider.isLoading)
+            BodyWidth(
+              child: Pagination(
+                currentPage: provider.currentPage,
+                totalPages: provider.totalPages,
+                itemsPerPage: provider.pageSize,
+                onPageChanged: (page) => provider.onPageChanged(page),
+                onItemsPerPageChanged: (size) =>
+                    provider.onItemsPerPageChanged(size),
               ),
-              trailing: isMobile
-                  ? null
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _iconPdf(record),
-                        _actionButtons(context, record),
-                      ],
-                    ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AttendanceDetail(record: record),
-                  ),
-                );
-              },
-            );
-          },
-        ),
+            ),
+        ],
       ),
     );
   }
 
-  Text _buildNetwork(AttendanceModel record) {
-    return Text(
-      record.networkName ?? 'Sin Red',
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+  Widget _buildHeader(bool isCompact) {
+    final textTheme = Theme.of(context).textTheme;
+    final heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Asistencia', style: textTheme.headlineMedium),
+        const SizedBox(height: Spacing.xxs),
+        Text(
+          'Registros de asistencia de la iglesia.',
+          style: textTheme.bodyMedium?.copyWith(color: secondaryText),
+        ),
+      ],
     );
-  }
 
-  Text _buildName(AttendanceModel record) {
-    return Text(
-      record.definitionName ?? 'Evento sin nombre',
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+    final search = SearchTextField(
+      hintText: 'Buscar por evento o red…',
+      onChanged: (val) => setState(() => _searchQuery = val),
     );
-  }
+    final date = DateWidget(
+      initialDate: _filterDate ?? DateTime.now(),
+      onDateSelected: (d) => setState(() => _filterDate = d),
+    );
+    final takeButton = Button(
+      text: 'Tomar Asistencia',
+      icon: Icons.how_to_reg,
+      size: isCompact ? const Size(double.infinity, 48) : const Size(220, 48),
+      onPressed: _takeAttendance,
+    );
 
-  ActionButtons _actionButtons(BuildContext context, AttendanceModel record) {
-    return ActionButtons(
-      onEdit: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Attendance(existingRecord: record),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        heading,
+        const SizedBox(height: Spacing.lg),
+        if (isCompact)
+          Column(
+            children: [
+              search,
+              const SizedBox(height: Spacing.md),
+              SizedBox(height: 56, child: date),
+              const SizedBox(height: Spacing.md),
+              takeButton,
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(child: search),
+              const SizedBox(width: Spacing.md),
+              date,
+              const SizedBox(width: Spacing.md),
+              takeButton,
+            ],
           ),
-        );
-        if (mounted) {
-          Provider.of<AttendanceProvider>(
-            context,
-            listen: false,
-          ).fetchAttendanceHistory();
-        }
-      },
-      onDelete: () {
-        showDeleteConfirmationDialog(
-          context: context,
-          itemName: 'Asistencia del ${DateFormat('d/MM').format(record.date)}',
-          onConfirm: () => _handleDelete(context, record),
-        );
-      },
+      ],
     );
   }
 
-  IconButton _iconPdf(AttendanceModel record) {
-    return IconButton(
-      icon: const Icon(Icons.picture_as_pdf, color: negativeColor),
-      tooltip: 'Descargar PDF',
-      onPressed: () => _downloadPdf(record.id),
+  Widget _buildRecordsList(
+    List<AttendanceModel> records,
+    AttendanceProvider provider,
+  ) {
+    if (provider.isLoading) {
+      return const AppSkeleton.list();
+    }
+    if (provider.error != null) {
+      return ErrorState(
+        error: provider.error,
+        onRetry: () => provider.fetchAttendanceHistory(),
+      );
+    }
+    if (records.isEmpty) {
+      return const EmptyState(
+        icon: Icons.fact_check_outlined,
+        title: 'No hay registros de asistencia',
+        message: 'Ajusta la fecha o la búsqueda.',
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchAttendanceHistory(),
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+        itemCount: records.length,
+        separatorBuilder: (_, __) => const SizedBox(height: Spacing.md),
+        itemBuilder: (_, i) {
+          final record = records[i];
+          return AttendanceCard(
+            record: record,
+            isToday: _isToday(record.date),
+            onTap: () => _openDetails(record),
+            onPdf: () => _downloadPdf(record.id),
+            onEdit: () => _editRecord(record),
+            onDelete: () => _confirmDelete(record),
+          );
+        },
+      ),
     );
   }
 }
+
+// La tarjeta de fecha vive ahora en lib/widgets/attendance_card.dart
+// (compartida con Reportes Generales).

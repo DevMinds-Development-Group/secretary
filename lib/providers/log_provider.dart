@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/log_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class LogProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -48,7 +49,7 @@ class LogProvider with ChangeNotifier {
       _totalPages = response.data['totalPages'];
     } on DioException catch (e) {
       _error = 'Error al cargar registros: ${e.message}';
-      print(_error);
+      appLog(_error);
       _logs = [];
     } finally {
       _isLoading = false;

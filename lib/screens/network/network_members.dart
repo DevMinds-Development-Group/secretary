@@ -6,12 +6,13 @@ import 'package:provider/provider.dart';
 import '../../../colors.dart';
 import '../../../models/member_model.dart';
 import '../../../providers/member_provider.dart';
-import '../../../widgets/custom_appbar.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/app_chip.dart';
 import '../../widgets/custom_card_container.dart';
-import '../../widgets/member_profile_image.dart';
+import '../../widgets/member_list_tile.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 
 class NetworkMembers extends StatefulWidget {
@@ -44,9 +45,9 @@ class _NetworkMembersState extends State<NetworkMembers> {
 
     if (memberProvider.error == "SIN_CONEXION" ||
         networkProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(title: widget.network.name),
+      return NavShell(
+        isSecondary: true,
+        title: widget.network.name,
         body: NoConnectionWidget(
           onRefresh: () {
             memberProvider.clearError();
@@ -65,9 +66,9 @@ class _NetworkMembersState extends State<NetworkMembers> {
       (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: widget.network.name),
+    return NavShell(
+      isSecondary: true,
+      title: widget.network.name,
       body: SafeArea(
         child: networkProvider.isLoading
             ? const Center(
@@ -147,7 +148,10 @@ class _NetworkMembersState extends State<NetworkMembers> {
               SizedBox(width: 10),
               Text(
                 network.mission ?? 'Sin misión definida',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ],
           ),
@@ -168,59 +172,17 @@ class _NetworkMembersState extends State<NetworkMembers> {
           separatorBuilder: (context, index) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final member = members[index];
-            return Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+            return MemberListTile(
+              member: member,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MemberProfileImage(
-                    imageUrl: member.photoUrl,
-                    name: member.name,
-                    radius: 25,
-                  ),
-                  const SizedBox(width: 15),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${member.name} ${member.lastName}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          member.phone,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[800],
-                          ),
-                        ),
-                        Text(
-                          member.address,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[900],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
+                  memberPhoneSubtitle(member),
+                  Text(
+                    member.address,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: secondaryText),
                   ),
                 ],
               ),
@@ -237,11 +199,11 @@ class _NetworkMembersState extends State<NetworkMembers> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: Colors.grey),
+          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: secondaryText),
           SizedBox(height: 16),
           Text(
             'No hay miembros en esta red',
-            style: TextStyle(fontSize: isMobile ? 15 : 18, color: Colors.grey),
+            style: TextStyle(fontSize: isMobile ? 15 : 18, color: secondaryText),
           ),
         ],
       ),
@@ -259,16 +221,15 @@ class _NetworkMembersState extends State<NetworkMembers> {
         spacing: 5,
         runSpacing: isMobile ? 0 : 5,
         children: network.leaders.map((leader) {
-          return Chip(
-            backgroundColor: primaryColor.withOpacity(0.1),
+          return AppChip(
             avatar: CircleAvatar(
               backgroundColor: primaryColor,
               child: Text(
                 leader.name[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(color: infoColor, fontSize: 15),
               ),
             ),
-            label: Text('${leader.name} ${leader.lastName}'),
+            label: '${leader.name} ${leader.lastName}',
           );
         }).toList(),
       ),

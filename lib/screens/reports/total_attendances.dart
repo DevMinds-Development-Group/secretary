@@ -14,11 +14,15 @@ import '../../models/attendance_model.dart';
 import '../../providers/attendance_provider.dart';
 import '../../utils/download_stub.dart'
     if (dart.library.html) '../../utils/download_web.dart';
-import '../../widgets/custom_appbar.dart';
-import '../../widgets/custom_card_container.dart';
+import '../../theme/design_constants.dart';
+import '../../widgets/attendance_card.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/date_range.dart';
-import '../../widgets/menu.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/search_text_field.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
 
 class TotalAttendances extends StatefulWidget {
   const TotalAttendances({super.key});
@@ -73,37 +77,22 @@ class _TotalAttendancesState extends State<TotalAttendances> {
       return matchesSearch && matchesDate;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: 'Reportes Generales',
-        isDrawerEnabled: isMobile,
-      ),
-      drawer: isMobile ? const Drawer(child: Menu()) : null,
-      body: Row(
-        children: [
-          if (!isMobile) const Menu(),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  _buildHeader(isMobile),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: attendanceProvider.isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: primaryColor,
-                            ),
-                          )
-                        : _buildSimpleList(filteredList),
-                  ),
-                ],
+    return NavShell(
+      isSecondary: true,
+      title: 'Reportes Generales',
+      body: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20.0),
+        child: Column(
+          children: [
+            BodyWidth(child: _buildHeader(isMobile)),
+            const SizedBox(height: 20),
+            Expanded(
+              child: BodyWidth(
+                child: _buildList(attendanceProvider, filteredList),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -151,43 +140,36 @@ class _TotalAttendancesState extends State<TotalAttendances> {
     );
   }
 
-  Widget _buildSimpleList(List<AttendanceModel> records) {
-    if (records.isEmpty)
-      return const Center(child: Text("No se encontraron reportes."));
+  Widget _buildList(
+    AttendanceProvider provider,
+    List<AttendanceModel> records,
+  ) {
+    if (provider.isLoading) return const AppSkeleton.list();
+    if (provider.error != null) {
+      return ErrorState(error: provider.error, onRetry: _refreshReports);
+    }
+    if (records.isEmpty) {
+      return const EmptyState(
+        icon: Icons.bar_chart_outlined,
+        title: 'No se encontraron reportes',
+        message: 'Ajusta el rango de fechas o la búsqueda.',
+      );
+    }
 
-    return ListView.builder(
+    final now = DateTime.now();
+    bool isToday(DateTime d) =>
+        d.year == now.year && d.month == now.month && d.day == now.day;
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
       itemCount: records.length,
+      separatorBuilder: (_, __) => const SizedBox(height: Spacing.md),
       itemBuilder: (context, index) {
         final record = records[index];
-
-        return CustomCardContainer(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(
-              Icons.folder_copy_rounded,
-              color: Colors.blue,
-              size: 30,
-            ),
-            title: Text(
-              record.definitionName ?? 'Evento General',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            subtitle: Text(
-              DateFormat('EEEE, d MMMM yyyy', 'es').format(record.date),
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            trailing: IconButton(
-              icon: const Icon(
-                Icons.picture_as_pdf,
-                color: negativeColor,
-                size: 30,
-              ),
-              tooltip: "Descargar Reporte General",
-              onPressed: () => _downloadGeneralPdf(record),
-            ),
-          ),
+        return AttendanceCard(
+          record: record,
+          isToday: isToday(record.date),
+          onPdf: () => _downloadGeneralPdf(record),
         );
       },
     );
@@ -252,7 +234,7 @@ class _TotalAttendancesState extends State<TotalAttendances> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Reporte generado con éxito!'),
-            backgroundColor: Colors.green,
+            backgroundColor: successColor,
             duration: Duration(seconds: 3),
           ),
         );

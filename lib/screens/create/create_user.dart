@@ -1,6 +1,7 @@
 // lib/screens/create/create_user.dart
 
 import 'package:Koinos/colors.dart';
+import 'package:Koinos/utils/app_log.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,9 +11,10 @@ import '../../models/user_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/role_provider.dart';
 import '../../providers/user_provider.dart';
+import '../../theme/design_constants.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/nav_shell.dart';
 
 class CreateUser extends StatefulWidget {
   final User? userToEdit;
@@ -83,7 +85,7 @@ class _CreateUserState extends State<CreateUser> {
             _selectedRoleId = role.id;
           });
         } catch (e) {
-          print('Error al preseleccionar rol: ${e.toString()}');
+          appLog('Error al preseleccionar rol: ${e.toString()}');
         }
       }
     }
@@ -98,6 +100,7 @@ class _CreateUserState extends State<CreateUser> {
   }
 
   Future<void> _saveUser() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedRoleId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -111,10 +114,10 @@ class _CreateUserState extends State<CreateUser> {
 
     // --- LÍNEA DE DEPURACIÓN ---
     // Esto nos dirá exactamente qué ID estamos enviando.
-    print('--- GUARDANDO USUARIO ---');
-    print('Username: ${_userNameController.text.trim()}');
-    print('Rol ID Seleccionado: $_selectedRoleId');
-    print('-------------------------');
+    appLog('--- GUARDANDO USUARIO ---');
+    appLog('Username: ${_userNameController.text.trim()}');
+    appLog('Rol ID Seleccionado: $_selectedRoleId');
+    appLog('-------------------------');
 
     setState(() => _isSaving = true);
 
@@ -157,12 +160,10 @@ class _CreateUserState extends State<CreateUser> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
-    final userProvider = context.watch<UserProvider>();
 
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: _isEditing ? 'Editar Usuario' : 'Crear Usuario',
-      ),
+    return NavShell(
+      isSecondary: true,
+      title: _isEditing ? 'Editar Usuario' : 'Crear Usuario',
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isMobile ? 30 : 70),
         child: Center(
@@ -170,19 +171,22 @@ class _CreateUserState extends State<CreateUser> {
             constraints: const BoxConstraints(maxWidth: 700),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Icon(
                     Icons.account_circle,
                     size: 120,
-                    color: Colors.grey,
+                    color: secondaryText,
                   ),
                   const SizedBox(height: 10),
                   CustomTextFormField(
                     controller: _userNameController,
                     labelText: 'Nombre de usuario',
+                    isRequired: true,
                     readOnly: _isEditing,
+                    textInputAction: TextInputAction.done,
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'El nombre de usuario no puede estar vacío.'
                         : null,
@@ -224,9 +228,28 @@ class _CreateUserState extends State<CreateUser> {
                       return DropdownButtonFormField<String>(
                         value: _selectedRoleId,
                         hint: const Text('Selecciona un rol'),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Rol',
-                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              DesignConstants.borderRadiusDropdown,
+                            ),
+                            borderSide: const BorderSide(
+                              color: alternateColor,
+                              width: 2,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              DesignConstants.borderRadiusDropdown,
+                            ),
+                            borderSide: const BorderSide(
+                              color: alternateColor,
+                              width: 2,
+                            ),
+                          ),
                         ),
                         items: roleProvider.roles.map((Role role) {
                           return DropdownMenuItem<String>(
@@ -295,7 +318,9 @@ class _CreateUserState extends State<CreateUser> {
                                 focusNode: focusNode,
                                 decoration: InputDecoration(
                                   labelText: 'Asociar a Miembro (Opcional)',
-                                  border: const OutlineInputBorder(),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                   suffixIcon: IconButton(
                                     icon: const Icon(Icons.clear),
                                     onPressed: () {
@@ -327,7 +352,7 @@ class _CreateUserState extends State<CreateUser> {
                         text: widget.userToEdit != null
                             ? 'Actualizar'
                             : 'Guardar',
-                        isLoading: userProvider.isLoading,
+                        isLoading: _isSaving,
                         onPressed: _saveUser,
                       ),
                     ],

@@ -1,4 +1,3 @@
-import 'package:Koinos/widgets/retry_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,14 +6,18 @@ import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../services/auth_service.dart';
+import '../../theme/design_constants.dart';
 import '../../utils/user_permissions.dart';
-import '../../widgets/action_buttons.dart';
+import '../../utils/window_size.dart';
 import '../../widgets/add_button.dart';
-import '../../widgets/custom_appbar.dart';
-import '../../widgets/custom_card_container.dart';
-import '../../widgets/menu.dart';
-import '../../widgets/no_connection_widget.dart';
+import '../../widgets/body_width.dart';
+import '../../widgets/event_feed_item.dart';
+import '../../widgets/nav_destinations.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
 import '../create/create_service.dart';
 
 class Services extends StatefulWidget {
@@ -33,342 +36,167 @@ class _ServicesState extends State<Services> {
     });
   }
 
-  // --- MÉTODOS DE FORMATO ---
-  String _getDisplayDay(ServiceModel service) {
-    final Map<String, String> daysMap = {
-      '1': 'Lunes',
-      '2': 'Martes',
-      '3': 'Miércoles',
-      '4': 'Jueves',
-      '5': 'Viernes',
-      '6': 'Sábado',
-      '7': 'Domingo',
-    };
-    if (service.recurring) {
-      return daysMap[service.weekDay.toString()] ?? service.weekDay;
-    } else {
-      return daysMap[service.date.weekday.toString()] ?? '';
+  bool _isToday(ServiceModel s) {
+    final now = DateTime.now();
+    if (s.recurring) {
+      return int.tryParse(s.weekDay.toString()) == now.weekday;
     }
+    return s.date.year == now.year &&
+        s.date.month == now.month &&
+        s.date.day == now.day;
   }
 
-  String _formatTime12h(TimeOfDay time) {
+  String _dayName(ServiceModel s) {
+    const days = {
+      1: 'Lunes',
+      2: 'Martes',
+      3: 'Miércoles',
+      4: 'Jueves',
+      5: 'Viernes',
+      6: 'Sábado',
+      7: 'Domingo',
+    };
+    if (s.recurring) {
+      return days[int.tryParse(s.weekDay.toString())] ?? s.weekDay.toString();
+    }
+    return days[s.date.weekday] ?? '';
+  }
+
+  String _time12h(TimeOfDay time) {
     final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
     final minute = time.minute.toString().padLeft(2, '0');
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
     return '$hour:$minute $period';
   }
 
-  Widget _buildServiceInfoRow({
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required List<String> items,
-    required bool isMobile,
-  }) {
-    if (items.isEmpty) return const SizedBox.shrink();
+  List<String> _names(List<dynamic> members) =>
+      members.map((m) => '${m.name} ${m.lastName}'.trim()).toList();
 
-    final List<Widget> children = [
-      Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: iconColor.withOpacity(0.7), size: 20),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-      if (!isMobile) const SizedBox(width: 8) else const SizedBox(height: 4),
-      Wrap(
-        spacing: 8,
-        runSpacing: 4,
-        children: items
-            .map(
-              (item) => Chip(
-                visualDensity: VisualDensity.compact,
-                backgroundColor: primaryColor.withOpacity(0.1),
-                side: BorderSide.none,
-                label: Text(item, style: const TextStyle(fontSize: 13)),
-              ),
-            )
-            .toList(),
-      ),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: children,
-            )
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: children,
-            ),
+  Future<void> _openEdit(ServiceModel service) async {
+    await Navigator.push(
+      context,
+      createFadeRoute(CreateService(serviceToEdit: service)),
     );
+    if (mounted) context.read<ServiceProvider>().fetchServices();
+  }
+
+  void _confirmDelete(ServiceModel service, ServiceProvider provider) {
+    showDeleteConfirmationDialog(
+      context: context,
+      itemName: service.title,
+      onConfirm: () => provider.deleteService(service.id),
+    );
+  }
+
+  Future<void> _openCreate() async {
+    await Navigator.push(context, createFadeRoute(const CreateService()));
+    if (mounted) context.read<ServiceProvider>().fetchServices();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-    final permissions = UserPermissions(context.read<AuthService>());
-    final servicesProvider = context.watch<ServiceProvider>();
+    final isCompact = context.isCompact;
+    final canManage = UserPermissions(context.read<AuthService>()).canSeeMembers;
 
-    if (servicesProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(
-          title: 'Servicios',
-          isDrawerEnabled: isMobile,
-          showBackButton: true,
-        ),
-        drawer: isMobile ? Drawer(child: Menu()) : null,
-        body: Center(
-          child: NoConnectionWidget(
-            onRefresh: () => servicesProvider.fetchServices(),
-          ),
-        ),
-      );
-    }
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: 'Servicios',
-        isDrawerEnabled: isMobile,
-        showBackButton: true,
-      ),
-      drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: SafeArea(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (!isMobile) Menu(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(isMobile ? 16 : 24),
-                child: _buildServicesContent(isMobile),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServicesContent(bool isMobile) {
-    final servicesProvider = context.watch<ServiceProvider>();
-    final services = servicesProvider.services;
-
-    return CustomCardContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return NavShell(
+      current: NavSection.services,
+      title: 'Servicios',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildHeader(isMobile, UserPermissions(context.read<AuthService>())),
-          const Divider(height: 32),
-          _buildListState(
-            servicesProvider,
-            services,
-            isMobile,
-            UserPermissions(context.read<AuthService>()),
+          const SizedBox(height: Spacing.xl),
+          BodyWidth(child: _buildHeader(isCompact, canManage)),
+          const SizedBox(height: Spacing.lg),
+          Expanded(
+            child: BodyWidth(child: _buildListState(canManage)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(bool isMobile, UserPermissions permissions) {
-    final title = const Text(
-      'Servicios de la semana',
-      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+  Widget _buildHeader(bool isCompact, bool canManage) {
+    final textTheme = Theme.of(context).textTheme;
+    final heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Servicios', style: textTheme.headlineMedium),
+        const SizedBox(height: Spacing.xxs),
+        Text(
+          'Servicios y eventos de la semana.',
+          style: textTheme.bodyMedium?.copyWith(color: secondaryText),
+        ),
+      ],
     );
 
-    final addButton = AddButton(
-      onPressed: () async {
-        await Navigator.push(context, createFadeRoute(const CreateService()));
-        if (mounted) context.read<ServiceProvider>().fetchServices();
-      },
+    if (!canManage) return heading;
+
+    final add = AddButton(
+      size: isCompact ? const Size(double.infinity, 48) : null,
+      onPressed: _openCreate,
     );
 
-    return isMobile
-        ? Column(
-            children: [
-              title,
-              const SizedBox(height: 16),
-              if (permissions.canSeeMembers)
-                SizedBox(width: double.infinity, child: addButton),
-            ],
-          )
-        : Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [title, if (permissions.canSeeMembers) addButton],
-          );
+    if (isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [heading, const SizedBox(height: Spacing.lg), add],
+      );
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: heading),
+        const SizedBox(width: Spacing.lg),
+        add,
+      ],
+    );
   }
 
-  Widget _buildListState(
-    ServiceProvider provider,
-    List<ServiceModel> services,
-    bool isMobile,
-    permissions,
-  ) {
+  Widget _buildListState(bool canManage) {
+    final provider = context.watch<ServiceProvider>();
+    final services = provider.services;
+
     if (provider.isLoading) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(color: primaryColor),
-        ),
-      );
+      return const AppSkeleton.list();
     }
-    if (provider.error == "SIN_CONEXION") {
-      return NoConnectionWidget(onRefresh: () => provider.fetchServices());
-    }
-
     if (provider.error != null) {
-      return Center(
-        child: Column(
-          children: [
-            const Icon(Icons.error_outline, color: negativeColor, size: 40),
-            Text(provider.error!),
-            RetryButton(onRefresh: () => provider.fetchServices()),
-          ],
-        ),
+      return ErrorState(
+        error: provider.error,
+        onRetry: () => provider.fetchServices(),
+      );
+    }
+    if (services.isEmpty) {
+      return const EmptyState(
+        icon: Icons.calendar_today_outlined,
+        title: 'No hay servicios programados',
       );
     }
 
-    if (services.isEmpty)
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: Text('No hay servicios programados.'),
-        ),
-      );
-
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: services.length,
-      separatorBuilder: (_, __) => const Divider(height: 24),
-      itemBuilder: (context, index) {
-        final service = services[index];
-        return Row(
-          //crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    service.title,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Fecha y Hora
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 18,
-                        color: Colors.orange.shade700,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${_getDisplayDay(service)} - ${_formatTime12h(service.time)}',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  if (service.type != 'REUNION' && service.type != 'OTRO')
-                    _buildServiceInfoRow(
-                      icon: Icons.menu_book_outlined,
-                      iconColor: Colors.cyan,
-                      label: 'Predica:',
-                      items: service.preachers
-                          .map((m) => '${m.name} ${m.lastName}'.trim())
-                          .toList(),
-                      isMobile: isMobile,
-                    ),
-
-                  _buildServiceInfoRow(
-                    icon: Icons.music_note,
-                    iconColor: Colors.deepPurpleAccent,
-                    label: 'Ministra:',
-                    items: service.worshipMinistries
-                        .map((m) => '${m.name} ${m.lastName}'.trim())
-                        .toList(),
-                    isMobile: isMobile,
-                  ),
-
-                  if (service.description.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.description_outlined,
-                            size: 18,
-                            color: Colors.blue,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              service.description,
-                              style: const TextStyle(fontSize: 15),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (permissions.canSeeMembers) ...[
-                    if (isMobile)
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: _actionButtons(context, service, provider),
-                      ),
-                  ],
-                ],
-              ),
-            ),
-            if (permissions.canSeeMembers) ...[
-              if (!isMobile) _actionButtons(context, service, provider),
-            ],
-          ],
-        );
-      },
-    );
-  }
-
-  ActionButtons _actionButtons(
-    BuildContext context,
-    ServiceModel service,
-    ServiceProvider provider,
-  ) {
-    return ActionButtons(
-      onEdit: () async {
-        await Navigator.push(
-          context,
-          createFadeRoute(CreateService(serviceToEdit: service)),
-        );
-        if (mounted) context.read<ServiceProvider>().fetchServices();
-      },
-      onDelete: () {
-        showDeleteConfirmationDialog(
-          context: context,
-          itemName: service.title,
-          onConfirm: () => provider.deleteService(service.id),
-        );
-      },
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchServices(),
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: services.length,
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (_, i) {
+          final service = services[i];
+          final showPreachers =
+              service.type != 'REUNION' && service.type != 'OTRO';
+          return EventFeedItem(
+            title: service.title,
+            type: service.type,
+            description: service.description,
+            scheduleLabel: '${_dayName(service)} · ${_time12h(service.time)}',
+            preacherNames: showPreachers ? _names(service.preachers) : const [],
+            worshipNames: _names(service.worshipMinistries),
+            isToday: _isToday(service),
+            onEdit: canManage ? () => _openEdit(service) : null,
+            onDelete:
+                canManage ? () => _confirmDelete(service, provider) : null,
+          );
+        },
+      ),
     );
   }
 }

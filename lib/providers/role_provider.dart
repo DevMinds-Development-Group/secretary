@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/role_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class RoleProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -34,7 +35,7 @@ class RoleProvider with ChangeNotifier {
       _roles = roleData.map((data) => Role.fromJson(data)).toList();
     } on DioException catch (e) {
       _error = 'Error al cargar roles: ${e.message}';
-      print(_error);
+      appLog(_error);
       _roles = [];
     } finally {
       _isLoading = false;
@@ -62,7 +63,7 @@ class RoleProvider with ChangeNotifier {
     } on DioException catch (e) {
       _error =
           e.response?.data['message'] ?? 'Error al crear el rol: ${e.message}';
-      print(_error);
+      appLog(_error);
       return false;
     }
   }
@@ -120,7 +121,7 @@ class RoleProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      print('DEBUG: Enviando DELETE a /roles/$id');
+      appLog('DEBUG: Enviando DELETE a /roles/$id');
       await _apiClient.dio.delete('/roles/$id');
 
       // Eliminamos el rol de la lista local para que la UI se actualice al instante
@@ -130,7 +131,7 @@ class RoleProvider with ChangeNotifier {
       return true;
     } on DioException catch (e) {
       _error = e.response?.data['message'] ?? 'Error al eliminar el rol';
-      print('DEBUG ERROR: $_error');
+      appLog('DEBUG ERROR: $_error');
       notifyListeners();
       return false;
     }

@@ -39,7 +39,7 @@ class _HomeState extends State<Home> {
                   elevation: 10,
                   //shadowColor: Colors.white.withOpacity(0.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
                     padding: EdgeInsets.all(30),
@@ -53,8 +53,9 @@ class _HomeState extends State<Home> {
                           'Ministerio',
                           textAlign: TextAlign.center,
                           style: TextStyle(
+                            fontFamily: 'Figtree',
                             fontSize: isMobile ? 24 : 30,
-                            color: Colors.grey[700],
+                            color: secondaryText,
                             letterSpacing: 2,
                           ),
                         ),
@@ -62,6 +63,7 @@ class _HomeState extends State<Home> {
                           'Viento Recio',
                           textAlign: TextAlign.center,
                           style: TextStyle(
+                            fontFamily: 'Figtree',
                             fontSize: isMobile ? 32 : 50,
                             fontWeight: FontWeight.bold,
                             color: negativeColor,
@@ -99,15 +101,15 @@ Widget _buildButtons(BuildContext context, bool isMobile) {
           context,
           createFadeRoute(const PublicAnnouncements()),
         ),
-        borderColor: Colors.grey.withOpacity(0.5),
+        borderColor: alternateColor,
       ),
       const SizedBox(height: 20),
       CustomButton(
         backgroundColor: primaryColor,
         text: 'Iniciar sesión',
-        color: Colors.white,
+        color: infoColor,
         icon: Icons.login_rounded,
-        iconColor: Colors.white,
+        iconColor: infoColor,
         onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
       ),
     ],

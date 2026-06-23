@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../models/member_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class MemberProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -111,7 +112,7 @@ class MemberProvider with ChangeNotifier {
 
       return response.statusCode == 200 || response.statusCode == 201;
     } on DioException catch (e) {
-      print("Error detalle: ${e.response?.data}");
+      appLog("Error detalle: ${e.response?.data}");
       return false;
     } finally {
       _isLoading = false;
@@ -275,7 +276,7 @@ class MemberProvider with ChangeNotifier {
 
   Future<bool> deleteMember(String id) async {
     try {
-      print('DEBUG: Enviando DELETE a /members/$id');
+      appLog('DEBUG: Enviando DELETE a /members/$id');
 
       final response = await _apiClient.dio.delete('/members/$id');
 
@@ -286,11 +287,11 @@ class MemberProvider with ChangeNotifier {
       }
       return false;
     } on DioException catch (e) {
-      print("Error al eliminar miembro: ${e.response?.data ?? e.message}");
+      appLog("Error al eliminar miembro: ${e.response?.data ?? e.message}");
       _error = e.response?.data['message'] ?? "Error al actualizar el miembro";
       return false;
     } catch (e) {
-      print("Error inesperado: $e");
+      appLog("Error inesperado: $e");
       return false;
     } finally {
       _isLoading = false;

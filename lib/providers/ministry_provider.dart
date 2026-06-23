@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/member_model.dart';
 import '../models/ministry_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class MinistryProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -30,7 +31,7 @@ class MinistryProvider with ChangeNotifier {
         _error = null;
         final List<dynamic> data = response.data['content'] ?? [];
         _ministries = data.map((m) => MinistryModel.fromJson(m)).toList();
-        print("Ministerios cargados: ${_ministries.length}");
+        appLog("Ministerios cargados: ${_ministries.length}");
       }
     } on DioException catch (e) {
       if (e.error == 'SIN_CONEXION' ||
@@ -64,7 +65,7 @@ class MinistryProvider with ChangeNotifier {
 
       await fetchMinistries();
     } catch (e) {
-      print("Error al crear ministerio: $e");
+      appLog("Error al crear ministerio: $e");
       rethrow;
     } finally {
       _isLoading = false;
@@ -93,7 +94,7 @@ class MinistryProvider with ChangeNotifier {
 
       await fetchMinistries();
     } catch (e) {
-      print("Error al actualizar ministerio: $e");
+      appLog("Error al actualizar ministerio: $e");
       rethrow;
     } finally {
       _isLoading = false;
@@ -183,7 +184,7 @@ class MinistryProvider with ChangeNotifier {
         _ministries[index] = updatedMinistry;
       }
     } catch (e) {
-      print("Error cargando detalle del ministerio: $e");
+      appLog("Error cargando detalle del ministerio: $e");
     } finally {
       _isLoading = false;
       notifyListeners();

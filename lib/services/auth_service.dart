@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../utils/app_log.dart';
+
 // --- MODELOS INTERNOS PARA EL AUTHSERVICE ---
 class UserProfile {
   final String username;
@@ -197,7 +199,7 @@ class AuthService with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Error leyendo SecureStorage: $e");
+      appLog("Error leyendo SecureStorage: $e");
     }
   }
 

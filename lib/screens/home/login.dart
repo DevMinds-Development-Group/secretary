@@ -76,7 +76,7 @@ class _LoginState extends State<Login> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Container(
         width: MediaQuery.of(context).size.width,
         height: MediaQuery.of(context).size.height,
@@ -95,7 +95,7 @@ class _LoginState extends State<Login> {
               child: Form(
                 key: _formKey, // Asigna la clave al formulario
                 child: Card(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   elevation: 10,
                   child: Padding(
                     padding: const EdgeInsets.all(30.0),
@@ -107,8 +107,9 @@ class _LoginState extends State<Login> {
                           'Ministerio',
                           textAlign: TextAlign.center,
                           style: TextStyle(
+                            fontFamily: 'Figtree',
                             fontSize: isMobile ? 24 : 30,
-                            color: Colors.grey[700],
+                            color: secondaryText,
                             letterSpacing: 2,
                           ),
                         ),
@@ -116,6 +117,7 @@ class _LoginState extends State<Login> {
                           'Viento Recio',
                           textAlign: TextAlign.center,
                           style: TextStyle(
+                            fontFamily: 'Figtree',
                             fontSize: isMobile ? 32 : 50,
                             fontWeight: FontWeight.bold,
                             color: negativeColor,
@@ -155,9 +157,9 @@ class _LoginState extends State<Login> {
                                   : CustomButton(
                                       backgroundColor: darkColor,
                                       text: 'Iniciar sesión',
-                                      color: Colors.white,
+                                      color: infoColor,
                                       icon: Icons.login_rounded,
-                                      iconColor: Colors.white,
+                                      iconColor: infoColor,
                                       onPressed: _handleLogin,
                                     ),
 
