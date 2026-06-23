@@ -1,117 +1,59 @@
 import 'package:flutter/material.dart';
 
 import '../../colors.dart';
-import '../../routes/page_route_builder.dart';
 import '../../routes/routes.dart';
-import '../../widgets/custom_button.dart';
-import '../public_announcements.dart';
+import '../../widgets/auth_background.dart';
 
-class Home extends StatefulWidget {
+class Home extends StatelessWidget {
   const Home({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
-}
-
-class _HomeState extends State<Home> {
-  @override
   Widget build(BuildContext context) {
-    bool isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(
-                  isMobile ? 'assets/01.jpg' : 'assets/03a.png',
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Center(
-            child: SingleChildScrollView(
+      body: BlobBackground(
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460),
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Card(
-                  color: cardColor,
-                  elevation: 10,
-                  //shadowColor: Colors.white.withOpacity(0.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.all(30),
-
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Image.asset('assets/logo0.png', width: 160),
-                        Text(
-                          'Ministerio',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Figtree',
-                            fontSize: isMobile ? 24 : 30,
-                            color: secondaryText,
-                            letterSpacing: 2,
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Spacer(flex: 3),
+                    const BrandLockup(),
+                    const Spacer(flex: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton.icon(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, AppRoutes.login),
+                        icon: const Icon(Icons.login_rounded),
+                        label: const Text('Comenzar'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: infoColor,
+                          foregroundColor: primaryColor,
+                          textStyle: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        Text(
-                          'Viento Recio',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Figtree',
-                            fontSize: isMobile ? 32 : 50,
-                            fontWeight: FontWeight.bold,
-                            color: negativeColor,
-                          ),
-                        ),
-                        const SizedBox(height: 60),
-
-                        // BOTONES
-                        _buildButtons(context, isMobile),
-                        const SizedBox(height: 30),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                    AuthFooter(color: infoColor.withOpacity(0.85)),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
-}
-
-Widget _buildButtons(BuildContext context, bool isMobile) {
-  // En mobile usamos Column para que los botones se vean mejor dentro de la Card
-  return Column(
-    children: [
-      CustomButton(
-        backgroundColor: darkColor,
-        text: 'Ver anuncios',
-        color: cardColor,
-        icon: Icons.event_note,
-        iconColor: cardColor,
-        onPressed: () => Navigator.push(
-          context,
-          createFadeRoute(const PublicAnnouncements()),
-        ),
-        borderColor: alternateColor,
-      ),
-      const SizedBox(height: 20),
-      CustomButton(
-        backgroundColor: primaryColor,
-        text: 'Iniciar sesión',
-        color: infoColor,
-        icon: Icons.login_rounded,
-        iconColor: infoColor,
-        onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-      ),
-    ],
-  );
 }
