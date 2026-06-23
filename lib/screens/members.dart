@@ -7,11 +7,10 @@ import '../providers/member_provider.dart';
 import '../routes/page_route_builder.dart';
 import '../theme/design_constants.dart';
 import '../utils/window_size.dart';
-import '../widgets/action_buttons.dart';
 import '../widgets/add_button.dart';
 import '../widgets/app_chip.dart';
 import '../widgets/body_width.dart';
-import '../widgets/member_list_tile.dart';
+import '../widgets/member_table.dart';
 import '../widgets/nav_destinations.dart';
 import '../widgets/nav_shell.dart';
 import '../widgets/pagination.dart';
@@ -20,7 +19,6 @@ import '../widgets/showDeleteConfirmationDialog.dart';
 import '../widgets/states/app_skeleton.dart';
 import '../widgets/states/empty_state.dart';
 import '../widgets/states/error_state.dart';
-import '../widgets/status_pill.dart';
 import 'create/create_member.dart';
 
 enum _MemberStatusFilter { all, active, inactive }
@@ -134,7 +132,7 @@ class _MembersState extends State<Members> {
         const SizedBox(height: Spacing.md),
         Expanded(
           child: BodyWidth(
-            child: _buildTable(context, provider, members, isCompact),
+            child: _buildTable(context, provider, members),
           ),
         ),
         if (provider.totalPages > 0 && !provider.isLoading)
@@ -217,7 +215,6 @@ class _MembersState extends State<Members> {
     BuildContext context,
     MemberProvider provider,
     List<Member> members,
-    bool isCompact,
   ) {
     if (provider.isLoading) {
       return const AppSkeleton.list();
@@ -231,127 +228,12 @@ class _MembersState extends State<Members> {
       );
     }
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(DesignConstants.borderRadiusCard),
-        border: Border.all(color: alternateColor, width: 1),
-      ),
-      child: Column(
-        children: [
-          _buildHeaderRow(context, isCompact),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () => provider.fetchMembers(),
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                separatorBuilder: (_, __) => const Divider(height: 1),
-                itemCount: members.length,
-                itemBuilder: (_, i) =>
-                    _buildMemberRow(context, members[i], isCompact),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return MemberTable(
+      members: members,
+      showNetworkColumn: true,
+      onEdit: (m) => _openCreate(member: m),
+      onDelete: (m) => _showDelete(context, m),
+      onRefresh: () => provider.fetchMembers(),
     );
   }
-
-  Widget _buildHeaderRow(BuildContext context, bool isCompact) {
-    final labelStyle = Theme.of(context)
-        .textTheme
-        .labelMedium
-        ?.copyWith(color: secondaryText, fontWeight: FontWeight.w600);
-
-    return Container(
-      color: surfaceSubtle,
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.lg,
-        vertical: Spacing.md,
-      ),
-      child: Row(
-        children: [
-          Expanded(flex: 4, child: Text('Nombre', style: labelStyle)),
-          if (!isCompact)
-            Expanded(flex: 2, child: Text('Red', style: labelStyle)),
-          SizedBox(
-            width: _statusColWidth,
-            child: Text('Estado', style: labelStyle),
-          ),
-          if (!isCompact) const SizedBox(width: _actionsColWidth),
-          if (isCompact) const SizedBox(width: 40),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberRow(BuildContext context, Member member, bool isCompact) {
-    final statusPill =
-        member.enabled ? StatusPill.active() : StatusPill.inactive();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            flex: 4,
-            child: MemberListTile(
-              member: member,
-              subtitle: memberPhoneSubtitle(member),
-              padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-            ),
-          ),
-          if (!isCompact)
-            Expanded(
-              flex: 2,
-              child: Text(
-                member.networkName ?? 'Sin red',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: secondaryText),
-              ),
-            ),
-          SizedBox(
-            width: _statusColWidth,
-            child: Align(alignment: Alignment.centerLeft, child: statusPill),
-          ),
-          if (!isCompact)
-            SizedBox(
-              width: _actionsColWidth,
-              child: ActionButtons(
-                onEdit: () => _openCreate(member: member),
-                onDelete: () => _showDelete(context, member),
-              ),
-            )
-          else
-            _buildRowMenu(context, member),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRowMenu(BuildContext context, Member member) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: secondaryText),
-      onSelected: (value) {
-        if (value == 'edit') {
-          _openCreate(member: member);
-        } else if (value == 'delete') {
-          _showDelete(context, member);
-        }
-      },
-      itemBuilder: (_) => const [
-        PopupMenuItem(value: 'edit', child: Text('Editar')),
-        PopupMenuItem(value: 'delete', child: Text('Eliminar')),
-      ],
-    );
-  }
-
-  static const double _statusColWidth = 100;
-  static const double _actionsColWidth = 96;
 }

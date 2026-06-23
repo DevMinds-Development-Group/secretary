@@ -11,9 +11,10 @@ import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/app_chip.dart';
 import '../../widgets/custom_card_container.dart';
-import '../../widgets/member_list_tile.dart';
+import '../../widgets/member_table.dart';
 import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
+import '../../widgets/showDeleteConfirmationDialog.dart';
 
 class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
@@ -35,6 +36,42 @@ class _NetworkMembersState extends State<NetworkMembers> {
         listen: false,
       ).fetchMembers(page: 0, size: 1000);
     });
+  }
+
+  Future<void> _openEditMember(Member member) async {
+    await Navigator.push(
+      context,
+      createFadeRoute(CreateMember(memberToEdit: member)),
+    );
+    if (mounted) {
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
+    }
+  }
+
+  void _confirmDeleteMember(Member member) {
+    showDeleteConfirmationDialog(
+      context: context,
+      itemName: member.fullName,
+      onConfirm: () async {
+        final provider = Provider.of<MemberProvider>(context, listen: false);
+        final success = await provider.deleteMember(member.id);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Miembro "${member.fullName}" eliminado.'
+                  : 'Error al eliminar el miembro',
+            ),
+            backgroundColor: success ? accentColor : negativeColor,
+          ),
+        );
+        if (success) provider.fetchMembers(page: 0, size: 1000);
+      },
+    );
   }
 
   @override
@@ -112,7 +149,17 @@ class _NetworkMembersState extends State<NetworkMembers> {
                               ? _buildEmptyState(
                                   isMobile,
                                 ) // Solo se muestra si terminó de cargar y está vacío
-                              : _buildMemberList(membersInGroup, isMobile),
+                              : MemberTable(
+                                  members: membersInGroup,
+                                  showNetworkColumn: false,
+                                  onEdit: _openEditMember,
+                                  onDelete: _confirmDeleteMember,
+                                  onRefresh: () =>
+                                      memberProvider.fetchMembers(
+                                        page: 0,
+                                        size: 1000,
+                                      ),
+                                ),
                         ),
                       ],
                     ),
@@ -157,38 +204,6 @@ class _NetworkMembersState extends State<NetworkMembers> {
           ),
           SizedBox(height: isMobile ? 0 : 8),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMemberList(List<Member> members, bool isMobile) {
-    return Padding(
-      padding: EdgeInsets.zero,
-      child: CustomCardContainer(
-        padding: EdgeInsets.all(10),
-        child: ListView.separated(
-          shrinkWrap: true,
-          itemCount: members.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final member = members[index];
-            return MemberListTile(
-              member: member,
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  memberPhoneSubtitle(member),
-                  Text(
-                    member.address,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 13, color: secondaryText),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
       ),
     );
   }
