@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../colors.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/nav_destinations.dart';
 import '../../widgets/nav_shell.dart';
 
@@ -21,8 +22,9 @@ class Reports extends StatelessWidget {
 
   Widget _buildLayout(BuildContext context, bool isMobile) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
-      child: GridView.count(
+      padding: const EdgeInsets.symmetric(vertical: 32.0),
+      child: BodyWidth(
+        child: GridView.count(
         crossAxisCount: isMobile ? 1 : 3,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
@@ -36,6 +38,7 @@ class Reports extends StatelessWidget {
           //_buildCard(context, Icons.favorite_border, 'Matrimonios'),
           //_buildCard(context, Icons.history, ''),
         ],
+        ),
       ),
     );
   }

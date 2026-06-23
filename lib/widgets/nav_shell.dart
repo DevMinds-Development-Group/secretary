@@ -36,23 +36,30 @@ class NavShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isSecondary || current == null) {
-      return Scaffold(
-        appBar: _buildAppBar(primary: false),
-        body: body,
-        floatingActionButton: floatingActionButton,
-      );
-    }
-
     final authService = context.watch<AuthService>();
     final permissions = UserPermissions(authService);
     final visible =
         kNavItems.where((item) => item.canSee(permissions)).toList();
 
     final compact = context.isCompact;
-    return compact
-        ? _buildCompact(context, visible, authService)
-        : _buildRail(context, visible, authService);
+    final secondary = isSecondary || current == null;
+
+    if (compact) {
+      // Móvil: las sub-páginas (formularios/detalle) muestran solo back + título
+      // (sin barra inferior); las primarias muestran la NavigationBar.
+      if (secondary) {
+        return Scaffold(
+          appBar: _buildAppBar(primary: false),
+          body: body,
+          floatingActionButton: floatingActionButton,
+        );
+      }
+      return _buildCompact(context, visible, authService);
+    }
+
+    // Web/expandido: el riel aparece en TODAS las pantallas (incluidos
+    // formularios y detalle). En secundarias la AppBar muestra back + título.
+    return _buildRail(context, visible, authService, secondary: secondary);
   }
 
   // ---------------------------------------------------------------------------
@@ -135,10 +142,11 @@ class NavShell extends StatelessWidget {
   Widget _buildRail(
     BuildContext context,
     List<NavItem> visible,
-    AuthService authService,
-  ) {
+    AuthService authService, {
+    bool secondary = false,
+  }) {
     return Scaffold(
-      appBar: _buildAppBar(primary: true),
+      appBar: _buildAppBar(primary: !secondary),
       floatingActionButton: floatingActionButton,
       body: _NavRail(
         items: visible,
@@ -295,10 +303,15 @@ class _NavRailState extends State<_NavRail> {
         widget.items.indexWhere((i) => i.id == widget.current);
 
     return Stack(
+      fit: StackFit.expand,
       clipBehavior: Clip.none,
       children: [
         // Capa base: reserva el ancho colapsado (sin divisor) + contenido.
+        // `stretch` hace que el contenido llene toda la altura del viewport
+        // aunque sea corto (p. ej. hubs de Admin/Reportes), evitando que el
+        // shell y el riel se encojan al alto del contenido.
         Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(width: _collapsedWidth),
             Expanded(child: widget.body),
@@ -327,52 +340,65 @@ class _NavRailState extends State<_NavRail> {
                   ),
                 ],
               ),
-              child: NavigationRail(
-                extended: _hovering,
-                minExtendedWidth: 240,
-                labelType: NavigationRailLabelType.none,
-                backgroundColor: scheme.surface,
-                selectedIndex: selectedIndex >= 0 ? selectedIndex : null,
-                onDestinationSelected: (index) =>
-                    widget.onSelect(widget.items[index]),
-                leading: const SizedBox(height: 8),
-                destinations: [
-                  for (final item in widget.items)
-                    NavigationRailDestination(
-                      icon: Icon(item.icon),
-                      selectedIcon: Icon(item.selectedIcon),
-                      label: Text(item.label),
-                    ),
-                ],
-                trailing: Expanded(
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'Mi perfil',
-                            icon: const Icon(Icons.person_outline),
-                            onPressed: widget.onProfile,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(minHeight: constraints.maxHeight),
+                      child: IntrinsicHeight(
+                        child: NavigationRail(
+                          extended: _hovering,
+                          minExtendedWidth: 240,
+                          labelType: NavigationRailLabelType.none,
+                          backgroundColor: scheme.surface,
+                          selectedIndex:
+                              selectedIndex >= 0 ? selectedIndex : null,
+                          onDestinationSelected: (index) =>
+                              widget.onSelect(widget.items[index]),
+                          leading: const SizedBox(height: 8),
+                          destinations: [
+                            for (final item in widget.items)
+                              NavigationRailDestination(
+                                icon: Icon(item.icon),
+                                selectedIcon: Icon(item.selectedIcon),
+                                label: Text(item.label),
+                              ),
+                          ],
+                          trailing: Expanded(
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      tooltip: 'Mi perfil',
+                                      icon: const Icon(Icons.person_outline),
+                                      onPressed: widget.onProfile,
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Manual de usuario',
+                                      icon: const Icon(Icons.help_outline),
+                                      onPressed: widget.onHelp,
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Cerrar sesión',
+                                      color: errorColor,
+                                      icon: const Icon(Icons.logout),
+                                      onPressed: widget.onLogout,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                          IconButton(
-                            tooltip: 'Manual de usuario',
-                            icon: const Icon(Icons.help_outline),
-                            onPressed: widget.onHelp,
-                          ),
-                          IconButton(
-                            tooltip: 'Cerrar sesión',
-                            color: errorColor,
-                            icon: const Icon(Icons.logout),
-                            onPressed: widget.onLogout,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                },
               ),
             ),
           ),

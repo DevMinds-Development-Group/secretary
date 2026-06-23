@@ -200,7 +200,7 @@ class _LoginState extends State<Login> {
           SizedBox(
             width: double.infinity,
             child: Button(
-              size: const Size.fromHeight(48),
+              size: const Size.fromHeight(52),
               text: 'Iniciar sesión',
               icon: Icons.login_rounded,
               isLoading: _isLoading,

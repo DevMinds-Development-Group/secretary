@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../colors.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/nav_destinations.dart';
 import '../../widgets/nav_shell.dart';
 import 'logs.dart';
@@ -23,19 +24,21 @@ class Admin extends StatelessWidget {
 
   Widget _buildLayout(BuildContext context, bool isMobile) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
-      child: GridView.count(
-        crossAxisCount: isMobile ? 1 : 3,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.7,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _buildCard(context, Icons.people, 'Usuarios'),
-          _buildCard(context, Icons.admin_panel_settings, 'Roles'),
-          _buildCard(context, Icons.history, 'Logs'),
-        ],
+      padding: const EdgeInsets.symmetric(vertical: 32.0),
+      child: BodyWidth(
+        child: GridView.count(
+          crossAxisCount: isMobile ? 1 : 3,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 1.7,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildCard(context, Icons.people, 'Usuarios'),
+            _buildCard(context, Icons.admin_panel_settings, 'Roles'),
+            _buildCard(context, Icons.history, 'Logs'),
+          ],
+        ),
       ),
     );
   }

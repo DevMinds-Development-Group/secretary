@@ -255,6 +255,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
         const SizedBox(height: Spacing.lg),
         if (isCompact)
           Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               search,
               const SizedBox(height: Spacing.md),

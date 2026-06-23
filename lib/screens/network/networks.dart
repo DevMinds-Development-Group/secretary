@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import '../../theme/design_constants.dart';
 import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/nav_destinations.dart';
 import '../../widgets/nav_shell.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
@@ -80,92 +81,93 @@ class _NetworksState extends State<Networks> {
     return NavShell(
       current: NavSection.networks,
       title: 'Redes',
-      body: networkProvider.isLoading
-          ? const AppSkeleton.grid()
-          : Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, isMobile),
-
-                  const SizedBox(height: 24),
-
-                  Expanded(
-                    child: networks.isEmpty
-                        ? EmptyState(
-                            icon: Icons.hub_outlined,
-                            title: 'Aún no hay redes',
-                            message: 'Crea tu primera red.',
-                            action: AddButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  createFadeRoute(const CreateNetwork()),
-                                );
-                              },
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: () => networkProvider.fetchNetworks(),
-                            child: GridView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      gridDelegate: isMobile
-                          ? const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 1,
-                              mainAxisExtent: 136,
-                              mainAxisSpacing: 12,
-                            )
-                          : const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 400.0,
-                              childAspectRatio: 2.5,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
-                            ),
-                      itemCount: networks.length,
-                      itemBuilder: (context, index) {
-                        final network = networkProvider.networks[index];
-                        final membersInNetwork = memberProvider.members
-                            .where((m) => m.networkName == network.name)
-                            .toList();
-                        final leaderNames = network.leaders
-                            .map(
-                              (leader) =>
-                                  '${leader.name} ${leader.lastName}',
-                            )
-                            .join(', ');
-                        final memberCount = membersInNetwork.length;
-
-                        return _buildGroupCard(
-                          title: network.name,
-                          leaderNames: leaderNames.isEmpty
-                              ? 'Sin líderes'
-                              : leaderNames,
-                          memberCount: memberCount,
-                          icon: Icons.group,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    NetworkMembers(network: network),
-                              ),
-                            );
-                          },
-                          onEdit: permissions.canCreateMember
-                              ? () => _editNetwork(network)
-                              : null,
-                          onDelete: permissions.canCreateMember
-                              ? () => _confirmDelete(network)
-                              : null,
-                        );
-                      },
-                    ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: BodyWidth(child: _buildHeader(context, isMobile)),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: BodyWidth(
+              child: networkProvider.isLoading
+                  ? const AppSkeleton.grid()
+                  : networks.isEmpty
+                      ? EmptyState(
+                          icon: Icons.hub_outlined,
+                          title: 'Aún no hay redes',
+                          message: 'Crea tu primera red.',
+                          action: AddButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                createFadeRoute(const CreateNetwork()),
+                              );
+                            },
                           ),
-                  ),
-                ],
-              ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () => networkProvider.fetchNetworks(),
+                          child: GridView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            gridDelegate: isMobile
+                                ? const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 1,
+                                    mainAxisExtent: 136,
+                                    mainAxisSpacing: 12,
+                                  )
+                                : const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 400.0,
+                                    childAspectRatio: 2.5,
+                                    crossAxisSpacing: 20,
+                                    mainAxisSpacing: 20,
+                                  ),
+                            itemCount: networks.length,
+                            itemBuilder: (context, index) {
+                              final network = networkProvider.networks[index];
+                              final membersInNetwork = memberProvider.members
+                                  .where((m) => m.networkName == network.name)
+                                  .toList();
+                              final leaderNames = network.leaders
+                                  .map(
+                                    (leader) =>
+                                        '${leader.name} ${leader.lastName}',
+                                  )
+                                  .join(', ');
+                              final memberCount = membersInNetwork.length;
+
+                              return _buildGroupCard(
+                                title: network.name,
+                                leaderNames: leaderNames.isEmpty
+                                    ? 'Sin líderes'
+                                    : leaderNames,
+                                memberCount: memberCount,
+                                icon: Icons.group,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          NetworkMembers(network: network),
+                                    ),
+                                  );
+                                },
+                                onEdit: permissions.canCreateMember
+                                    ? () => _editNetwork(network)
+                                    : null,
+                                onDelete: permissions.canCreateMember
+                                    ? () => _confirmDelete(network)
+                                    : null,
+                              );
+                            },
+                          ),
+                        ),
             ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 

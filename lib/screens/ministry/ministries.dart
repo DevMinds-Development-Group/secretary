@@ -10,6 +10,7 @@ import '../../services/auth_service.dart';
 import '../../theme/design_constants.dart';
 import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/nav_destinations.dart';
 import '../../widgets/nav_shell.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
@@ -82,93 +83,95 @@ class _MinistriesState extends State<Ministries> {
     return NavShell(
       current: NavSection.ministries,
       title: 'Ministerios',
-      body: ministryProvider.isLoading
-          ? const AppSkeleton.grid()
-          : Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, isMobile),
-                  const SizedBox(height: 24),
-                  Expanded(
-                    child: ministries.isEmpty
-                        ? EmptyState(
-                            icon: Icons.diversity_3_outlined,
-                            title: 'Aún no hay ministerios',
-                            message: 'Crea tu primer ministerio.',
-                            action: AddButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  createFadeRoute(CreateMinistry()),
-                                );
-                              },
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: () =>
-                                ministryProvider.fetchMinistries(),
-                            child: GridView.builder(
-                      shrinkWrap: true,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      gridDelegate: isMobile
-                          ? const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 1,
-                              mainAxisExtent: 136,
-                              mainAxisSpacing: 12,
-                            )
-                          : const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 400.0,
-                              childAspectRatio: 2.5,
-                              crossAxisSpacing: 20,
-                              mainAxisSpacing: 20,
-                            ),
-                      itemCount: ministries.length,
-                      itemBuilder: (context, index) {
-                        final ministry = ministries[index];
-                        final leaderNames = ministry.leaders
-                            .map(
-                              (leader) =>
-                                  '${leader.name} ${leader.lastName}',
-                            )
-                            .join(', ');
-                        // final membersInNetwork = memberProvider.members
-                        //     .where((m) => m.networkName == ministry.name)
-                        //     .toList();
-                        final memberCount = ministryProvider
-                            .getMemberCountForMinistry(ministry.id);
-                        return _buildMinistryCard(
-                          title: ministry.name,
-                          details: ministry.description,
-                          leaderNames: leaderNames.isEmpty
-                              ? 'Sin líderes'
-                              : leaderNames,
-                          icon: Icons.group,
-                          memberCount: memberCount,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    MinistryMembers(ministry: ministry),
-                              ),
-                            );
-                          },
-                          onEdit: permissions.canSeeReports
-                              ? () => _editMinistry(ministry)
-                              : null,
-                          onDelete: permissions.canSeeReports
-                              ? () => _confirmDelete(ministry)
-                              : null,
-                        );
-                      },
-                    ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: BodyWidth(child: _buildHeader(context, isMobile)),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: BodyWidth(
+              child: ministryProvider.isLoading
+                  ? const AppSkeleton.grid()
+                  : ministries.isEmpty
+                      ? EmptyState(
+                          icon: Icons.diversity_3_outlined,
+                          title: 'Aún no hay ministerios',
+                          message: 'Crea tu primer ministerio.',
+                          action: AddButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                createFadeRoute(CreateMinistry()),
+                              );
+                            },
                           ),
-                  ),
-                ],
-              ),
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () => ministryProvider.fetchMinistries(),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            gridDelegate: isMobile
+                                ? const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 1,
+                                    mainAxisExtent: 136,
+                                    mainAxisSpacing: 12,
+                                  )
+                                : const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 400.0,
+                                    childAspectRatio: 2.5,
+                                    crossAxisSpacing: 20,
+                                    mainAxisSpacing: 20,
+                                  ),
+                            itemCount: ministries.length,
+                            itemBuilder: (context, index) {
+                              final ministry = ministries[index];
+                              final leaderNames = ministry.leaders
+                                  .map(
+                                    (leader) =>
+                                        '${leader.name} ${leader.lastName}',
+                                  )
+                                  .join(', ');
+                              // final membersInNetwork = memberProvider.members
+                              //     .where((m) => m.networkName == ministry.name)
+                              //     .toList();
+                              final memberCount = ministryProvider
+                                  .getMemberCountForMinistry(ministry.id);
+                              return _buildMinistryCard(
+                                title: ministry.name,
+                                details: ministry.description,
+                                leaderNames: leaderNames.isEmpty
+                                    ? 'Sin líderes'
+                                    : leaderNames,
+                                icon: Icons.group,
+                                memberCount: memberCount,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MinistryMembers(ministry: ministry),
+                                    ),
+                                  );
+                                },
+                                onEdit: permissions.canSeeReports
+                                    ? () => _editMinistry(ministry)
+                                    : null,
+                                onDelete: permissions.canSeeReports
+                                    ? () => _confirmDelete(ministry)
+                                    : null,
+                              );
+                            },
+                          ),
+                        ),
             ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
     );
   }
 
