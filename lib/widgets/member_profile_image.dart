@@ -1,6 +1,7 @@
 // lib/widgets/member_profile_image.dart
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../colors.dart';
@@ -106,9 +107,9 @@ class MemberProfileImage extends StatelessWidget {
       return FileImage(localFile!);
     }
     if (hasRemote) {
-      return NetworkImage(
-        '$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}',
-      );
+      // Caché en memoria + disco: pinta al instante desde caché y descarga del
+      // backend solo en fallo de caché (sin cache-busting por reconstrucción).
+      return CachedNetworkImageProvider(imageUrl!);
     }
     return null;
   }

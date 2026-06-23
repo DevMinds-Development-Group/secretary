@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../models/member_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_image_cache.dart';
 import '../utils/app_log.dart';
 
 class MemberProvider with ChangeNotifier {
@@ -103,14 +104,23 @@ class MemberProvider with ChangeNotifier {
         ),
       });
 
+      // URL anterior (misma URL se sobrescribe en el backend) para invalidarla.
+      final oldUrl = findById(memberId)?.photoUrl;
+
       final response = await _apiClient.dio.post(
         '/members/$memberId/profile-picture',
         data: formData,
       );
 
-      await fetchMembers();
+      final ok = response.statusCode == 200 || response.statusCode == 201;
+      if (ok) {
+        // Invalida la foto cacheada en toda la app para que se recarguen los
+        // bytes nuevos (la URL se reutiliza).
+        await AppImageCache.evict(oldUrl);
+        await fetchMembers();
+      }
 
-      return response.statusCode == 200 || response.statusCode == 201;
+      return ok;
     } on DioException catch (e) {
       appLog("Error detalle: ${e.response?.data}");
       return false;
