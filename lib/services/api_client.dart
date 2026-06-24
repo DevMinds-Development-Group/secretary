@@ -16,7 +16,7 @@ class ApiClient {
     : _dio = Dio(
         BaseOptions(
           baseUrl:
-              'https://vri-secretary-backend-develop.up.railway.app/api/v1',
+              'https://vri-secretary-backend-production.up.railway.app/api/v1',
         ),
       ) {
     _dio.interceptors.add(
