@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/network_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class NetworkProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -61,7 +62,7 @@ class NetworkProvider with ChangeNotifier {
         await fetchNetworks();
       }
     } catch (e) {
-      print("Error al crear red: $e");
+      appLog("Error al crear red: $e");
       rethrow; // Para manejar el error en la UI si quieres
     } finally {
       _isLoading = false;
@@ -89,7 +90,7 @@ class NetworkProvider with ChangeNotifier {
       // Actualizamos la lista local y notificamos
       await fetchNetworks();
     } catch (e) {
-      print("Error al actualizar red: $e");
+      appLog("Error al actualizar red: $e");
       rethrow;
     } finally {
       _isLoading = false;
@@ -114,7 +115,7 @@ class NetworkProvider with ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print("Error al eliminar red: $e");
+      appLog("Error al eliminar red: $e");
       rethrow;
     } finally {
       _isLoading = false;

@@ -2,17 +2,19 @@ import 'package:Koinos/widgets/action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../colors.dart';
 import '../../models/user_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/role_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/add_button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/pagination.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
 import '../create/create_user.dart';
 
 class Users extends StatefulWidget {
@@ -43,9 +45,9 @@ class _UsersState extends State<Users> {
     final memberProvider = Provider.of<MemberProvider>(context);
     //final List<User> users = userProvider.users;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Usuarios'),
+    return NavShell(
+      isSecondary: true,
+      title: 'Usuarios',
       body: SafeArea(
         child: Column(
           children: [
@@ -68,11 +70,17 @@ class _UsersState extends State<Users> {
             SizedBox(height: isMobile ? 20 : 5),
             Expanded(
               child: userProvider.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: primaryColor),
+                  ? const AppSkeleton.list()
+                  : userProvider.error != null
+                  ? ErrorState(
+                      error: userProvider.error,
+                      onRetry: () => userProvider.fetchUsers(page: 0),
                     )
                   : userProvider.users.isEmpty
-                  ? const Center(child: Text('No hay usuarios para mostrar.'))
+                  ? const EmptyState(
+                      icon: Icons.person_outline,
+                      title: 'No hay usuarios',
+                    )
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(

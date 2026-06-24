@@ -1,12 +1,14 @@
 import 'package:Koinos/widgets/retry_button.dart';
 import 'package:flutter/material.dart';
 
+import '../colors.dart';
+
 Widget NoConnectionWidget({required VoidCallback onRefresh}) {
   return Center(
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.wifi_off_rounded, size: 60, color: Colors.grey),
+        const Icon(Icons.wifi_off_rounded, size: 60, color: secondaryText),
         const SizedBox(height: 15),
         const Text(
           "Sin conexión a Internet",

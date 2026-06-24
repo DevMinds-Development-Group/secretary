@@ -6,13 +6,15 @@ import 'package:provider/provider.dart';
 import '../../../colors.dart';
 import '../../../models/member_model.dart';
 import '../../../providers/member_provider.dart';
-import '../../../widgets/custom_appbar.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../widgets/app_chip.dart';
 import '../../widgets/custom_card_container.dart';
-import '../../widgets/member_profile_image.dart';
+import '../../widgets/member_table.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
+import '../../widgets/showDeleteConfirmationDialog.dart';
 
 class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
@@ -36,6 +38,42 @@ class _NetworkMembersState extends State<NetworkMembers> {
     });
   }
 
+  Future<void> _openEditMember(Member member) async {
+    await Navigator.push(
+      context,
+      createFadeRoute(CreateMember(memberToEdit: member)),
+    );
+    if (mounted) {
+      Provider.of<MemberProvider>(
+        context,
+        listen: false,
+      ).fetchMembers(page: 0, size: 1000);
+    }
+  }
+
+  void _confirmDeleteMember(Member member) {
+    showDeleteConfirmationDialog(
+      context: context,
+      itemName: member.fullName,
+      onConfirm: () async {
+        final provider = Provider.of<MemberProvider>(context, listen: false);
+        final success = await provider.deleteMember(member.id);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              success
+                  ? 'Miembro "${member.fullName}" eliminado.'
+                  : 'Error al eliminar el miembro',
+            ),
+            backgroundColor: success ? accentColor : negativeColor,
+          ),
+        );
+        if (success) provider.fetchMembers(page: 0, size: 1000);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
@@ -44,9 +82,9 @@ class _NetworkMembersState extends State<NetworkMembers> {
 
     if (memberProvider.error == "SIN_CONEXION" ||
         networkProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(title: widget.network.name),
+      return NavShell(
+        isSecondary: true,
+        title: widget.network.name,
         body: NoConnectionWidget(
           onRefresh: () {
             memberProvider.clearError();
@@ -65,9 +103,9 @@ class _NetworkMembersState extends State<NetworkMembers> {
       (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
     );
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: widget.network.name),
+    return NavShell(
+      isSecondary: true,
+      title: widget.network.name,
       body: SafeArea(
         child: networkProvider.isLoading
             ? const Center(
@@ -80,6 +118,23 @@ class _NetworkMembersState extends State<NetworkMembers> {
                     constraints: BoxConstraints(maxWidth: 1500),
                     child: Column(
                       children: [
+                        SizedBox(height: 20),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: AddButton(
+                            size: Size(
+                              isMobile
+                                  ? MediaQuery.of(context).size.width * 0.9
+                                  : 200,
+                              isMobile ? 50 : 45,
+                            ),
+                            onPressed: () => Navigator.push(
+                              context,
+                              createFadeRoute(const CreateMember()),
+                            ),
+                            title: 'Crear Miembro',
+                          ),
+                        ),
                         SizedBox(height: 20),
                         _buildNetworkHeader(widget.network, isMobile),
                         SizedBox(height: 20),
@@ -94,7 +149,17 @@ class _NetworkMembersState extends State<NetworkMembers> {
                               ? _buildEmptyState(
                                   isMobile,
                                 ) // Solo se muestra si terminó de cargar y está vacío
-                              : _buildMemberList(membersInGroup, isMobile),
+                              : MemberTable(
+                                  members: membersInGroup,
+                                  showNetworkColumn: false,
+                                  onEdit: _openEditMember,
+                                  onDelete: _confirmDeleteMember,
+                                  onRefresh: () =>
+                                      memberProvider.fetchMembers(
+                                        page: 0,
+                                        size: 1000,
+                                      ),
+                                ),
                         ),
                       ],
                     ),
@@ -110,21 +175,6 @@ class _NetworkMembersState extends State<NetworkMembers> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: AddButton(
-              size: Size(
-                isMobile ? MediaQuery.of(context).size.width * 0.85 : 200,
-                isMobile ? 50 : 45,
-              ),
-              onPressed: () => Navigator.push(
-                context,
-                createFadeRoute(const CreateMember()),
-              ),
-              title: 'Crear Miembro',
-            ),
-          ),
-          SizedBox(height: isMobile ? 15 : 0),
           isMobile
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,87 +195,15 @@ class _NetworkMembersState extends State<NetworkMembers> {
               SizedBox(width: 10),
               Text(
                 network.mission ?? 'Sin misión definida',
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ],
           ),
           SizedBox(height: isMobile ? 0 : 8),
         ],
-      ),
-    );
-  }
-
-  // Widget para la lista de miembros (Estilo Members.dart)
-  Widget _buildMemberList(List<Member> members, bool isMobile) {
-    return Padding(
-      padding: EdgeInsets.zero,
-      child: CustomCardContainer(
-        padding: EdgeInsets.all(10),
-        child: ListView.separated(
-          shrinkWrap: true,
-          itemCount: members.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final member = members[index];
-            return Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  MemberProfileImage(
-                    imageUrl: member.photoUrl,
-                    name: member.name,
-                    radius: 25,
-                  ),
-                  const SizedBox(width: 15),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${member.name} ${member.lastName}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          member.phone,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[800],
-                          ),
-                        ),
-                        Text(
-                          member.address,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[900],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
       ),
     );
   }
@@ -236,11 +214,11 @@ class _NetworkMembersState extends State<NetworkMembers> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: Colors.grey),
+          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: secondaryText),
           SizedBox(height: 16),
           Text(
             'No hay miembros en esta red',
-            style: TextStyle(fontSize: isMobile ? 15 : 18, color: Colors.grey),
+            style: TextStyle(fontSize: isMobile ? 15 : 18, color: secondaryText),
           ),
         ],
       ),
@@ -258,16 +236,15 @@ class _NetworkMembersState extends State<NetworkMembers> {
         spacing: 5,
         runSpacing: isMobile ? 0 : 5,
         children: network.leaders.map((leader) {
-          return Chip(
-            backgroundColor: primaryColor.withOpacity(0.1),
+          return AppChip(
             avatar: CircleAvatar(
               backgroundColor: primaryColor,
               child: Text(
                 leader.name[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(color: infoColor, fontSize: 15),
               ),
             ),
-            label: Text('${leader.name} ${leader.lastName}'),
+            label: '${leader.name} ${leader.lastName}',
           );
         }).toList(),
       ),

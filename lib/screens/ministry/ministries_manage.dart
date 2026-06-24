@@ -6,8 +6,8 @@ import '../../colors.dart';
 import '../../models/ministry_model.dart';
 import '../../providers/ministry_provider.dart';
 import '../../routes/page_route_builder.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_ministry.dart';
 
@@ -33,9 +33,9 @@ class _MinistryManageState extends State<MinistryManage> {
     final List<MinistryModel> ministries = ministryProvider.ministries;
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Gestionar ministerios'),
+    return NavShell(
+      isSecondary: true,
+      title: 'Gestionar ministerios',
       body: SafeArea(
         child: Column(
           children: [
@@ -87,7 +87,7 @@ class _MinistryManageState extends State<MinistryManage> {
       child: isMobile
           ? SingleChildScrollView(
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(12),
                 child: _buildMobileList(context, ministries),
               ),
             )
@@ -135,8 +135,8 @@ class _MinistryManageState extends State<MinistryManage> {
     List<MinistryModel> ministries,
   ) {
     return Card(
-      color: Colors.white,
-      elevation: 5,
+      color: Theme.of(context).colorScheme.surface,
+      elevation: 1,
       child: ListView.separated(
         shrinkWrap: true,
         padding: const EdgeInsets.only(left: 5),

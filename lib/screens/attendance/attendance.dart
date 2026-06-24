@@ -1,4 +1,4 @@
-import 'package:Koinos/widgets/member_profile_image.dart';
+import 'package:Koinos/utils/app_log.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -10,11 +10,12 @@ import '../../providers/attendance_provider.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../providers/service_provider.dart';
+import '../../theme/design_constants.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/custom_text_form_field.dart';
-import '../../widgets/menu.dart';
+import '../../widgets/member_list_tile.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 
 class Attendance extends StatefulWidget {
@@ -63,7 +64,7 @@ class _AttendanceState extends State<Attendance> {
       _presentMemberIds.clear();
       _presentMemberIds.addAll(record.presentMemberIds);
 
-      print("DEBUG: Cargados ${_presentMemberIds.length} miembros para editar");
+      appLog("DEBUG: Cargados ${_presentMemberIds.length} miembros para editar");
     }
   }
 
@@ -79,15 +80,21 @@ class _AttendanceState extends State<Attendance> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade400, width: 1.5),
-        color: cardColor,
+        borderRadius: BorderRadius.circular(
+          DesignConstants.borderRadiusDropdown,
+        ),
+        border: Border.all(color: alternateColor, width: 1.5),
+        color: secondaryBackground,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedNetworkId,
           hint: const Text("Seleccionar Red"),
           isExpanded: false,
+          borderRadius: BorderRadius.circular(
+            DesignConstants.borderRadiusDropdown,
+          ),
+          dropdownColor: secondaryBackground,
           items: [
             const DropdownMenuItem(value: null, child: Text("Todas las Redes")),
             ...networks.map(
@@ -111,18 +118,24 @@ class _AttendanceState extends State<Attendance> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade400, width: 1.5),
-        color: cardColor,
+        borderRadius: BorderRadius.circular(
+          DesignConstants.borderRadiusDropdown,
+        ),
+        border: Border.all(color: alternateColor, width: 1.5),
+        color: secondaryBackground,
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedEventId,
           hint: const Text(
             "Seleccionar Evento",
-            style: TextStyle(color: Colors.black87),
+            style: TextStyle(color: primaryText),
           ),
           isExpanded: false,
+          borderRadius: BorderRadius.circular(
+            DesignConstants.borderRadiusDropdown,
+          ),
+          dropdownColor: secondaryBackground,
           items: services.map((service) {
             return DropdownMenuItem<String>(
               value: service.id,
@@ -197,7 +210,7 @@ class _AttendanceState extends State<Attendance> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Asistencia guardada correctamente'),
-          backgroundColor: Colors.green,
+          backgroundColor: accentColor,
         ),
       );
       Navigator.pop(context);
@@ -230,9 +243,9 @@ class _AttendanceState extends State<Attendance> {
         serviceProvider.error == "SIN_CONEXION" ||
         netProvider.error == "SIN_CONEXION" ||
         attendanceProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(title: 'Asistencia', isDrawerEnabled: isMobile),
+      return NavShell(
+        isSecondary: true,
+        title: 'Asistencia',
         body: NoConnectionWidget(
           onRefresh: () async {
             memberProvider.clearError();
@@ -254,9 +267,9 @@ class _AttendanceState extends State<Attendance> {
     if (memberProvider.isLoading ||
         serviceProvider.isLoading ||
         netProvider.isLoading) {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(title: 'Asistencia'),
+      return NavShell(
+        isSecondary: true,
+        title: 'Asistencia',
         body: const Center(
           child: CircularProgressIndicator(color: primaryColor),
         ),
@@ -271,30 +284,22 @@ class _AttendanceState extends State<Attendance> {
           .toList();
     }
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Asistencia', isDrawerEnabled: isMobile),
-      drawer: isMobile ? Drawer(child: Menu()) : null,
+    return NavShell(
+      isSecondary: true,
+      title: 'Asistencia',
       body: SafeArea(
-        child: Row(
+        child: Column(
           children: [
-            if (!isMobile) Menu(),
-            Expanded(
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: isMobile
-                        ? _buildMobileControls(memberProvider, isMobile)
-                        : _buildWebControls(memberProvider, isMobile),
-                  ),
-                  const SizedBox(height: 10),
-                  // Pasamos la lista filtrada correctamente
-                  Expanded(child: _buildMemberList(membersToShow, isMobile)),
-                ],
-              ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: isMobile
+                  ? _buildMobileControls(memberProvider, isMobile)
+                  : _buildWebControls(memberProvider, isMobile),
             ),
+            const SizedBox(height: 10),
+            // Pasamos la lista filtrada correctamente
+            Expanded(child: _buildMemberList(membersToShow, isMobile)),
           ],
         ),
       ),
@@ -443,79 +448,50 @@ class _AttendanceState extends State<Attendance> {
             final member = members[index];
             final bool isPresent = _presentMemberIds.contains(member.id);
 
-            // 1. Envolvemos todo en GestureDetector para capturar el toque en la tarjeta
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (isPresent) {
-                    _presentMemberIds.remove(member.id);
-                  } else {
-                    _presentMemberIds.add(member.id);
-                  }
-                });
-              },
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  // Opcional: cambiar el color si está seleccionado para dar feedback visual
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              decoration: BoxDecoration(
+                // Opcional: cambiar el color si está seleccionado para dar feedback visual
+                color: isPresent
+                    ? primaryColor.withOpacity(0.05)
+                    : secondaryBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
                   color: isPresent
-                      ? primaryColor.withOpacity(0.05)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isPresent
-                        ? primaryColor.withOpacity(0.3)
-                        : Colors.transparent,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                      ? primaryColor.withOpacity(0.3)
+                      : Colors.transparent,
                 ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // 2. Foto o Inicial
-                    MemberProfileImage(
-                      imageUrl: member.photoUrl,
-                      name: member.name,
-                      radius: 25,
-                    ),
-                    const SizedBox(width: 15),
-
-                    // 3. Nombre del miembro
-                    Expanded(
-                      child: Text(
-                        '${member.name} ${member.lastName}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: isPresent
-                              ? FontWeight.bold
-                              : FontWeight.w500,
-                          color: isPresent ? primaryColor : Colors.black87,
-                        ),
-                      ),
-                    ),
-
-                    // 4. Checkbox a la derecha
-                    Checkbox(
-                      activeColor: primaryColor,
-                      value: isPresent,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          if (value == true) {
-                            _presentMemberIds.add(member.id);
-                          } else {
-                            _presentMemberIds.remove(member.id);
-                          }
-                        });
-                      },
-                    ),
-                  ],
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x33000000),
+                    blurRadius: 3,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: MemberListTile(
+                member: member,
+                onTap: () {
+                  setState(() {
+                    if (isPresent) {
+                      _presentMemberIds.remove(member.id);
+                    } else {
+                      _presentMemberIds.add(member.id);
+                    }
+                  });
+                },
+                trailing: Checkbox(
+                  activeColor: primaryColor,
+                  value: isPresent,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        _presentMemberIds.add(member.id);
+                      } else {
+                        _presentMemberIds.remove(member.id);
+                      }
+                    });
+                  },
                 ),
               ),
             );

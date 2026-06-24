@@ -9,9 +9,10 @@ import '../../providers/ministry_provider.dart';
 import '../../services/auth_service.dart';
 import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
-import '../../widgets/custom_appbar.dart';
+import '../../widgets/app_chip.dart';
 import '../../widgets/custom_card_container.dart';
-import '../../widgets/member_profile_image.dart';
+import '../../widgets/member_list_tile.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
@@ -61,8 +62,9 @@ class _MinistryMembersState extends State<MinistryMembers> {
 
     if (ministryProvider.error == "SIN_CONEXION" ||
         memberProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        appBar: CustomAppBar(title: widget.ministry.name),
+      return NavShell(
+        isSecondary: true,
+        title: widget.ministry.name,
         body: NoConnectionWidget(
           onRefresh: () {
             ministryProvider.clearError();
@@ -74,28 +76,24 @@ class _MinistryMembersState extends State<MinistryMembers> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: isMobile
-            ? widget.ministry.name
-            : 'Miembros de ${currentMinistry.name}',
-      ),
-      body: ministryProvider.isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: primaryColor),
-            ) // Mostrar carga
-          : SafeArea(
-              child: Center(
-                child: Column(
-                  children: [
-                    SizedBox(height: isMobile ? 5 : 20),
-                    if (isMobile)
-                      _buildMinistryHeader(currentMinistry, isMobile),
-                    if (permissions.canSeeMembers)
-                      Padding(
-                        padding: const EdgeInsets.all(0),
-                        child: Align(
+    return NavShell(
+      isSecondary: true,
+      title: isMobile
+          ? widget.ministry.name
+          : 'Miembros de ${currentMinistry.name}',
+      body: SafeArea(
+        child: ministryProvider.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(color: primaryColor),
+              ) // Mostrar carga
+            : Padding(
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 5),
+                child: Center(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20),
+                      if (permissions.canSeeMembers)
+                        Align(
                           alignment: isMobile
                               ? Alignment.center
                               : Alignment.centerRight,
@@ -114,30 +112,30 @@ class _MinistryMembersState extends State<MinistryMembers> {
                             ),
                           ),
                         ),
-                      ),
-                    if (!isMobile)
+                      SizedBox(height: 20),
                       _buildMinistryHeader(currentMinistry, isMobile),
-                    if (isMobile) const SizedBox(height: 15),
-                    Expanded(
-                      child: ministryProvider.isLoading
-                          ? const Center(
-                              child: CircularProgressIndicator(
-                                color: primaryColor,
+                      SizedBox(height: 20),
+                      Expanded(
+                        child: ministryProvider.isLoading
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                  color: primaryColor,
+                                ),
+                              )
+                            : sortedMembers.isEmpty
+                            ? _buildEmptyState(isMobile)
+                            : _buildMemberList(
+                                sortedMembers,
+                                isMobile,
+                                currentMinistry,
+                                permissions,
                               ),
-                            )
-                          : sortedMembers.isEmpty
-                          ? _buildEmptyState(isMobile)
-                          : _buildMemberList(
-                              sortedMembers,
-                              isMobile,
-                              currentMinistry,
-                              permissions,
-                            ),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -197,7 +195,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
             TextButton(
               child: const Text(
                 'Cancelar',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: secondaryText),
               ),
               onPressed: () => Navigator.of(ctx).pop(),
             ),
@@ -229,7 +227,6 @@ class _MinistryMembersState extends State<MinistryMembers> {
 
   Widget _buildMinistryHeader(MinistryModel ministry, bool isMobile) {
     return CustomCardContainer(
-      margin: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -253,7 +250,10 @@ class _MinistryMembersState extends State<MinistryMembers> {
               SizedBox(width: 10),
               Text(
                 ministry.description,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ],
           ),
@@ -268,11 +268,11 @@ class _MinistryMembersState extends State<MinistryMembers> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: Colors.grey),
+          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: secondaryText),
           SizedBox(height: 16),
           Text(
             'No hay miembros en esta red',
-            style: TextStyle(fontSize: isMobile ? 15 : 18, color: Colors.grey),
+            style: TextStyle(fontSize: isMobile ? 15 : 18, color: secondaryText),
           ),
         ],
       ),
@@ -290,16 +290,15 @@ class _MinistryMembersState extends State<MinistryMembers> {
         spacing: 5,
         runSpacing: isMobile ? 0 : 5,
         children: network.leaders.map((leader) {
-          return Chip(
-            backgroundColor: primaryColor.withOpacity(0.1),
+          return AppChip(
             avatar: CircleAvatar(
               backgroundColor: primaryColor,
               child: Text(
                 leader.name[0].toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: const TextStyle(color: infoColor, fontSize: 15),
               ),
             ),
-            label: Text('${leader.name} ${leader.lastName}'),
+            label: '${leader.name} ${leader.lastName}',
           );
         }).toList(),
       ),
@@ -312,94 +311,65 @@ class _MinistryMembersState extends State<MinistryMembers> {
     MinistryModel currentMinistry,
     permissions,
   ) {
-    return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      itemCount: members.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final member = members[index];
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+    return Padding(
+      padding: EdgeInsets.zero,
+      child: CustomCardContainer(
+        padding: EdgeInsets.all(10),
+        child: ListView.separated(
+          shrinkWrap: true,
+          itemCount: members.length,
+          separatorBuilder: (context, index) => const Divider(height: 1),
+          itemBuilder: (context, index) {
+            final member = members[index];
+            return MemberListTile(
+              member: member,
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  memberPhoneSubtitle(member),
+                  Text(
+                    member.address,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13, color: secondaryText),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              MemberProfileImage(
-                imageUrl: member.photoUrl,
-                name: member.name,
-                radius: 25,
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start, // Alineado a la izquierda
-                  children: [
-                    Text(
-                      '${member.name} ${member.lastName}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+              trailing: permissions.canSeeMembers
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: negativeColor,
                       ),
-                    ),
-                    Text(
-                      member.phone,
-                      style: TextStyle(
-                        color: Colors.blue[800],
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      member.address,
-                      style: TextStyle(color: Colors.grey[900], fontSize: 13),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              if (permissions.canSeeMembers)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: negativeColor),
-                  onPressed: () {
-                    showDeleteConfirmationDialog(
-                      context: context,
-                      itemName: '${member.name} ${member.lastName}',
-                      onConfirm: () async {
-                        try {
-                          await Provider.of<MinistryProvider>(
-                            context,
-                            listen: false,
-                          ).removeMemberFromMinistry(
-                            currentMinistry.id,
-                            member,
-                          );
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Error al eliminar miembro'),
-                            ),
-                          );
-                        }
+                      onPressed: () {
+                        showDeleteConfirmationDialog(
+                          context: context,
+                          itemName: '${member.name} ${member.lastName}',
+                          onConfirm: () async {
+                            try {
+                              await Provider.of<MinistryProvider>(
+                                context,
+                                listen: false,
+                              ).removeMemberFromMinistry(
+                                currentMinistry.id,
+                                member,
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Error al eliminar miembro'),
+                                ),
+                              );
+                            }
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
-            ],
-          ),
-        );
-      },
+                    )
+                  : null,
+            );
+          },
+        ),
+      ),
     );
   }
 }

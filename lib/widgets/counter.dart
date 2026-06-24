@@ -57,6 +57,7 @@ class _CounterState extends State<Counter> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -64,16 +65,17 @@ class _CounterState extends State<Counter> {
         Text(
           widget.label,
           style: TextStyle(
-            fontSize: 15,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
+            color: scheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 4),
         Container(
-          height: 36, // Altura fija para el control del contador
+          // Altura mínima (no fija) para no recortar con escalado de texto.
+          constraints: const BoxConstraints(minHeight: 48),
           decoration: BoxDecoration(
-            color: Colors.grey[300],
+            color: scheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -82,12 +84,10 @@ class _CounterState extends State<Counter> {
               IconButton(
                 icon: const Icon(Icons.remove, size: 20),
                 onPressed: _decrement,
-                splashRadius: 20, // Reduce el radio del splash
-                padding: EdgeInsets.zero, // Elimina padding extra
-                constraints:
-                    const BoxConstraints(), // Elimina restricciones de tamaño por defecto
+                tooltip: 'Disminuir ${widget.label}',
+                // Objetivo táctil de 48dp (accesibilidad).
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               ),
-              SizedBox(width: 5),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
@@ -98,14 +98,11 @@ class _CounterState extends State<Counter> {
                   ),
                 ),
               ),
-              SizedBox(width: 5),
               IconButton(
                 icon: const Icon(Icons.add, size: 20),
                 onPressed: _increment,
-                splashRadius: 20, // Reduce el radio del splash
-                padding: EdgeInsets.zero, // Elimina padding extra
-                constraints:
-                    const BoxConstraints(), // Elimina restricciones de tamaño por defecto
+                tooltip: 'Aumentar ${widget.label}',
+                constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
               ),
             ],
           ),

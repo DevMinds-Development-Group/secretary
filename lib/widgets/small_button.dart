@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../colors.dart';
+
 class SmallButton extends StatefulWidget {
   final VoidCallback onPressed;
   final String text;
@@ -30,9 +32,10 @@ class _ButtonState extends State<SmallButton> {
     return ElevatedButton(
       onPressed: widget.onPressed,
       style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: Colors.blue.shade700,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: primaryColor,
         fixedSize: buttonSize,
+        elevation: 3,
       ),
       child: isLoading
           ? const SizedBox(
@@ -40,13 +43,13 @@ class _ButtonState extends State<SmallButton> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                color: Colors.white,
+                color: infoColor,
               ),
             )
           : Text(
               widget.text,
               style: TextStyle(
-                color: Colors.white,
+                color: infoColor,
                 fontSize: isMobile ? 13 : 15,
               ),
             ),

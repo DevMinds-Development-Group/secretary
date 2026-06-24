@@ -10,10 +10,11 @@ import 'package:provider/provider.dart';
 import '../../models/member_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/network_provider.dart';
+import '../../theme/design_constants.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
 import '../../widgets/member_profile_image.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 
 class CreateMember extends StatefulWidget {
@@ -90,6 +91,7 @@ class _CreateMemberState extends State<CreateMember> {
 
   // --- Lógica de Negocio ---
   Future<void> _saveMember() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedNetworkId == null) {
@@ -149,7 +151,7 @@ class _CreateMemberState extends State<CreateMember> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? negativeColor : Colors.green,
+        backgroundColor: isError ? negativeColor : accentColor,
       ),
     );
   }
@@ -163,30 +165,26 @@ class _CreateMemberState extends State<CreateMember> {
 
     if (netProvider.error == "SIN_CONEXION" ||
         memberProvider.error == "SIN_CONEXION") {
-      return Scaffold(
-        appBar: CustomAppBar(
-          title: _isEditing ? 'Editar miembro' : 'Crear miembro',
-        ),
+      return NavShell(
+        isSecondary: true,
+        title: _isEditing ? 'Editar miembro' : 'Crear miembro',
         body: NoConnectionWidget(onRefresh: () => netProvider.fetchNetworks()),
       );
     }
 
     if (netProvider.isLoading && netProvider.networks.isEmpty) {
-      return Scaffold(
-        appBar: CustomAppBar(
-          title: _isEditing ? 'Editar miembro' : 'Crear miembro',
-        ),
+      return NavShell(
+        isSecondary: true,
+        title: _isEditing ? 'Editar miembro' : 'Crear miembro',
         body: const Center(
           child: CircularProgressIndicator(color: primaryColor),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(
-        title: _isEditing ? 'Editar miembro' : 'Crear miembro',
-      ),
+    return NavShell(
+      isSecondary: true,
+      title: _isEditing ? 'Editar miembro' : 'Crear miembro',
       body: SingleChildScrollView(
         child: Center(
           child: Container(
@@ -202,6 +200,7 @@ class _CreateMemberState extends State<CreateMember> {
   Widget _buildForm(bool isMobile, MemberProvider mp) {
     return Form(
       key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         children: [
           // Sección de foto interactiva
@@ -225,13 +224,22 @@ class _CreateMemberState extends State<CreateMember> {
                         _selectedImage = null;
                         _photoDeleted = true;
                       }),
-                      child: const CircleAvatar(
-                        radius: 10,
-                        backgroundColor: Colors.red,
-                        child: Icon(
-                          Icons.delete,
-                          size: 16,
-                          color: Colors.white,
+                      child: const Tooltip(
+                        message: 'Quitar foto',
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: CircleAvatar(
+                              radius: 10,
+                              backgroundColor: errorColor,
+                              child: Icon(
+                                Icons.delete,
+                                size: 16,
+                                color: infoColor,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -241,13 +249,19 @@ class _CreateMemberState extends State<CreateMember> {
           ),
           TextButton.icon(
             onPressed: _pickImage,
-            icon: const Icon(Icons.edit, color: Colors.black54),
-            label: Text("Subir foto", style: TextStyle(color: Colors.black54)),
+            icon: Icon(Icons.edit, color: Theme.of(context).colorScheme.onSurface),
+            label: Text(
+              "Subir foto",
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
           ),
           const SizedBox(height: 10.0),
           CustomTextFormField(
             labelText: 'Nombre',
             controller: _nameController,
+            isRequired: true,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? 'El nombre es obligatorio'
                 : null,
@@ -256,6 +270,9 @@ class _CreateMemberState extends State<CreateMember> {
           CustomTextFormField(
             labelText: 'Apellidos',
             controller: _lastNameController,
+            isRequired: true,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? 'Los apellidos son obligatorios'
                 : null,
@@ -264,6 +281,9 @@ class _CreateMemberState extends State<CreateMember> {
           CustomTextFormField(
             labelText: 'Dirección',
             controller: _addressController,
+            isRequired: true,
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
             validator: (v) => (v == null || v.trim().isEmpty)
                 ? 'La dirección es obligatoria'
                 : null,
@@ -274,6 +294,7 @@ class _CreateMemberState extends State<CreateMember> {
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             controller: _phoneController,
+            textInputAction: TextInputAction.done,
           ),
           const SizedBox(height: 16.0),
           _buildNetworkDropdown(),
@@ -300,7 +321,22 @@ class _CreateMemberState extends State<CreateMember> {
         return DropdownButtonFormField<String>(
           value: _selectedNetworkId,
           hint: const Text('Seleccionar red'),
-          decoration: const InputDecoration(border: OutlineInputBorder()),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Theme.of(context).colorScheme.surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(
+                DesignConstants.borderRadiusDropdown,
+              ),
+              borderSide: const BorderSide(color: alternateColor, width: 2),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(
+                DesignConstants.borderRadiusDropdown,
+              ),
+              borderSide: const BorderSide(color: alternateColor, width: 2),
+            ),
+          ),
           items: netProvider.networks.map((net) {
             return DropdownMenuItem(value: net.id, child: Text(net.name));
           }).toList(),
