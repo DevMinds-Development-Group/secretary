@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../colors.dart';
+
 class DateWidget extends StatelessWidget {
   final DateTime initialDate;
   final Function(DateTime) onDateSelected;
@@ -47,19 +49,19 @@ class DateWidget extends StatelessWidget {
 
     return ElevatedButton.icon(
       style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        backgroundColor: Colors.white,
-        side: BorderSide(color: Colors.grey.shade400, width: 1.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: secondaryBackground,
+        side: BorderSide(color: alternateColor, width: 1.5),
         padding: EdgeInsets.all(20),
         elevation: 1,
       ),
       onPressed: () => _selectDate(context),
-      icon: Icon(Icons.calendar_today, color: Colors.grey.shade700, size: 20),
+      icon: Icon(Icons.calendar_today, color: secondaryText, size: 20),
       label: Text(
         formattedDate,
         style: TextStyle(
           fontSize: 16,
-          color: Colors.grey.shade800,
+          color: secondaryText,
           fontWeight: FontWeight.w500,
         ),
       ),

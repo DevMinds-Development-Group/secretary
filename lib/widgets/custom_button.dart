@@ -23,27 +23,30 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
+    final scheme = Theme.of(context).colorScheme;
 
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           side: borderColor != null
               ? BorderSide(
                   color: borderColor!,
-                  width: 1.5,
+                  width: 2,
                 ) // Si hay color, pone borde
-              : BorderSide.none, // Si es null, no pone nada
+              : BorderSide(color: scheme.outline, width: 2),
         ),
-        fixedSize: Size(400, 50),
+        // Ancho completo en móvil; en escritorio un mínimo cómodo (sin el
+        // antiguo lock de 400px que rompía en pantallas pequeñas).
+        minimumSize: Size(isMobile ? double.infinity : 280, 48),
 
-        backgroundColor: backgroundColor ?? (Colors.white),
-        elevation: 3,
+        backgroundColor: backgroundColor ?? scheme.surface,
+        elevation: 0,
         padding: EdgeInsets.symmetric(
           horizontal: isMobile ? 10 : 20,
           vertical: isMobile ? 10 : 20,
         ),
-        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
       ),
       onPressed: onPressed,
       child: Row(
@@ -52,12 +55,12 @@ class CustomButton extends StatelessWidget {
           Text(
             text,
             style: TextStyle(
-              color: color ?? Colors.black,
+              color: color ?? scheme.onSurface,
               fontSize: isMobile ? 18 : 20,
             ),
           ),
           const SizedBox(width: 10),
-          Icon(icon, color: iconColor ?? Colors.black),
+          Icon(icon, color: iconColor ?? scheme.onSurface),
         ],
       ),
     );

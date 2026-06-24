@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/attendance_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class AttendanceProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -54,7 +55,7 @@ class AttendanceProvider with ChangeNotifier {
 
         _recordsList.sort((a, b) => b.date.compareTo(a.date));
 
-        print(
+        appLog(
           "DEBUG: Se cargaron ${_recordsList.length} registros desde 'content'",
         );
       }
@@ -65,7 +66,7 @@ class AttendanceProvider with ChangeNotifier {
       } else {
         _error = "No se pudo cargar el historial de asistencias";
       }
-      print("DEBUG ERROR FETCH: $e");
+      appLog("DEBUG ERROR FETCH: $e");
     } catch (e) {
       _error = "Ocurrió un error inesperado al consultar el servidor";
     } finally {
@@ -77,7 +78,6 @@ class AttendanceProvider with ChangeNotifier {
   void clearError() {
     if (_error != null) {
       _error = null;
-      // Usamos microtask para evitar errores de "setState/notifyListeners during build"
       Future.microtask(() => notifyListeners());
     }
   }
@@ -126,7 +126,7 @@ class AttendanceProvider with ChangeNotifier {
       } else {
         _error =
             "El tiempo para registrar o modificar la asistencia ha expirado. El límite es hasta las 10:00 AM del día siguiente al evento. O el servidor no está disponible";
-        print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
+        appLog("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
       }
 
       return false;
@@ -162,7 +162,7 @@ class AttendanceProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print("DEBUG ERROR DELETE: $e");
+      appLog("DEBUG ERROR DELETE: $e");
       return false;
     } finally {
       _isLoading = false;
@@ -175,5 +175,41 @@ class AttendanceProvider with ChangeNotifier {
     return _recordsList.where((record) {
       return record.id.toLowerCase().contains(query.toLowerCase());
     }).toList();
+  }
+
+  Future<void> fetchGeneralReports({
+    required String start,
+    required String end,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    _recordsList = [];
+    notifyListeners();
+
+    try {
+      final response = await _apiClient.dio.get(
+        '/general-attendances/events',
+        queryParameters: {'start': start, 'end': end},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> rawData = response.data ?? [];
+
+        _recordsList = rawData
+            .map((item) => AttendanceModel.fromJson(item))
+            .toList();
+
+        _recordsList.sort((a, b) => b.date.compareTo(a.date));
+      }
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION') {
+        _error = "SIN_CONEXION";
+      } else {
+        _error = "No se pudieron cargar los reportes generales";
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

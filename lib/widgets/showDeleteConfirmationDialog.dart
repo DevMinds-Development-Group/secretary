@@ -11,6 +11,9 @@ Future<void> showDeleteConfirmationDialog({
     builder: (BuildContext ctx) {
       bool isMobile = MediaQuery.of(context).size.width < 700;
       return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: Align(
           alignment: Alignment.center,
           child: Text(
@@ -18,6 +21,7 @@ Future<void> showDeleteConfirmationDialog({
             style: TextStyle(
               fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Figtree',
             ),
           ),
         ),
@@ -30,7 +34,7 @@ Future<void> showDeleteConfirmationDialog({
           TextButton(
             child: const Text(
               'Cancelar',
-              style: TextStyle(color: Colors.grey, fontSize: 18),
+              style: TextStyle(color: secondaryText, fontSize: 18),
             ),
             onPressed: () {
               Navigator.of(ctx).pop(); // Cierra el diálogo

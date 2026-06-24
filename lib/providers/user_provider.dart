@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/user_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class UserProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -44,7 +45,7 @@ class UserProvider with ChangeNotifier {
       _currentPage = response.data['number'] ?? 0;
     } on DioException catch (e) {
       _error = 'Error al cargar usuarios: ${e.message}';
-      print(_error);
+      appLog(_error);
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -85,7 +86,7 @@ class UserProvider with ChangeNotifier {
     } on DioException catch (e) {
       _error =
           'Error al crear usuario: ${e.response?.data['message'] ?? e.message}';
-      print(_error);
+      appLog(_error);
       //_isLoading = false;
       //notifyListeners();
       return false;
@@ -120,7 +121,7 @@ class UserProvider with ChangeNotifier {
       } else {
         _error = 'Error al actualizar usuario';
       }
-      print("DEBUG ERROR: ${e.type} - ${e.error} - Message: ${e.message}");
+      appLog("DEBUG ERROR: ${e.type} - ${e.error} - Message: ${e.message}");
       notifyListeners();
       return false;
     } finally {
@@ -140,7 +141,7 @@ class UserProvider with ChangeNotifier {
     } on DioException catch (e) {
       _error =
           'Error al eliminar usuario: ${e.response?.data['message'] ?? e.message}';
-      print(_error);
+      appLog(_error);
       notifyListeners();
       return false;
     }

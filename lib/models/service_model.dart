@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../utils/app_log.dart';
 import 'member_model.dart';
 
 class ServiceModel {
@@ -47,7 +48,7 @@ class ServiceModel {
       }).toList();
     }
 
-    print("JSON RECIBIDO DEL SERVIDOR: $json");
+    appLog("JSON RECIBIDO DEL SERVIDOR: $json");
 
     return ServiceModel(
       id: json['id'] ?? '',

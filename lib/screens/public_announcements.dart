@@ -5,6 +5,8 @@ import '../colors.dart';
 import '../models/announcement_model.dart';
 import '../providers/announcement_provider.dart';
 import '../widgets/custom_card_container.dart';
+import '../widgets/states/app_skeleton.dart';
+import '../widgets/states/empty_state.dart';
 
 class PublicAnnouncements extends StatefulWidget {
   const PublicAnnouncements({super.key});
@@ -39,7 +41,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
           slivers: [
             SliverAppBar(
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                icon: const Icon(Icons.arrow_back_ios_new, color: infoColor),
                 onPressed: () => Navigator.pop(context),
               ),
               actions: [
@@ -49,7 +51,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                     tooltip: 'Iniciar Sesión',
                     icon: const Icon(
                       Icons.login_rounded,
-                      color: Colors.white,
+                      color: infoColor,
                       size: 28,
                     ),
                     onPressed: () {
@@ -68,7 +70,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
               pinned: true,
               elevation: 20,
               forceElevated: true,
-              shadowColor: Colors.black.withOpacity(0.8),
+              shadowColor: shadowColor,
               backgroundColor: cardColor,
               flexibleSpace: FlexibleSpaceBar(
                 titlePadding: EdgeInsets.only(bottom: isMobile ? 16 : 10),
@@ -79,6 +81,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                     color: cardColor,
                     fontWeight: isMobile ? FontWeight.bold : FontWeight.w500,
                     fontSize: 30,
+                    fontFamily: 'Figtree',
 
                     shadows: [
                       Shadow(blurRadius: isMobile ? 20 : 30, color: darkColor),
@@ -91,13 +94,14 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
 
             if (provider.isLoading)
               const SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                ),
+                child: AppSkeleton.list(),
               )
             else if (provider.announcements.isEmpty)
               const SliverFillRemaining(
-                child: Center(child: Text("No hay anuncios disponibles.")),
+                child: EmptyState(
+                  icon: Icons.campaign_outlined,
+                  title: 'No hay anuncios disponibles',
+                ),
               )
             else
               SliverToBoxAdapter(
@@ -155,7 +159,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
             backgroundColor: darkColor,
             foregroundColor: cardColor,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
             ),
             elevation: 10,
             shadowColor: darkColor.withOpacity(0.5),
@@ -173,14 +177,14 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
   Widget _buildSectionTitle(String title, IconData icon, isMobile) {
     return Row(
       children: [
-        Icon(icon, color: const Color(0xFF64748B), size: 26),
+        Icon(icon, color: secondaryText, size: 26),
         const SizedBox(width: 8),
         Text(
           title.toUpperCase(),
           style: TextStyle(
             fontSize: isMobile ? 18 : 16,
             fontWeight: FontWeight.w900,
-            color: Color(0xFF64748B),
+            color: secondaryText,
             letterSpacing: 1.5,
           ),
         ),
@@ -201,29 +205,30 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
             Text(
               event.name,
               style: const TextStyle(
-                color: Colors.white,
+                color: infoColor,
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
+                fontFamily: 'Figtree',
               ),
             ),
             const SizedBox(height: 8),
             Text(
               event.description,
-              style: const TextStyle(color: Colors.white70, fontSize: 18),
+              style: const TextStyle(color: infoColor, fontSize: 18),
             ),
             const SizedBox(height: 20),
             Row(
               children: [
                 const Icon(
                   Icons.access_time_filled,
-                  color: Colors.white,
+                  color: infoColor,
                   size: 24,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   event.formattedTime,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: infoColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),
@@ -234,12 +239,12 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.person, color: Colors.white, size: 24),
+                  const Icon(Icons.person, color: infoColor, size: 24),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       "Predica: ${event.preachers.join(', ')}",
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(color: infoColor, fontSize: 18),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -250,12 +255,12 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(Icons.person, color: Colors.white, size: 24),
+                  const Icon(Icons.person, color: infoColor, size: 24),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       "Ministra: ${event.worshipMinistry.join(', ')}",
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(color: infoColor, fontSize: 18),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -278,7 +283,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
             height: 75,
             decoration: BoxDecoration(
               color: event.color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -321,13 +326,13 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                     const Icon(
                       Icons.schedule,
                       size: 16,
-                      color: Colors.blueGrey,
+                      color: secondaryText,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       event.formattedTime,
                       style: const TextStyle(
-                        color: Colors.blueGrey,
+                        color: secondaryText,
                         fontSize: 15,
                       ),
                     ),
@@ -336,14 +341,14 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                       const Icon(
                         Icons.menu_book_rounded,
                         size: 16,
-                        color: Colors.blueGrey,
+                        color: secondaryText,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           event.preachers.first,
                           style: const TextStyle(
-                            color: Colors.blueGrey,
+                            color: secondaryText,
                             fontSize: 15,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -355,14 +360,14 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                       const Icon(
                         Icons.music_note_outlined,
                         size: 16,
-                        color: Colors.blueGrey,
+                        color: secondaryText,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           event.worshipMinistry.first,
                           style: const TextStyle(
-                            color: Colors.blueGrey,
+                            color: secondaryText,
                             fontSize: 15,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -377,7 +382,7 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
           Icon(
             Icons.arrow_forward_ios_rounded,
             size: 16,
-            color: Colors.grey.shade300,
+            color: alternateColor,
           ),
         ],
       ),
@@ -389,16 +394,16 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.white,
+          backgroundColor: secondaryBackground,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
+                  top: Radius.circular(12),
                 ),
                 child: Image.asset(
                   'assets/location.png',
@@ -407,11 +412,11 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                       (isMobile ? 0.95 : 0.3),
                   errorBuilder: (context, error, stackTrace) => Container(
                     height: 200,
-                    color: const Color(0xFFD32F2F),
+                    color: errorColor,
                     child: const Icon(
                       Icons.map_outlined,
                       size: 80,
-                      color: Colors.white,
+                      color: infoColor,
                     ),
                   ),
                 ),
@@ -426,13 +431,14 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'Figtree',
                       ),
                     ),
                     const SizedBox(height: 12),
                     const Text(
                       "Calle Eddy Martínez #34 entre \n Ave.Camilo Cienfuegos y J.Espinosa \nReparto Buena Vista.",
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black87, fontSize: 16),
+                      style: TextStyle(color: primaryText, fontSize: 16),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
@@ -440,17 +446,15 @@ class _PublicAnnouncementsState extends State<PublicAnnouncements> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0F172A),
+                          backgroundColor: darkColor,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              isMobile ? 15 : 10,
-                            ),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
                         child: const Text(
                           "ENTENDIDO",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(color: infoColor),
                         ),
                       ),
                     ),

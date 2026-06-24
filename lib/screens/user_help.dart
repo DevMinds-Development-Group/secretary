@@ -1,13 +1,16 @@
-import 'package:Koinos/widgets/custom_appbar.dart';
 import 'package:flutter/material.dart';
+
+import '../colors.dart';
+import '../widgets/nav_shell.dart';
 
 class UserHelp extends StatelessWidget {
   const UserHelp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: 'Manual de Usuario'),
+    return NavShell(
+      isSecondary: true,
+      title: 'Manual de Usuario',
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16.0),
@@ -208,7 +211,7 @@ class UserHelp extends StatelessWidget {
             const Center(
               child: Text(
                 'Sistema Koinos - Viento Recio - 2026',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(color: secondaryText, fontSize: 12),
               ),
             ),
           ],
@@ -222,16 +225,16 @@ class UserHelp extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blue[800]!, Colors.blue[600]!],
+          colors: [primaryColor, primaryColor.withOpacity(0.85)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Color(0x33000000),
+            blurRadius: 3,
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -241,15 +244,16 @@ class UserHelp extends StatelessWidget {
           Text(
             'Guía Operativa del Sistema',
             style: TextStyle(
-              color: Colors.white,
+              color: infoColor,
               fontSize: 22,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Figtree',
             ),
           ),
           SizedBox(height: 10),
           Text(
             'Encuentra aquí el detalle de cada botón, opción y proceso del software "Koinos - Viento Recio".',
-            style: TextStyle(color: Colors.white70, fontSize: 14),
+            style: TextStyle(color: infoColor, fontSize: 14),
           ),
         ],
       ),
@@ -264,12 +268,12 @@ class UserHelp extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey[300]!),
+        side: BorderSide(color: alternateColor),
         borderRadius: BorderRadius.circular(12),
       ),
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
-        leading: Icon(icon, color: Colors.blue[800]),
+        leading: Icon(icon, color: primaryColor),
         title: Text(
           title,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -288,7 +292,7 @@ class UserHelp extends StatelessWidget {
                   child: Text(
                     item,
                     style: TextStyle(
-                      color: Colors.grey[800],
+                      color: primaryText,
                       height: 1.4,
                       fontSize: 16,
                     ),

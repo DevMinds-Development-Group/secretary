@@ -5,6 +5,7 @@ class DashboardModel {
   final int totalNetworks;
   final int totalMinistries;
   final List<WeeklyEvent> weeklyEvents;
+  final List<MembershipGrowthPoint> membershipGrowth;
 
   DashboardModel({
     required this.totalMembers,
@@ -13,6 +14,7 @@ class DashboardModel {
     required this.totalNetworks,
     required this.totalMinistries,
     required this.weeklyEvents,
+    required this.membershipGrowth,
   });
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,26 @@ class DashboardModel {
               ?.map((e) => WeeklyEvent.fromJson(e))
               .toList() ??
           [],
+      membershipGrowth:
+          (json['membershipGrowth'] as List?)
+              ?.map((e) => MembershipGrowthPoint.fromJson(e))
+              .toList() ??
+          [],
+    );
+  }
+}
+
+/// Punto de la serie de crecimiento de membresía (total acumulado por mes).
+class MembershipGrowthPoint {
+  final String label; // p. ej. "Junio 2026"
+  final int count; // total acumulado de miembros ese mes
+
+  MembershipGrowthPoint({required this.label, required this.count});
+
+  factory MembershipGrowthPoint.fromJson(Map<String, dynamic> json) {
+    return MembershipGrowthPoint(
+      label: json['label'] ?? '',
+      count: json['count'] ?? 0,
     );
   }
 }
