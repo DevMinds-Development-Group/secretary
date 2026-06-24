@@ -33,10 +33,10 @@ class Member {
   }
 
   // Getter para nombre completo
-  String get fullName =>
-      '$name ?? '
-              '} $lastName'
-          .replaceAll('  ', ' ');
+  String get fullName => [
+    if (name.isNotEmpty) name,
+    if (lastName.isNotEmpty) lastName,
+  ].join(' ');
 
   factory Member.fromJson(Map<String, dynamic> json) {
     return Member(

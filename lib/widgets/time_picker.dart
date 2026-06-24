@@ -1,6 +1,9 @@
 import 'package:Koinos/widgets/small_button.dart';
 import 'package:flutter/material.dart';
 
+import '../colors.dart';
+import '../theme/design_constants.dart';
+
 class TimePicker extends StatefulWidget {
   final Function(TimeOfDay)? onTimeSelected;
   final TimeOfDay? initialTime;
@@ -69,6 +72,9 @@ class _TimePickerState extends State<TimePicker> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: const Text('Seleccionar hora'),
           content: StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) {
@@ -79,6 +85,10 @@ class _TimePickerState extends State<TimePicker> {
                   DropdownButton<int>(
                     value: _selectedHour,
                     hint: const Text('Hora'),
+                    borderRadius: BorderRadius.circular(
+                      DesignConstants.borderRadiusDropdown,
+                    ),
+                    dropdownColor: secondaryBackground,
                     items: _hours.map((int hour) {
                       return DropdownMenuItem<int>(
                         value: hour,
@@ -98,6 +108,10 @@ class _TimePickerState extends State<TimePicker> {
                   DropdownButton<int>(
                     value: _selectedMinute,
                     hint: const Text('Min'),
+                    borderRadius: BorderRadius.circular(
+                      DesignConstants.borderRadiusDropdown,
+                    ),
+                    dropdownColor: secondaryBackground,
                     items: _minutes.map((int minute) {
                       return DropdownMenuItem<int>(
                         value: minute,
@@ -115,6 +129,10 @@ class _TimePickerState extends State<TimePicker> {
                   DropdownButton<String>(
                     value: _selectedAmPm,
                     hint: const Text('AM/PM'),
+                    borderRadius: BorderRadius.circular(
+                      DesignConstants.borderRadiusDropdown,
+                    ),
+                    dropdownColor: secondaryBackground,
                     items: _amPm.map((String ampm) {
                       return DropdownMenuItem<String>(
                         value: ampm,
@@ -135,7 +153,7 @@ class _TimePickerState extends State<TimePicker> {
             TextButton(
               child: const Text(
                 'Cancelar',
-                style: TextStyle(color: Colors.grey),
+                style: TextStyle(color: secondaryText),
               ),
               onPressed: () {
                 Navigator.of(context).pop();

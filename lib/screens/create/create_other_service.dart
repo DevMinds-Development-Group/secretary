@@ -7,9 +7,8 @@ import '../../models/member_model.dart';
 import '../../models/service_model.dart';
 import '../../providers/service_provider.dart';
 import '../../providers/service_type_provider.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
-import '../../widgets/menu.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/small_button.dart';
 
 class CreateOtherService extends StatefulWidget {
@@ -57,40 +56,31 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
       builder: (context, serviceProvider, child) {
         final todayEvents = serviceProvider.getEventsForDay(DateTime.now());
 
-        return Scaffold(
-          backgroundColor: backgroundColor,
-          appBar: CustomAppBar(title: 'Crear otro evento'),
-          drawer: isMobile ? Drawer(child: Menu()) : null,
-          body: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!isMobile) const SizedBox(child: Menu()),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(32.0),
-                  child: isMobile
-                      ? Column(
-                          children: [
-                            _buildCalendar(isMobile, context),
-                            const SizedBox(height: 32),
-                            _buildServices(
-                              todayEvents,
-                            ), // Pasamos la lista reactiva
-                          ],
-                        )
-                      : Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: _buildCalendar(isMobile, context)),
-                            const SizedBox(width: 50),
-                            Expanded(
-                              child: _buildServices(todayEvents),
-                            ), // Pasamos la lista reactiva
-                          ],
-                        ),
-                ),
-              ),
-            ],
+        return NavShell(
+          isSecondary: true,
+          title: 'Crear otro evento',
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(32.0),
+            child: isMobile
+                ? Column(
+                    children: [
+                      _buildCalendar(isMobile, context),
+                      const SizedBox(height: 32),
+                      _buildServices(
+                        todayEvents,
+                      ), // Pasamos la lista reactiva
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildCalendar(isMobile, context)),
+                      const SizedBox(width: 50),
+                      Expanded(
+                        child: _buildServices(todayEvents),
+                      ), // Pasamos la lista reactiva
+                    ],
+                  ),
           ),
         );
       },
@@ -103,7 +93,11 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
       children: [
         const Text(
           'Hoy',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Figtree',
+          ),
         ),
         const SizedBox(height: 16),
         if (todayEvents.isEmpty)
@@ -111,7 +105,7 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Text(
               'No hay eventos programados para hoy.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+              style: TextStyle(color: secondaryText, fontSize: 16),
             ),
           )
         else
@@ -147,15 +141,16 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
             style: TextStyle(
               fontSize: isMobile ? 24 : 28,
               fontWeight: FontWeight.bold,
+              fontFamily: 'Figtree',
             ),
           ),
         ),
         const SizedBox(height: 24),
         Card(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           elevation: 5,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15.0),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
@@ -229,11 +224,15 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: ListTile(
-        leading: Icon(icon, size: 35, color: Colors.black87),
+        leading: Icon(
+          icon,
+          size: 35,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(time, style: TextStyle(color: Colors.grey[600])),
+        subtitle: Text(time, style: TextStyle(color: secondaryText)),
       ),
     );
   }
@@ -307,7 +306,7 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                   onPressed: () => Navigator.of(dialogContext).pop(null),
                   child: const Text(
                     'Cancelar',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: secondaryText),
                   ),
                 ),
                 SmallButton(
@@ -409,8 +408,8 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                           vertical: 16,
                         ),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: alternateColor),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -421,8 +420,8 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                                   : 'Seleccionar hora de inicio',
                               style: TextStyle(
                                 color: dialogSelectedTime != null
-                                    ? Colors.black87
-                                    : Colors.grey[700],
+                                    ? Theme.of(context).colorScheme.onSurface
+                                    : secondaryText,
                                 fontSize: 16,
                               ),
                             ),
@@ -441,7 +440,7 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                   onPressed: () => Navigator.of(context).pop(),
                   child: const Text(
                     'Cancelar',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: secondaryText),
                   ),
                 ),
                 SmallButton(
@@ -463,7 +462,7 @@ class _CreateOtherServiceState extends State<CreateOtherService> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Servicio guardado correctamente.'),
-                          backgroundColor: Colors.green,
+                          backgroundColor: accentColor,
                         ),
                       );
                     } else {

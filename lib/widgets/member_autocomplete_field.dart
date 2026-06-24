@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../colors.dart';
 import '../models/member_model.dart';
 import '../providers/member_provider.dart';
+import '../theme/design_constants.dart';
+import '../utils/app_log.dart';
 import 'custom_text_form_field.dart';
+import 'member_profile_image.dart';
 
 class MemberAutocompleteField extends StatefulWidget {
   final TextEditingController controller;
@@ -32,7 +36,7 @@ class _MemberAutocompleteFieldState extends State<MemberAutocompleteField> {
 
         return Consumer<MemberProvider>(
           builder: (context, memberProvider, child) {
-            print(
+            appLog(
               "Autocomplete '${widget.labelText}' - Miembros cargados: ${allMembers.length}",
             );
 
@@ -89,8 +93,10 @@ class _MemberAutocompleteFieldState extends State<MemberAutocompleteField> {
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4.0,
-                    borderRadius: BorderRadius.circular(5),
-                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(
+                      DesignConstants.borderRadiusDropdown,
+                    ),
+                    color: Theme.of(context).colorScheme.surface,
                     child: Container(
                       width: constraints.maxWidth,
                       constraints: const BoxConstraints(maxHeight: 250),
@@ -101,15 +107,25 @@ class _MemberAutocompleteFieldState extends State<MemberAutocompleteField> {
                         itemBuilder: (BuildContext context, int index) {
                           final Member option = options.elementAt(index);
                           return ListTile(
+                            leading: MemberProfileImage(
+                              imageUrl: option.photoUrl,
+                              name: option.name,
+                              radius: 16,
+                              squared: true,
+                              borderColor: primaryColor,
+                              borderWidth: 1.5,
+                            ),
                             title: Text(
                               '${option.name} ${option.lastName}',
                               style: const TextStyle(fontSize: 14),
                             ),
                             subtitle: Text(
                               option.phone,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant,
                               ),
                             ),
                             onTap: () => onSelected(option),

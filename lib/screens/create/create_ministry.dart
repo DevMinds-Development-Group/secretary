@@ -6,8 +6,8 @@ import '../../models/ministry_model.dart';
 import '../../providers/leader_provider.dart';
 import '../../providers/ministry_provider.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/multi_select_dialog.dart';
 
 class CreateMinistry extends StatefulWidget {
@@ -79,7 +79,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Ministerio guardado con éxito'),
-            backgroundColor: Colors.green,
+            backgroundColor: accentColor,
           ),
         );
       }
@@ -99,11 +99,9 @@ class _CreateMinistryState extends State<CreateMinistry> {
     final leaderProvider = Provider.of<LeaderProvider>(context, listen: false);
     final ministryProvider = context.watch<MinistryProvider>();
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: CustomAppBar(
-        title: _isEditing ? 'Editar Ministerio' : 'Crear Ministerio',
-      ),
+    return NavShell(
+      isSecondary: true,
+      title: _isEditing ? 'Editar Ministerio' : 'Crear Ministerio',
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isMobile ? 20 : 70),
         child: Center(
@@ -111,6 +109,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
             constraints: BoxConstraints(maxWidth: 700),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
 
@@ -121,6 +120,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'Figtree',
                       ),
                     ),
                   ),
@@ -128,6 +128,10 @@ class _CreateMinistryState extends State<CreateMinistry> {
                   CustomTextFormField(
                     controller: _nameController,
                     labelText: 'Nombre del Ministerio',
+                    isRequired: true,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) =>
+                        FocusScope.of(context).nextFocus(),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Por favor, ingrese un nombre.';
@@ -139,6 +143,8 @@ class _CreateMinistryState extends State<CreateMinistry> {
                   CustomTextFormField(
                     controller: _descriptionController,
                     labelText: 'Descripción',
+                    isRequired: true,
+                    textInputAction: TextInputAction.done,
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Ingrese descripción del ministerio';
@@ -183,7 +189,7 @@ class _CreateMinistryState extends State<CreateMinistry> {
                           ? Text(
                               'Ninguno seleccionado',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: secondaryText,
                                 fontSize: 16,
                               ),
                             )

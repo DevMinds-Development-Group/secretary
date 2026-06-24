@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../main.dart';
+import '../utils/app_log.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -15,7 +16,7 @@ class ApiClient {
     : _dio = Dio(
         BaseOptions(
           baseUrl:
-              'https://vri-secretary-backend-production.up.railway.app/api/v1',
+              'https://vri-secretary-backend-develop.up.railway.app/api/v1',
         ),
       ) {
     _dio.interceptors.add(
@@ -25,23 +26,23 @@ class ApiClient {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           } else {
-            print('No se encontró token para la petición a: ${options.path}');
+            appLog('No se encontró token para la petición a: ${options.path}');
           }
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print(
+          appLog(
             'Respuesta recibida: ${response.statusCode} desde ${response.requestOptions.path}',
           );
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            print('TOKEN EXPIRADO: Limpiando sesión...');
+            appLog('TOKEN EXPIRADO: Limpiando sesión...');
             await _secureStorage.deleteAll();
 
             navigatorKey.currentState?.pushNamedAndRemoveUntil(
-              'login',
+              '/',
               (route) => false,
             );
 

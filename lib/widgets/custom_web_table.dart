@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../colors.dart';
+import '../utils/window_size.dart';
+import 'custom_card_container.dart';
+
 class CustomWebTable<T> extends StatelessWidget {
   final List<T> items;
   final List<String> columnLabels;
@@ -18,28 +22,83 @@ class CustomWebTable<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (context.isCompact) {
+      return _buildCardList(context);
+    }
+    return _buildDataTable(context);
+  }
+
+  /// Layout compacto (móvil): cada fila se renderiza como una tarjeta apilada
+  /// con pares etiqueta: valor, derivados de los mismos `columnLabels` y celdas
+  /// que usa la `DataTable`.
+  Widget _buildCardList(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: List<Widget>.generate(items.length, (index) {
+        final cells = rowBuilder(items[index]);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: CustomCardContainer(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List<Widget>.generate(columnLabels.length, (i) {
+                final value = i < cells.length
+                    ? cells[i].child
+                    : const SizedBox.shrink();
+                return Padding(
+                  padding: EdgeInsets.only(
+                    bottom: i == columnLabels.length - 1 ? 0 : 8,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        columnLabels[i],
+                        style: const TextStyle(
+                          color: secondaryText,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: value,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Layout estándar (web/tablet): `DataTable` plana con borde hairline.
+  Widget _buildDataTable(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 3),
-        ],
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15), // Radio de los bordes
-        border: Border.all(color: Colors.grey.shade500, width: 1),
+        color: secondaryBackground,
+        borderRadius: BorderRadius.circular(12), // Radio de los bordes
+        border: Border.all(color: alternateColor, width: 1),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: IntrinsicWidth(
             child: Theme(
               data: Theme.of(
                 context,
-              ).copyWith(dividerColor: Colors.grey.shade300),
+              ).copyWith(dividerColor: alternateColor),
               child: DataTable(
                 showCheckboxColumn: false,
                 headingRowColor: WidgetStateProperty.all(
-                  headerColor ?? Colors.blue.shade100,
+                  headerColor ?? accent1,
                 ),
                 headingRowHeight: 45,
                 dataRowMinHeight: 40,
@@ -61,8 +120,7 @@ class CustomWebTable<T> extends StatelessWidget {
                   final item = items[index];
                   return DataRow(
                     color: WidgetStateProperty.resolveWith<Color?>((states) {
-                      if (index.isOdd)
-                        return Colors.grey.shade50.withOpacity(0.5);
+                      if (index.isOdd) return surfaceSubtle;
                       return null;
                     }),
                     cells: rowBuilder(item),

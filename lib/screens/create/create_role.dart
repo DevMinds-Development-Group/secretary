@@ -1,5 +1,6 @@
 // lib/screens/create/create_role.dart
 import 'package:Koinos/colors.dart';
+import 'package:Koinos/utils/app_log.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,8 +8,8 @@ import '../../models/permission_model.dart';
 import '../../models/role_model.dart';
 import '../../providers/role_provider.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/multi_select_dialog.dart';
 
 class CreateRole extends StatefulWidget {
@@ -54,17 +55,18 @@ class _CreateRoleState extends State<CreateRole> {
   }
 
   Future<void> _saveRole() async {
+    if (_isSaving) return;
     if (_formKey.currentState == null) {
-      print('ERROR: _formKey.currentState es nulo');
+      appLog('ERROR: _formKey.currentState es nulo');
       return;
     }
 
     if (!_formKey.currentState!.validate()) {
-      print('FORMULARIO NO VÁLIDO: Revisa los campos rojos');
+      appLog('FORMULARIO NO VÁLIDO: Revisa los campos rojos');
       return;
     }
 
-    print('FORMULARIO VÁLIDO: Iniciando proceso de guardado...');
+    appLog('FORMULARIO VÁLIDO: Iniciando proceso de guardado...');
 
     setState(() => _isSaving = true);
 
@@ -74,12 +76,12 @@ class _CreateRoleState extends State<CreateRole> {
           .map((p) => p.name)
           .toList();
 
-      print('MODO EDICIÓN: $_isEditing');
-      print('PERMISOS A ENVIAR: $permissionsAsString');
+      appLog('MODO EDICIÓN: $_isEditing');
+      appLog('PERMISOS A ENVIAR: $permissionsAsString');
 
       bool success = false;
       if (_isEditing) {
-        print('LLAMANDO A: updateRole con ID: ${widget.roleToEdit!.id}');
+        appLog('LLAMANDO A: updateRole con ID: ${widget.roleToEdit!.id}');
         success = await roleProvider.updateRole(
           id: widget.roleToEdit!.id,
           name: _nameController.text,
@@ -88,7 +90,7 @@ class _CreateRoleState extends State<CreateRole> {
           enabled: widget.roleToEdit!.enabled,
         );
       } else {
-        print('LLAMANDO A: addRole');
+        appLog('LLAMANDO A: addRole');
         success = await roleProvider.addRole(
           name: _nameController.text,
           description: _descriptionController.text,
@@ -96,19 +98,19 @@ class _CreateRoleState extends State<CreateRole> {
         );
       }
 
-      print('RESULTADO DE LA OPERACIÓN: $success');
+      appLog('RESULTADO DE LA OPERACIÓN: $success');
 
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Operación exitosa'),
-            backgroundColor: Colors.green,
+            backgroundColor: accentColor,
           ),
         );
         await roleProvider.fetchRoles();
         Navigator.of(context).pop();
       } else if (!success && mounted) {
-        print('ERROR CAPTURADO EN PROVIDER: ${roleProvider.error}');
+        appLog('ERROR CAPTURADO EN PROVIDER: ${roleProvider.error}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -119,8 +121,8 @@ class _CreateRoleState extends State<CreateRole> {
         );
       }
     } catch (e, stacktrace) {
-      print('EXCEPCIÓN CRÍTICA: $e');
-      print('STACKTRACE: $stacktrace');
+      appLog('EXCEPCIÓN CRÍTICA: $e');
+      appLog('STACKTRACE: $stacktrace');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -129,10 +131,10 @@ class _CreateRoleState extends State<CreateRole> {
   @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 700;
-    final roleProvider = context.watch<RoleProvider>();
 
-    return Scaffold(
-      appBar: CustomAppBar(title: _isEditing ? 'Editar Rol' : 'Crear Rol'),
+    return NavShell(
+      isSecondary: true,
+      title: _isEditing ? 'Editar Rol' : 'Crear Rol',
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isMobile ? 30 : 70),
         child: Center(
@@ -142,18 +144,23 @@ class _CreateRoleState extends State<CreateRole> {
             constraints: const BoxConstraints(maxWidth: 700),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Icon(
                     Icons.admin_panel_settings,
                     size: 120,
-                    color: Colors.grey,
+                    color: secondaryText,
                   ),
                   const SizedBox(height: 30),
                   CustomTextFormField(
                     controller: _nameController,
                     labelText: 'Nombre del Rol',
+                    isRequired: true,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) =>
+                        FocusScope.of(context).nextFocus(),
                     validator: (value) => (value == null || value.isEmpty)
                         ? 'El nombre es obligatorio'
                         : null,
@@ -162,6 +169,8 @@ class _CreateRoleState extends State<CreateRole> {
                   CustomTextFormField(
                     controller: _descriptionController,
                     labelText: 'Descripción',
+                    isRequired: true,
+                    textInputAction: TextInputAction.done,
                     //maxLines: 3,
                     validator: (value) => (value == null || value.isEmpty)
                         ? 'La descripción es obligatoria'
@@ -221,7 +230,7 @@ class _CreateRoleState extends State<CreateRole> {
                         text: widget.roleToEdit != null
                             ? 'Actualizar'
                             : 'Guardar',
-                        isLoading: roleProvider.isLoading,
+                        isLoading: _isSaving,
                         onPressed: _saveRole,
                       ),
                     ],

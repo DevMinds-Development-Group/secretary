@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../../providers/user_provider.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 
 class Profile extends StatefulWidget {
@@ -66,10 +66,10 @@ class _ProfileState extends State<Profile> {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             scrollable: true,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
             ),
             title: const Text(
               "Nueva Contraseña",
@@ -135,7 +135,7 @@ class _ProfileState extends State<Profile> {
                 onPressed: () => Navigator.pop(context),
                 child: const Text(
                   "CANCELAR",
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: secondaryText),
                 ),
               ),
 
@@ -160,7 +160,7 @@ class _ProfileState extends State<Profile> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Contraseña actualizada con éxito"),
-                          backgroundColor: Colors.green,
+                          backgroundColor: accentColor,
                         ),
                       );
                     } else {
@@ -200,9 +200,9 @@ class _ProfileState extends State<Profile> {
     final user = authService.user;
 
     if (authService.error == "SIN_CONEXION") {
-      return Scaffold(
-        backgroundColor: backgroundColor,
-        appBar: CustomAppBar(title: 'Perfil'),
+      return NavShell(
+        isSecondary: true,
+        title: 'Perfil',
         body: Center(
           child: NoConnectionWidget(
             onRefresh: () async {
@@ -214,17 +214,18 @@ class _ProfileState extends State<Profile> {
       );
     }
     if (authService.isLoading || user == null) {
-      return Scaffold(
-        appBar: CustomAppBar(title: 'Perfil'),
+      return NavShell(
+        isSecondary: true,
+        title: 'Perfil',
         body: const Center(
           child: CircularProgressIndicator(color: primaryColor),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Perfil'),
+    return NavShell(
+      isSecondary: true,
+      title: 'Perfil',
       body: user == null
           ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : SingleChildScrollView(
@@ -269,13 +270,17 @@ class _ProfileState extends State<Profile> {
           (memberName != null && memberName.isNotEmpty)
               ? "$memberName ${memberLastName ?? ''}"
               : username,
-          style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontFamily: 'Figtree',
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 5),
         Text(
           user.username,
-          style: const TextStyle(fontSize: 16.0, color: Colors.grey),
+          style: const TextStyle(fontSize: 16.0, color: secondaryText),
         ),
         const SizedBox(height: 10),
       ],
@@ -296,7 +301,7 @@ class _ProfileState extends State<Profile> {
     return Card(
       color: cardColor,
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -347,12 +352,12 @@ class _ProfileState extends State<Profile> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: darkColor,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(12),
           onTap: () async {
             if (authService.error == "SIN_CONEXION") {
               await authService.fetchUserProfile(authService.userName!);
@@ -375,12 +380,12 @@ class _ProfileState extends State<Profile> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.lock_reset_rounded, color: Colors.white),
+                Icon(Icons.lock_reset_rounded, color: infoColor),
                 SizedBox(width: 10),
                 Text(
                   'Cambiar Contraseña',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: infoColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -401,10 +406,10 @@ class _ProfileState extends State<Profile> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: alternateColor,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: Colors.blueGrey, size: 22),
+            child: Icon(icon, color: secondaryText, size: 22),
           ),
           const SizedBox(width: 15.0),
           Expanded(
@@ -413,7 +418,7 @@ class _ProfileState extends State<Profile> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  style: const TextStyle(color: secondaryText, fontSize: 13),
                 ),
                 Text(
                   subtitle,

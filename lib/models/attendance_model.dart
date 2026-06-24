@@ -42,8 +42,7 @@ class AttendanceModel {
       id: json['id']?.toString() ?? '',
       definitionId: json['definitionId']?.toString() ?? '',
       definitionName:
-          json['definitionName']?.toString() ??
-          json['eventNameSnapshot']?.toString(),
+          json['eventName'] ?? json['definitionName'] ?? 'Sin nombre',
       networkName: json['networkName']?.toString(),
       networkId: json['networkId']?.toString() ?? '',
       date: json['date'] != null

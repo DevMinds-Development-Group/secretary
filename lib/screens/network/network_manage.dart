@@ -6,8 +6,8 @@ import '../../colors.dart';
 import '../../models/network_model.dart';
 import '../../providers/network_provider.dart';
 import '../../routes/page_route_builder.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../create/create_network.dart';
 
@@ -34,9 +34,9 @@ class _NetworkManageState extends State<NetworkManage> {
     final List<NetworkModel> networks = networkProvider.networks;
     final isMobile = MediaQuery.of(context).size.width < 700;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Gestionar redes'),
+    return NavShell(
+      isSecondary: true,
+      title: 'Gestionar redes',
       body: SafeArea(
         child: Column(
           children: [
@@ -128,8 +128,8 @@ class _NetworkManageState extends State<NetworkManage> {
 
   Widget _buildMobileList(BuildContext context, List<NetworkModel> networks) {
     return Card(
-      color: Colors.white,
-      elevation: 5,
+      color: Theme.of(context).colorScheme.surface,
+      elevation: 1,
       //margin: EdgeInsets.zero,
       child: ListView.separated(
         shrinkWrap: true,
@@ -196,7 +196,7 @@ class _NetworkManageState extends State<NetworkManage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Red "${network.name}" eliminada'),
-                backgroundColor: Colors.green,
+                backgroundColor: successColor,
               ),
             );
           }
