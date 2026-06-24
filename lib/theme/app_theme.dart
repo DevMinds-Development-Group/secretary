@@ -285,6 +285,9 @@ class AppTheme {
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return textTheme.labelMedium?.copyWith(
+            // Reducido respecto a labelMedium (14) para que no se amontonen
+            // las etiquetas en la barra inferior móvil.
+            fontSize: 12,
             color: selected ? primaryColor : textSecondary,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
           );

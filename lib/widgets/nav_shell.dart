@@ -122,16 +122,24 @@ class NavShell extends StatelessWidget {
       appBar: _buildAppBar(primary: !secondary),
       body: body,
       floatingActionButton: floatingActionButton,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: selectedIndex.clamp(0, destinations.length - 1),
-        destinations: destinations,
-        onDestinationSelected: (index) {
-          if (index < primary.length) {
-            _go(context, primary[index]);
-          } else {
-            _showMoreSheet(context, overflow);
-          }
-        },
+      bottomNavigationBar: DecoratedBox(
+        // Sombra hacia arriba para que la barra se note elevada del contenido.
+        decoration: const BoxDecoration(
+          boxShadow: [
+            BoxShadow(color: shadowColor, blurRadius: 8, offset: Offset(0, -2)),
+          ],
+        ),
+        child: NavigationBar(
+          selectedIndex: selectedIndex.clamp(0, destinations.length - 1),
+          destinations: destinations,
+          onDestinationSelected: (index) {
+            if (index < primary.length) {
+              _go(context, primary[index]);
+            } else {
+              _showMoreSheet(context, overflow);
+            }
+          },
+        ),
       ),
     );
   }

@@ -700,6 +700,7 @@ class _SupervisionDashboardState extends State<SupervisionDashboard> {
       child: Row(
         children: [
           Expanded(
+            flex: 3,
             child: Text(
               meta.isEmpty ? '—' : meta,
               maxLines: 1,
@@ -709,9 +710,15 @@ class _SupervisionDashboardState extends State<SupervisionDashboard> {
           ),
           if (trailing.isNotEmpty) ...[
             const SizedBox(width: Spacing.sm),
-            Text(
-              trailing,
-              style: textTheme.labelMedium?.copyWith(color: secondaryText),
+            Flexible(
+              flex: 2,
+              child: Text(
+                trailing,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: textTheme.labelMedium?.copyWith(color: secondaryText),
+              ),
             ),
           ],
         ],

@@ -259,7 +259,7 @@ class _AttendanceHistoryState extends State<AttendanceHistory> {
             children: [
               search,
               const SizedBox(height: Spacing.md),
-              SizedBox(height: 56, child: date),
+              date,
               const SizedBox(height: Spacing.md),
               takeButton,
             ],
