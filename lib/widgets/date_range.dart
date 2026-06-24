@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../colors.dart';
 import 'date.dart';
 
 class DateRange extends StatelessWidget {
@@ -87,7 +88,7 @@ class DateRange extends StatelessWidget {
             label,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: Colors.grey,
+              color: secondaryText,
               fontSize: 14,
             ),
           ),

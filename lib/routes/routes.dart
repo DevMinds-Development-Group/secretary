@@ -2,7 +2,9 @@ import 'package:Koinos/routes/route_guard.dart';
 import 'package:flutter/material.dart';
 
 import '../screens/admin/admin.dart';
+import '../screens/admin/logs.dart';
 import '../screens/admin/profile.dart';
+import '../screens/admin/roles.dart';
 import '../screens/admin/users.dart';
 import '../screens/attendance/attendance.dart';
 import '../screens/attendance/attendance_history.dart';
@@ -18,6 +20,7 @@ import '../screens/members.dart';
 import '../screens/ministry/ministries.dart';
 import '../screens/network/network_manage.dart';
 import '../screens/network/networks.dart';
+import '../screens/reports/reports.dart';
 import '../screens/service/services.dart';
 import '../screens/user_help.dart';
 
@@ -39,6 +42,8 @@ class AppRoutes {
   static const String create_member = 'create_member';
   static const String admin = 'admin';
   static const String users = 'users';
+  static const String roles = 'roles';
+  static const String logs = 'logs';
   static const String network_manage = 'network_manage';
   static const String create_other_service = 'create_other_service';
   static const String attendance_history = 'attendance_history';
@@ -63,13 +68,15 @@ class AppRoutes {
           RouteGuard.checkAuth(context, const Ministries()),
       create_ministry: (context) =>
           RouteGuard.checkAuth(context, const CreateMinistry()),
-      //reports: (context) => Reports(),
+      reports: (context) => RouteGuard.checkAuth(context, const Reports()),
       create_service: (context) =>
           RouteGuard.checkAuth(context, const CreateService()),
       create_member: (context) =>
           RouteGuard.checkAuth(context, const CreateMember()),
       admin: (context) => RouteGuard.checkAuth(context, const Admin()),
       users: (context) => RouteGuard.checkAuth(context, const Users()),
+      roles: (context) => RouteGuard.checkAuth(context, const Roles()),
+      logs: (context) => RouteGuard.checkAuth(context, const Logs()),
       network_manage: (context) =>
           RouteGuard.checkAuth(context, const NetworkManage()),
       attendance_history: (context) =>

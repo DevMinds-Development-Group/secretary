@@ -7,9 +7,12 @@ import '../../models/role_model.dart';
 import '../../providers/role_provider.dart';
 import '../../routes/page_route_builder.dart';
 import '../../widgets/add_button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
 import '../create/create_role.dart';
 
 class Roles extends StatefulWidget {
@@ -33,9 +36,9 @@ class _RolesState extends State<Roles> {
     final roleProvider = context.watch<RoleProvider>();
     final isMobile = MediaQuery.of(context).size.width < 700;
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Roles'),
+    return NavShell(
+      isSecondary: true,
+      title: 'Roles',
       body: SafeArea(
         child: Column(
           children: [
@@ -58,11 +61,17 @@ class _RolesState extends State<Roles> {
             SizedBox(height: isMobile ? 20 : 5),
             Expanded(
               child: roleProvider.isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(color: primaryColor),
+                  ? const AppSkeleton.list()
+                  : roleProvider.error != null
+                  ? ErrorState(
+                      error: roleProvider.error,
+                      onRetry: () => roleProvider.fetchRoles(),
                     )
                   : roleProvider.roles.isEmpty
-                  ? const Center(child: Text('No hay roles para mostrar.'))
+                  ? const EmptyState(
+                      icon: Icons.admin_panel_settings_outlined,
+                      title: 'No hay roles',
+                    )
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(

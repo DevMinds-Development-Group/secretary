@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/member_model.dart'; // Usaremos Member para los líderes
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class LeaderProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -39,7 +40,7 @@ class LeaderProvider with ChangeNotifier {
       // Mapeamos a Member directamente
       _leaders = data.map((l) => Member.fromJson(l)).toList();
     } catch (e) {
-      print("Error cargando líderes: $e");
+      appLog("Error cargando líderes: $e");
     } finally {
       _isLoading = false;
       notifyListeners();

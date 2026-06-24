@@ -1,4 +1,3 @@
-import 'package:Koinos/widgets/member_profile_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,16 +5,23 @@ import '../colors.dart';
 import '../models/member_model.dart';
 import '../providers/member_provider.dart';
 import '../routes/page_route_builder.dart';
-import '../widgets/action_buttons.dart';
+import '../theme/design_constants.dart';
+import '../utils/window_size.dart';
 import '../widgets/add_button.dart';
-import '../widgets/custom_appbar.dart';
-import '../widgets/custom_card_container.dart';
-import '../widgets/menu.dart';
-import '../widgets/no_connection_widget.dart';
+import '../widgets/app_chip.dart';
+import '../widgets/body_width.dart';
+import '../widgets/member_table.dart';
+import '../widgets/nav_destinations.dart';
+import '../widgets/nav_shell.dart';
 import '../widgets/pagination.dart';
 import '../widgets/search_text_field.dart';
 import '../widgets/showDeleteConfirmationDialog.dart';
+import '../widgets/states/app_skeleton.dart';
+import '../widgets/states/empty_state.dart';
+import '../widgets/states/error_state.dart';
 import 'create/create_member.dart';
+
+enum _MemberStatusFilter { all, active, inactive }
 
 class Members extends StatefulWidget {
   const Members({super.key});
@@ -25,10 +31,11 @@ class Members extends StatefulWidget {
 }
 
 class _MembersState extends State<Members> {
+  _MemberStatusFilter _filter = _MemberStatusFilter.all;
+
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MemberProvider>(context, listen: false).fetchMembers();
     });
@@ -52,7 +59,6 @@ class _MembersState extends State<Members> {
     }
   }
 
-  // 2. Función que abre tu diálogo de confirmación
   void _showDelete(BuildContext context, Member member) {
     showDeleteConfirmationDialog(
       context: context,
@@ -61,230 +67,173 @@ class _MembersState extends State<Members> {
     );
   }
 
+  void _openCreate({Member? member}) {
+    Navigator.push(
+      context,
+      createFadeRoute(CreateMember(memberToEdit: member)),
+    );
+  }
+
+  List<Member> _applyFilter(List<Member> members) {
+    switch (_filter) {
+      case _MemberStatusFilter.all:
+        return members;
+      case _MemberStatusFilter.active:
+        return members.where((m) => m.enabled).toList();
+      case _MemberStatusFilter.inactive:
+        return members.where((m) => !m.enabled).toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 700;
-
     final memberProvider = Provider.of<MemberProvider>(context);
-    final List<Member> filteredMembers = memberProvider.filteredMembers;
 
-    if (memberProvider.error == 'SIN_CONEXION') {
-      return Scaffold(
-        appBar: CustomAppBar(title: 'Miembros'), // O tu AppBar actual
-        body: NoConnectionWidget(
-          // O el widget que uses para reintentar
-          onRefresh: () => memberProvider.fetchMembers(),
+    if (memberProvider.error != null) {
+      return NavShell(
+        current: NavSection.members,
+        title: 'Miembros',
+        body: ErrorState(
+          error: memberProvider.error,
+          onRetry: () => memberProvider.fetchMembers(),
         ),
       );
     }
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(
-        title: 'Miembros',
-        isDrawerEnabled: isMobile,
-        showBackButton: true,
-      ),
-      drawer: isMobile ? Drawer(child: Menu()) : null,
-      body: SafeArea(
-        child: Row(
-          children: [
-            if (!isMobile) Menu(),
-            Expanded(
-              child: _buildMembersContent(
-                context,
-                isMobile,
-                memberProvider,
-                filteredMembers,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return NavShell(
+      current: NavSection.members,
+      title: 'Miembros',
+      body: _buildContent(context, memberProvider),
     );
   }
 
-  // Este widget ahora recibe el provider y la lista de miembros como parámetros
-  Widget _buildMembersContent(
+  Widget _buildContent(BuildContext context, MemberProvider provider) {
+    final isCompact = context.isCompact;
+    final members = _applyFilter(provider.filteredMembers);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: Spacing.xl),
+          child: BodyWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SizedBox(height: Spacing.lg),
+                _buildSearchRow(context, provider, isCompact),
+                const SizedBox(height: Spacing.md),
+                _buildFilterChips(),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: Spacing.md),
+        Expanded(
+          child: BodyWidth(
+            child: _buildTable(context, provider, members),
+          ),
+        ),
+        if (provider.totalPages > 0 && !provider.isLoading)
+          BodyWidth(
+            child: Pagination(
+              currentPage: provider.currentPage,
+              totalPages: provider.totalPages,
+              itemsPerPage: provider.pageSize,
+              onPageChanged: (page) => provider.onPageChanged(page),
+              onItemsPerPageChanged: (size) =>
+                  provider.onItemsPerPageChanged(size),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Miembros', style: textTheme.headlineMedium),
+        const SizedBox(height: Spacing.xxs),
+        Text(
+          'Lista de los miembros de tu iglesia.',
+          style: textTheme.bodyMedium?.copyWith(color: secondaryText),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchRow(
     BuildContext context,
-    bool isMobile,
+    MemberProvider provider,
+    bool isCompact,
+  ) {
+    final search = SearchTextField(
+      hintText: 'Buscar miembros…',
+      onChanged: (query) => provider.search(query),
+    );
+    final add = AddButton(
+      size: isCompact ? const Size(double.infinity, 48) : null,
+      onPressed: () => _openCreate(),
+    );
+
+    if (isCompact) {
+      return Column(
+        children: [search, const SizedBox(height: Spacing.md), add],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: search),
+        const SizedBox(width: Spacing.lg),
+        add,
+      ],
+    );
+  }
+
+  Widget _buildFilterChips() {
+    Widget chip(String label, _MemberStatusFilter value) => AppFilterChip(
+          label: label,
+          selected: _filter == value,
+          onSelected: (_) => setState(() => _filter = value),
+        );
+
+    return Wrap(
+      spacing: Spacing.sm,
+      runSpacing: Spacing.sm,
+      children: [
+        chip('Todos', _MemberStatusFilter.all),
+        chip('Activos', _MemberStatusFilter.active),
+        chip('Inactivos', _MemberStatusFilter.inactive),
+      ],
+    );
+  }
+
+  Widget _buildTable(
+    BuildContext context,
     MemberProvider provider,
     List<Member> members,
   ) {
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        // Barra de búsqueda
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: isMobile ? 18.0 : 24.0),
-          child: isMobile
-              ? _buildMobileLayout(context, provider)
-              : _buildWebLayout(provider, context),
-        ),
-        SizedBox(height: isMobile ? 15 : 30),
-        // Lista de miembros
-        Expanded(
-          child: _buildMemberList(context, isMobile, members),
-        ), // Pasa la lista filtrada
-        if (provider.totalPages > 0 && !provider.isLoading)
-          Pagination(
-            currentPage: provider.currentPage,
-            totalPages: provider.totalPages,
-            itemsPerPage: provider.pageSize,
-            onPageChanged: (page) => provider.onPageChanged(page),
-            onItemsPerPageChanged: (size) =>
-                provider.onItemsPerPageChanged(size),
-          ),
-      ],
-    );
-  }
-
-  Row _buildWebLayout(MemberProvider provider, BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Expanded(
-          child: SearchTextField(
-            onChanged: (query) {
-              provider.search(query);
-            },
-            controller: null,
-          ),
-        ),
-        const SizedBox(width: 20),
-        AddButton(
-          onPressed: () {
-            Navigator.push(context, createFadeRoute(const CreateMember()));
-          },
-        ),
-      ],
-    );
-  }
-
-  Column _buildMobileLayout(BuildContext context, MemberProvider provider) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          child: SearchTextField(
-            onChanged: (query) {
-              provider.search(query);
-            },
-            controller: null,
-          ),
-        ),
-
-        const SizedBox(height: 15),
-        AddButton(
-          size: Size(MediaQuery.of(context).size.width * 0.9, 50),
-
-          onPressed: () {
-            Navigator.push(context, createFadeRoute(const CreateMember()));
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMemberList(
-    BuildContext context,
-    bool isMobile,
-    List<Member> members,
-  ) {
-    final provider = Provider.of<MemberProvider>(context, listen: false);
-
     if (provider.isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: primaryColor),
+      return const AppSkeleton.list();
+    }
+    if (members.isEmpty) {
+      return EmptyState(
+        icon: Icons.people_outline,
+        title: 'No se encontraron miembros',
+        message: 'Agrega un miembro o ajusta tu búsqueda.',
+        action: AddButton(onPressed: () => _openCreate()),
       );
     }
 
-    if (members.isEmpty) {
-      return const Center(child: Text('No se encontraron miembros.'));
-    }
-
-    return Padding(
-      padding: EdgeInsets.all(isMobile ? 15 : 20),
-      child: CustomCardContainer(
-        padding: EdgeInsets.all(isMobile ? 5 : 20),
-        child: ListView.separated(
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemCount: members.length,
-          itemBuilder: (context, index) {
-            final member = members[index];
-
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      MemberProfileImage(
-                        imageUrl: member.photoUrl,
-                        name: member.name,
-                        radius: 25,
-                      ),
-                      const SizedBox(width: 15),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${member.name} ${member.lastName}',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              member.networkName ?? 'Sin Red',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ActionButtons(
-                      onEdit: () {
-                        Navigator.push(
-                          context,
-                          createFadeRoute(CreateMember(memberToEdit: member)),
-                        );
-                      },
-                      onDelete: () => _showDelete(context, member),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+    return MemberTable(
+      members: members,
+      showNetworkColumn: true,
+      onEdit: (m) => _openCreate(member: m),
+      onDelete: (m) => _showDelete(context, m),
+      onRefresh: () => provider.fetchMembers(),
     );
   }
 }

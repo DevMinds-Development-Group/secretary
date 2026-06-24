@@ -30,22 +30,22 @@ class _ButtonState extends State<AddButton> {
     return ElevatedButton(
       onPressed: widget.onPressed,
       style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: accentColor,
         fixedSize: buttonSize,
-        elevation: 5,
+        elevation: 3,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(size: isMobile ? 18 : 20, Icons.add, color: Colors.white),
+          Icon(size: isMobile ? 18 : 20, Icons.add, color: infoColor),
           SizedBox(width: 2),
           Text(
             widget.title ?? defalutTitle,
             style: TextStyle(
-              color: Colors.white,
+              color: infoColor,
               fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

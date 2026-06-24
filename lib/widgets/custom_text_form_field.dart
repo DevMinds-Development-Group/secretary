@@ -25,6 +25,10 @@ class CustomTextFormField extends StatefulWidget {
   final String? prefixText;
   final Size? size;
 
+  /// Muestra un indicador `*` junto a la etiqueta (campo obligatorio).
+  /// Es solo visual: la regla real la define `validator`.
+  final bool isRequired;
+
   const CustomTextFormField({
     super.key,
     this.controller,
@@ -46,6 +50,7 @@ class CustomTextFormField extends StatefulWidget {
     this.inputFormatters,
     this.prefixText,
     this.size,
+    this.isRequired = false,
   });
 
   @override
@@ -65,40 +70,45 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
     BuildContext context, {
     Widget? effectiveSuffixIcon,
   }) {
-    final defaultBorderColor = Colors.grey[600] ?? secondaryColor;
-    final iconColor = secondaryColor.withOpacity(0.7);
+    final scheme = Theme.of(context).colorScheme;
+    final defaultBorderColor = scheme.outline; // Alternate
+    final iconColor = secondaryText;
+
+    OutlineInputBorder border(Color color, double width) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: color, width: width),
+        );
 
     return InputDecoration(
-      labelText: widget.labelText,
+      label: widget.isRequired
+          ? Text.rich(
+              TextSpan(
+                text: widget.labelText,
+                children: const [
+                  TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: errorColor),
+                  ),
+                ],
+              ),
+              style: TextStyle(color: iconColor),
+            )
+          : null,
+      labelText: widget.isRequired ? null : widget.labelText,
       hintText: widget.hintText,
       filled: true,
-      fillColor: Colors.white,
+      fillColor: scheme.surface,
       prefixText: widget.prefixText,
-      labelStyle: TextStyle(color: secondaryColor.withOpacity(0.9)),
-      hintStyle: TextStyle(color: secondaryColor.withOpacity(0.7)),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: defaultBorderColor),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: defaultBorderColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: primaryColor, width: 2.0),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: primaryColor2, width: 1.0),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(5.0),
-        borderSide: BorderSide(color: primaryColor2, width: 2.0),
-      ),
+      labelStyle: TextStyle(color: iconColor),
+      hintStyle: TextStyle(color: iconColor),
+      border: border(defaultBorderColor, 2.0),
+      enabledBorder: border(defaultBorderColor, 1.0),
+      focusedBorder: border(primaryColor, 2.0),
+      errorBorder: border(errorColor, 2.0),
+      focusedErrorBorder: border(errorColor, 2.0),
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 15.0,
-        vertical: 12.0,
+        horizontal: 20.0,
+        vertical: 16.0,
       ),
       // Controla altura implícita
       prefixIcon: widget.prefixIcon,

@@ -5,9 +5,12 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/log_model.dart';
 import '../../providers/log_provider.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_web_table.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/pagination.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
 
 class Logs extends StatefulWidget {
   const Logs({Key? key}) : super(key: key);
@@ -49,11 +52,9 @@ class _LogsState extends State<Logs> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
     return Consumer<LogProvider>(
       builder: (context, logProvider, child) {
-        return Scaffold(
-          backgroundColor: backgroundColor,
-          appBar: CustomAppBar(
-            title: isMobile ? 'Registros Actividad' : 'Registros de Actividad',
-          ),
+        return NavShell(
+          isSecondary: true,
+          title: isMobile ? 'Registros Actividad' : 'Registros de Actividad',
           body: SafeArea(
             child: RefreshIndicator(
               onRefresh: () => logProvider.fetchLogs(),
@@ -62,20 +63,16 @@ class _LogsState extends State<Logs> {
                   SizedBox(height: 30),
                   Expanded(
                     child: logProvider.isLoading
-                        ? const Center(
-                            child: CircularProgressIndicator(
-                              color: primaryColor,
-                            ),
+                        ? const AppSkeleton.list()
+                        : logProvider.error != null
+                        ? ErrorState(
+                            error: logProvider.error,
+                            onRetry: () => logProvider.fetchLogs(),
                           )
                         : logProvider.logs.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No hay registros para mostrar.',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: secondaryColor,
-                              ),
-                            ),
+                        ? const EmptyState(
+                            icon: Icons.history,
+                            title: 'No hay registros de actividad',
                           )
                         : LayoutBuilder(
                             builder: (context, constraints) {

@@ -52,6 +52,7 @@ class _MultiSelectDialogState<T> extends State<MultiSelectDialog<T>> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       title: Text(widget.title),
       content: SingleChildScrollView(
         child: ListBody(

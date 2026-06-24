@@ -6,8 +6,8 @@ import '../../models/network_model.dart';
 import '../../providers/leader_provider.dart';
 import '../../providers/network_provider.dart';
 import '../../widgets/button.dart';
-import '../../widgets/custom_appbar.dart';
 import '../../widgets/custom_text_form_field.dart';
+import '../../widgets/nav_shell.dart';
 import '../../widgets/multi_select_dialog.dart';
 
 class CreateNetwork extends StatefulWidget {
@@ -98,8 +98,9 @@ class _CreateNetworkState extends State<CreateNetwork> {
     final networkProvider = context.watch<NetworkProvider>();
 
     bool isMobile = MediaQuery.of(context).size.width < 700;
-    return Scaffold(
-      appBar: CustomAppBar(title: _isEditing ? 'Editar Red' : 'Crear Red'),
+    return NavShell(
+      isSecondary: true,
+      title: _isEditing ? 'Editar Red' : 'Crear Red',
       body: SingleChildScrollView(
         padding: EdgeInsets.all(isMobile ? 20 : 70),
         child: Center(
@@ -107,6 +108,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
             constraints: BoxConstraints(maxWidth: 700),
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -116,6 +118,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'Figtree',
                       ),
                     ),
                   ),
@@ -123,6 +126,8 @@ class _CreateNetworkState extends State<CreateNetwork> {
                   CustomTextFormField(
                     controller: _nameController,
                     labelText: 'Nombre de la Red',
+                    isRequired: true,
+                    textInputAction: TextInputAction.done,
                     validator: (v) => (v == null || v.isEmpty)
                         ? 'El nombre es obligatorio'
                         : null,
@@ -169,7 +174,7 @@ class _CreateNetworkState extends State<CreateNetwork> {
                           ? Text(
                               'Ninguno seleccionado',
                               style: TextStyle(
-                                color: Colors.grey.shade600,
+                                color: secondaryText,
                                 fontSize: 16,
                               ),
                             )

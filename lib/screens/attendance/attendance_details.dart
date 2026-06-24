@@ -5,8 +5,11 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/attendance_model.dart';
 import '../../providers/member_provider.dart';
-import '../../widgets/custom_appbar.dart';
+import '../../utils/app_log.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/custom_card_container.dart';
+import '../../widgets/member_list_tile.dart';
+import '../../widgets/nav_shell.dart';
 
 class AttendanceDetail extends StatelessWidget {
   final AttendanceModel record;
@@ -17,8 +20,8 @@ class AttendanceDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final memberProvider = Provider.of<MemberProvider>(context);
 
-    print("DEBUG: IDs en el registro: ${record.presentMemberIds}");
-    print(
+    appLog("DEBUG: IDs en el registro: ${record.presentMemberIds}");
+    appLog(
       "DEBUG: Total miembros en provider: ${memberProvider.members.length}",
     );
 
@@ -26,17 +29,15 @@ class AttendanceDetail extends StatelessWidget {
         .where((m) => record.presentMemberIds.contains(m.id))
         .toList();
 
-    print("DEBUG: Miembros encontrados tras filtrar: ${presentMembers.length}");
+    appLog("DEBUG: Miembros encontrados tras filtrar: ${presentMembers.length}");
 
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: CustomAppBar(title: 'Detalles de Asistencia'),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: 800),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
+    return NavShell(
+      isSecondary: true,
+      title: 'Detalles de Asistencia',
+      body: BodyWidth(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildInfoCard(),
@@ -60,19 +61,7 @@ class AttendanceDetail extends StatelessWidget {
                       separatorBuilder: (_, __) => const Divider(),
                       itemBuilder: (context, index) {
                         final member = presentMembers[index];
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.green.withOpacity(0.2),
-                            child: Text(
-                              member.name[0],
-                              style: TextStyle(
-                                color: Colors.green.shade700,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          title: Text("${member.name} ${member.lastName}"),
-                        );
+                        return MemberListTile(member: member);
                       },
                     ),
                   ),
@@ -80,8 +69,7 @@ class AttendanceDetail extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildInfoCard() {
@@ -93,7 +81,11 @@ class AttendanceDetail extends StatelessWidget {
         children: [
           Text(
             '${record.definitionName ?? 'Evento'} | ${record.networkName}',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Figtree',
+            ),
           ),
           const SizedBox(height: 5),
           Text(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:ota_update/ota_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../colors.dart';
 import '../services/api_client.dart';
 import '../widgets/button.dart';
 
@@ -66,6 +67,9 @@ class UpdateService {
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             title: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -78,13 +82,13 @@ class UpdateService {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: Colors.blue,
+                    color: primaryColor,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   "Versión actual: v$currentVersion",
-                  style: const TextStyle(fontSize: 15, color: Colors.blueGrey),
+                  style: const TextStyle(fontSize: 15, color: secondaryText),
                 ),
               ],
             ),
@@ -106,9 +110,9 @@ class UpdateService {
                   const SizedBox(height: 20),
                   LinearProgressIndicator(
                     value: _progress / 100,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: alternateColor,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Colors.blue,
+                      primaryColor,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -131,7 +135,7 @@ class UpdateService {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     TextButton(
-                      style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                      style: TextButton.styleFrom(foregroundColor: secondaryText),
                       onPressed: () => Navigator.pop(context),
                       child: const Text(
                         "Ahora no",
@@ -197,7 +201,7 @@ class UpdateService {
   void _handleError(BuildContext context, String message) {
     if (Navigator.canPop(context)) Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: errorColor),
     );
   }
 }

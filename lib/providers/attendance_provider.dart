@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/attendance_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class AttendanceProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -54,7 +55,7 @@ class AttendanceProvider with ChangeNotifier {
 
         _recordsList.sort((a, b) => b.date.compareTo(a.date));
 
-        print(
+        appLog(
           "DEBUG: Se cargaron ${_recordsList.length} registros desde 'content'",
         );
       }
@@ -65,7 +66,7 @@ class AttendanceProvider with ChangeNotifier {
       } else {
         _error = "No se pudo cargar el historial de asistencias";
       }
-      print("DEBUG ERROR FETCH: $e");
+      appLog("DEBUG ERROR FETCH: $e");
     } catch (e) {
       _error = "Ocurrió un error inesperado al consultar el servidor";
     } finally {
@@ -125,7 +126,7 @@ class AttendanceProvider with ChangeNotifier {
       } else {
         _error =
             "El tiempo para registrar o modificar la asistencia ha expirado. El límite es hasta las 10:00 AM del día siguiente al evento. O el servidor no está disponible";
-        print("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
+        appLog("DEBUG ERROR SAVE ATTENDANCE: ${e.response?.data}");
       }
 
       return false;
@@ -161,7 +162,7 @@ class AttendanceProvider with ChangeNotifier {
       }
       return false;
     } catch (e) {
-      print("DEBUG ERROR DELETE: $e");
+      appLog("DEBUG ERROR DELETE: $e");
       return false;
     } finally {
       _isLoading = false;

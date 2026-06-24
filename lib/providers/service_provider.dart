@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../models/service_model.dart';
 import '../services/api_client.dart';
+import '../utils/app_log.dart';
 
 class ServiceProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
@@ -41,7 +42,7 @@ class ServiceProvider with ChangeNotifier {
 
         _services = loadedServices;
 
-        print(
+        appLog(
           "DEBUG: Lista sincronizada con el servidor. Total: ${_services.length}",
         );
       }
@@ -83,7 +84,7 @@ class ServiceProvider with ChangeNotifier {
       return false;
     } catch (e) {
       _error = "Error al guardar";
-      print("DEBUG ERROR: $e");
+      appLog("DEBUG ERROR: $e");
       return false;
     } finally {
       _isLoading = false;
@@ -126,7 +127,7 @@ class ServiceProvider with ChangeNotifier {
     } on DioException catch (e) {
       _error =
           'Error al eliminar servicio: ${e.response?.data['message'] ?? e.message}';
-      print(_error);
+      appLog(_error);
       notifyListeners();
       return false;
     }
