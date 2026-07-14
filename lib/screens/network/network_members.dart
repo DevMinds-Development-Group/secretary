@@ -34,7 +34,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
     });
   }
 
@@ -47,7 +47,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
     }
   }
 
@@ -69,7 +69,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
             backgroundColor: success ? accentColor : negativeColor,
           ),
         );
-        if (success) provider.fetchMembers(page: 0, size: 1000);
+        if (success) provider.fetchAllMembers();
       },
     );
   }
@@ -80,22 +80,22 @@ class _NetworkMembersState extends State<NetworkMembers> {
     final networkProvider = context.watch<NetworkProvider>();
     final memberProvider = Provider.of<MemberProvider>(context);
 
-    if (memberProvider.error == "SIN_CONEXION" ||
+    if (memberProvider.allError == "SIN_CONEXION" ||
         networkProvider.error == "SIN_CONEXION") {
       return NavShell(
         isSecondary: true,
         title: widget.network.name,
         body: NoConnectionWidget(
           onRefresh: () {
-            memberProvider.clearError();
+            memberProvider.clearAllError();
             networkProvider.clearError();
-            memberProvider.fetchMembers(page: 0, size: 1000);
+            memberProvider.fetchAllMembers();
           },
         ),
       );
     }
 
-    final List<Member> membersInGroup = memberProvider.members
+    final List<Member> membersInGroup = memberProvider.allMembers
         .where((member) => member.networkId == widget.network.id)
         .toList();
 
@@ -139,7 +139,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
                         _buildNetworkHeader(widget.network, isMobile),
                         SizedBox(height: 20),
                         Expanded(
-                          child: memberProvider.isLoading
+                          child: memberProvider.allLoading
                               ? const Center(
                                   child: CircularProgressIndicator(
                                     color: primaryColor,
@@ -155,10 +155,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
                                   onEdit: _openEditMember,
                                   onDelete: _confirmDeleteMember,
                                   onRefresh: () =>
-                                      memberProvider.fetchMembers(
-                                        page: 0,
-                                        size: 1000,
-                                      ),
+                                      memberProvider.fetchAllMembers(),
                                 ),
                         ),
                       ],

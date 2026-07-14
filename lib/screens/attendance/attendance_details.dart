@@ -22,10 +22,10 @@ class AttendanceDetail extends StatelessWidget {
 
     appLog("DEBUG: IDs en el registro: ${record.presentMemberIds}");
     appLog(
-      "DEBUG: Total miembros en provider: ${memberProvider.members.length}",
+      "DEBUG: Total miembros en provider: ${memberProvider.allMembers.length}",
     );
 
-    final presentMembers = memberProvider.members
+    final presentMembers = memberProvider.allMembers
         .where((m) => record.presentMemberIds.contains(m.id))
         .toList();
 

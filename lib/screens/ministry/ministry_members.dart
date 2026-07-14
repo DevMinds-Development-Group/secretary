@@ -37,7 +37,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
     });
   }
 
@@ -61,16 +61,16 @@ class _MinistryMembersState extends State<MinistryMembers> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
     if (ministryProvider.error == "SIN_CONEXION" ||
-        memberProvider.error == "SIN_CONEXION") {
+        memberProvider.allError == "SIN_CONEXION") {
       return NavShell(
         isSecondary: true,
         title: widget.ministry.name,
         body: NoConnectionWidget(
           onRefresh: () {
             ministryProvider.clearError();
-            memberProvider.clearError();
+            memberProvider.clearAllError();
             ministryProvider.fetchMinistryDetails(widget.ministry.id);
-            memberProvider.fetchMembers(page: 0, size: 1000);
+            memberProvider.fetchAllMembers();
           },
         ),
       );
@@ -106,7 +106,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
                                 : null,
                             onPressed: () => _showAddMemberDialog(
                               context,
-                              memberProvider.members,
+                              memberProvider.allMembers,
                               isMobile,
                               currentMinistry,
                             ),

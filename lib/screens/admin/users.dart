@@ -34,7 +34,7 @@ class _UsersState extends State<Users> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(size: 1000);
+      ).fetchAllMembers();
     });
   }
 

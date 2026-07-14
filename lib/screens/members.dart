@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../colors.dart';
+import '../models/member_filters.dart';
 import '../models/member_model.dart';
 import '../providers/member_provider.dart';
 import '../routes/page_route_builder.dart';
@@ -21,8 +22,6 @@ import '../widgets/states/empty_state.dart';
 import '../widgets/states/error_state.dart';
 import 'create/create_member.dart';
 
-enum _MemberStatusFilter { all, active, inactive }
-
 class Members extends StatefulWidget {
   const Members({super.key});
 
@@ -31,14 +30,73 @@ class Members extends StatefulWidget {
 }
 
 class _MembersState extends State<Members> {
-  _MemberStatusFilter _filter = _MemberStatusFilter.all;
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _lastNameCtrl;
+  late final TextEditingController _phoneCtrl;
+
+  /// null = todos, true = activos, false = inactivos.
+  bool? _enabled;
+
+  /// Panel de filtros desplegable (solo móvil).
+  bool _filtersExpanded = false;
 
   @override
   void initState() {
     super.initState();
+    // Sembramos los campos desde los filtros persistidos en el provider.
+    final f = context.read<MemberProvider>().filters;
+    _nameCtrl = TextEditingController(text: f.name);
+    _lastNameCtrl = TextEditingController(text: f.lastName);
+    _phoneCtrl = TextEditingController(text: f.phone);
+    _enabled = f.enabled;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      // Recarga fresca desde página 0 conservando los filtros vigentes.
+      context.read<MemberProvider>().loadFirstPage();
     });
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  MemberFilters _currentFilters() => MemberFilters(
+        name: _nameCtrl.text,
+        lastName: _lastNameCtrl.text,
+        phone: _phoneCtrl.text,
+        enabled: _enabled,
+      );
+
+  void _applyFilters() {
+    context.read<MemberProvider>().applyFilters(_currentFilters());
+  }
+
+  void _setEnabled(bool? value) {
+    setState(() => _enabled = value);
+    _applyFilters();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _nameCtrl.clear();
+      _lastNameCtrl.clear();
+      _phoneCtrl.clear();
+      _enabled = null;
+    });
+    context.read<MemberProvider>().clearFilters();
+  }
+
+  int get _activeFilterCount {
+    var count = 0;
+    if (_nameCtrl.text.trim().isNotEmpty) count++;
+    if (_lastNameCtrl.text.trim().isNotEmpty) count++;
+    if (_phoneCtrl.text.trim().isNotEmpty) count++;
+    if (_enabled != null) count++;
+    return count;
   }
 
   void _handleDelete(BuildContext context, Member member) async {
@@ -74,17 +132,6 @@ class _MembersState extends State<Members> {
     );
   }
 
-  List<Member> _applyFilter(List<Member> members) {
-    switch (_filter) {
-      case _MemberStatusFilter.all:
-        return members;
-      case _MemberStatusFilter.active:
-        return members.where((m) => m.enabled).toList();
-      case _MemberStatusFilter.inactive:
-        return members.where((m) => !m.enabled).toList();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final memberProvider = Provider.of<MemberProvider>(context);
@@ -95,7 +142,7 @@ class _MembersState extends State<Members> {
         title: 'Miembros',
         body: ErrorState(
           error: memberProvider.error,
-          onRetry: () => memberProvider.fetchMembers(),
+          onRetry: () => memberProvider.loadFirstPage(),
         ),
       );
     }
@@ -109,7 +156,6 @@ class _MembersState extends State<Members> {
 
   Widget _buildContent(BuildContext context, MemberProvider provider) {
     final isCompact = context.isCompact;
-    final members = _applyFilter(provider.filteredMembers);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -122,9 +168,7 @@ class _MembersState extends State<Members> {
               children: [
                 _buildHeader(context),
                 const SizedBox(height: Spacing.lg),
-                _buildSearchRow(context, provider, isCompact),
-                const SizedBox(height: Spacing.md),
-                _buildFilterChips(),
+                _buildToolbar(context, provider, isCompact),
               ],
             ),
           ),
@@ -132,7 +176,7 @@ class _MembersState extends State<Members> {
         const SizedBox(height: Spacing.md),
         Expanded(
           child: BodyWidth(
-            child: _buildTable(context, provider, members),
+            child: _buildTable(context, provider, provider.members),
           ),
         ),
         if (provider.totalPages > 0 && !provider.isLoading)
@@ -165,49 +209,167 @@ class _MembersState extends State<Members> {
     );
   }
 
-  Widget _buildSearchRow(
+  // ---------------------------------------------------------------------------
+  // Barra de herramientas: filtros (visibles en web / desplegables en móvil) +
+  // botón de crear.
+  // ---------------------------------------------------------------------------
+  Widget _buildToolbar(
     BuildContext context,
     MemberProvider provider,
     bool isCompact,
   ) {
-    final search = SearchTextField(
-      hintText: 'Buscar miembros…',
-      onChanged: (query) => provider.search(query),
-    );
     final add = AddButton(
       size: isCompact ? const Size(double.infinity, 48) : null,
       onPressed: () => _openCreate(),
     );
 
-    if (isCompact) {
-      return Column(
-        children: [search, const SizedBox(height: Spacing.md), add],
+    if (!isCompact) {
+      // Web: todos los filtros visibles + botón crear a la derecha.
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _buildFilterFields(isCompact: false)),
+          const SizedBox(width: Spacing.lg),
+          add,
+        ],
       );
     }
-    return Row(
+
+    // Móvil: botón crear + toggle "Filtros" que despliega el panel.
+    final count = _activeFilterCount;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: search),
-        const SizedBox(width: Spacing.lg),
         add,
+        const SizedBox(height: Spacing.md),
+        OutlinedButton(
+          onPressed: () =>
+              setState(() => _filtersExpanded = !_filtersExpanded),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primaryText,
+            side: const BorderSide(color: alternateColor),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.md,
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.tune, size: 18, color: primaryColor),
+              const SizedBox(width: Spacing.sm),
+              Text(count > 0 ? 'Filtros ($count)' : 'Filtros'),
+              const Spacer(),
+              Icon(
+                _filtersExpanded ? Icons.expand_less : Icons.expand_more,
+                color: secondaryText,
+              ),
+            ],
+          ),
+        ),
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 200),
+          crossFadeState: _filtersExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: Spacing.md),
+            child: _buildFilterFields(isCompact: true),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildFilterChips() {
-    Widget chip(String label, _MemberStatusFilter value) => AppFilterChip(
+  Widget _buildFilterFields({required bool isCompact}) {
+    final nameField = _filterField(
+      controller: _nameCtrl,
+      hint: 'Nombre…',
+      width: isCompact ? double.infinity : 220,
+    );
+    final lastNameField = _filterField(
+      controller: _lastNameCtrl,
+      hint: 'Apellido…',
+      width: isCompact ? double.infinity : 200,
+    );
+    final phoneField = _filterField(
+      controller: _phoneCtrl,
+      hint: 'Teléfono…',
+      width: isCompact ? double.infinity : 180,
+    );
+    final estado = _buildEstadoChips();
+    final clear = _buildClearButton();
+
+    if (isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          nameField,
+          const SizedBox(height: Spacing.md),
+          lastNameField,
+          const SizedBox(height: Spacing.md),
+          phoneField,
+          const SizedBox(height: Spacing.md),
+          estado,
+          if (_activeFilterCount > 0)
+            Align(alignment: Alignment.centerLeft, child: clear),
+        ],
+      );
+    }
+
+    return Wrap(
+      spacing: Spacing.md,
+      runSpacing: Spacing.md,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        nameField,
+        lastNameField,
+        phoneField,
+        estado,
+        if (_activeFilterCount > 0) clear,
+      ],
+    );
+  }
+
+  Widget _filterField({
+    required TextEditingController controller,
+    required String hint,
+    required double width,
+  }) {
+    return SizedBox(
+      width: width,
+      child: SearchTextField(
+        controller: controller,
+        hintText: hint,
+        onChanged: (_) => _applyFilters(),
+      ),
+    );
+  }
+
+  Widget _buildEstadoChips() {
+    Widget chip(String label, bool? value) => AppFilterChip(
           label: label,
-          selected: _filter == value,
-          onSelected: (_) => setState(() => _filter = value),
+          selected: _enabled == value,
+          onSelected: (_) => _setEnabled(value),
         );
 
     return Wrap(
       spacing: Spacing.sm,
       runSpacing: Spacing.sm,
       children: [
-        chip('Todos', _MemberStatusFilter.all),
-        chip('Activos', _MemberStatusFilter.active),
-        chip('Inactivos', _MemberStatusFilter.inactive),
+        chip('Todos', null),
+        chip('Activos', true),
+        chip('Inactivos', false),
       ],
+    );
+  }
+
+  Widget _buildClearButton() {
+    return TextButton.icon(
+      onPressed: _clearFilters,
+      icon: const Icon(Icons.close, size: 18),
+      label: const Text('Limpiar'),
+      style: TextButton.styleFrom(foregroundColor: secondaryText),
     );
   }
 
@@ -223,8 +385,12 @@ class _MembersState extends State<Members> {
       return EmptyState(
         icon: Icons.people_outline,
         title: 'No se encontraron miembros',
-        message: 'Agrega un miembro o ajusta tu búsqueda.',
-        action: AddButton(onPressed: () => _openCreate()),
+        message: provider.hasActiveFilters
+            ? 'Ajusta o limpia los filtros.'
+            : 'Agrega un miembro para empezar.',
+        action: provider.hasActiveFilters
+            ? null
+            : AddButton(onPressed: () => _openCreate()),
       );
     }
 
