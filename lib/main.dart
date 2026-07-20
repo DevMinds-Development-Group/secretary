@@ -6,6 +6,7 @@ import 'package:Koinos/providers/leader_provider.dart';
 import 'package:Koinos/providers/log_provider.dart';
 import 'package:Koinos/providers/member_provider.dart';
 import 'package:Koinos/providers/ministry_provider.dart';
+import 'package:Koinos/providers/network_members_provider.dart';
 import 'package:Koinos/providers/network_provider.dart';
 import 'package:Koinos/providers/role_provider.dart';
 import 'package:Koinos/providers/service_provider.dart';
@@ -35,6 +36,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => MemberProvider()),
         ChangeNotifierProvider(create: (context) => AttendanceProvider()),
         ChangeNotifierProvider(create: (context) => NetworkProvider()),
+        ChangeNotifierProvider(create: (context) => NetworkMembersProvider()),
         ChangeNotifierProvider(create: (context) => MinistryProvider()),
         ChangeNotifierProvider(create: (context) => ServiceTypeProvider()),
         ChangeNotifierProvider(create: (context) => LeaderProvider()),

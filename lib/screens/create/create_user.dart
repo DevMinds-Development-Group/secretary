@@ -48,7 +48,7 @@ class _CreateUserState extends State<CreateUser> {
 
     // Usamos un Future para asegurar que el provider esté listo antes de inicializar
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<MemberProvider>(context, listen: false).fetchAllMembers();
       _initializeFields();
     });
   }
@@ -279,7 +279,7 @@ class _CreateUserState extends State<CreateUser> {
                           if (textEditingValue.text.isEmpty) {
                             return const Iterable<Member>.empty();
                           }
-                          return memberProvider.members.where((Member m) {
+                          return memberProvider.allMembers.where((Member m) {
                             final fullName = '${m.name} ${m.lastName}'
                                 .toLowerCase();
                             return fullName.contains(
@@ -305,7 +305,7 @@ class _CreateUserState extends State<CreateUser> {
                                   _selectedMemberId != null &&
                                   fieldController.text.isEmpty) {
                                 try {
-                                  final m = memberProvider.members.firstWhere(
+                                  final m = memberProvider.allMembers.firstWhere(
                                     (element) =>
                                         element.id == _selectedMemberId,
                                   );

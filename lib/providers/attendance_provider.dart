@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import '../models/attendance_filters.dart';
 import '../models/attendance_model.dart';
 import '../services/api_client.dart';
 import '../utils/app_log.dart';
@@ -15,6 +16,7 @@ class AttendanceProvider with ChangeNotifier {
   int _currentPage = 0;
   int _totalPages = 0;
   int _pageSize = 10;
+  AttendanceFilters _filters = const AttendanceFilters();
 
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -22,6 +24,8 @@ class AttendanceProvider with ChangeNotifier {
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
   int get pageSize => _pageSize;
+  AttendanceFilters get filters => _filters;
+  bool get hasActiveFilters => _filters.isNotEmpty;
 
   Future<void> fetchAttendanceHistory({int page = 0, int? size}) async {
     if (size != null) _pageSize = size;
@@ -39,6 +43,7 @@ class AttendanceProvider with ChangeNotifier {
           'pageSize': _pageSize,
           'sortBy': 'date',
           'sortType': 'DESC',
+          ..._filters.toQuery(),
         },
       );
 
@@ -73,6 +78,22 @@ class AttendanceProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// Recarga fresca desde la página 0 conservando los filtros vigentes
+  /// (persisten al salir/entrar de la pantalla).
+  Future<void> loadFirstPage() async {
+    await fetchAttendanceHistory(page: 0);
+  }
+
+  Future<void> applyFilters(AttendanceFilters filters) async {
+    _filters = filters;
+    await fetchAttendanceHistory(page: 0);
+  }
+
+  Future<void> clearFilters() async {
+    _filters = const AttendanceFilters();
+    await fetchAttendanceHistory(page: 0);
   }
 
   void clearError() {

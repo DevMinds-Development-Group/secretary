@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../main.dart';
-import '../utils/app_log.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -26,23 +25,23 @@ class ApiClient {
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           } else {
-            appLog('No se encontró token para la petición a: ${options.path}');
+            print('No se encontró token para la petición a: ${options.path}');
           }
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          appLog(
+          print(
             'Respuesta recibida: ${response.statusCode} desde ${response.requestOptions.path}',
           );
           return handler.next(response);
         },
         onError: (DioException e, handler) async {
           if (e.response?.statusCode == 401) {
-            appLog('TOKEN EXPIRADO: Limpiando sesión...');
+            print('TOKEN EXPIRADO: Limpiando sesión...');
             await _secureStorage.deleteAll();
 
             navigatorKey.currentState?.pushNamedAndRemoveUntil(
-              '/',
+              'login',
               (route) => false,
             );
 

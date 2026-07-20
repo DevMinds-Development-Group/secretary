@@ -1,3 +1,5 @@
+import 'member_model.dart';
+
 class AttendanceModel {
   final String id;
   final String definitionId;
@@ -9,6 +11,11 @@ class AttendanceModel {
   final int pastoralVisitsCount;
   final int newConvert;
   final Set<String> presentMemberIds;
+
+  /// Miembros presentes tal como los devuelve el backend (proyección histórica:
+  /// id/name/lastName/phone). Se renderizan directamente en el detalle, sin
+  /// depender de `MemberProvider.allMembers` (que puede no estar cargado).
+  final List<Member> presentMembers;
   final String observations;
 
   AttendanceModel({
@@ -22,20 +29,25 @@ class AttendanceModel {
     required this.pastoralVisitsCount,
     required this.newConvert,
     required this.presentMemberIds,
+    this.presentMembers = const [],
     this.observations = "",
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
-    Set<String> extractedIds = {};
+    final List<Member> present = [];
+    final Set<String> extractedIds = {};
 
-    if (json['presentMembers'] != null) {
-      extractedIds = (json['presentMembers'] as List)
-          .map((member) => member['id'].toString())
-          .toSet();
-    } else if (json['presentMembers'] != null) {
-      extractedIds = (json['presentMembers'] as List)
-          .map((id) => id.toString())
-          .toSet();
+    final raw = json['presentMembers'];
+    if (raw is List) {
+      for (final entry in raw) {
+        if (entry is Map<String, dynamic>) {
+          final member = Member.fromJson(entry);
+          present.add(member);
+          extractedIds.add(member.id);
+        } else if (entry != null) {
+          extractedIds.add(entry.toString());
+        }
+      }
     }
 
     return AttendanceModel(
@@ -53,6 +65,7 @@ class AttendanceModel {
       newConvert: json['newConvert'] ?? 0,
       observations: json['observations'] ?? '',
       presentMemberIds: extractedIds,
+      presentMembers: present,
     );
   }
 

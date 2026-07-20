@@ -47,7 +47,7 @@ class _AttendanceState extends State<Attendance> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
       Provider.of<NetworkProvider>(context, listen: false).fetchNetworks();
     });
 
@@ -239,7 +239,7 @@ class _AttendanceState extends State<Attendance> {
     final attendanceProvider = context.watch<AttendanceProvider>();
 
     // 1. PRIORIDAD: ERROR DE CONEXIÓN
-    if (memberProvider.error == "SIN_CONEXION" ||
+    if (memberProvider.allError == "SIN_CONEXION" ||
         serviceProvider.error == "SIN_CONEXION" ||
         netProvider.error == "SIN_CONEXION" ||
         attendanceProvider.error == "SIN_CONEXION") {
@@ -248,13 +248,13 @@ class _AttendanceState extends State<Attendance> {
         title: 'Asistencia',
         body: NoConnectionWidget(
           onRefresh: () async {
-            memberProvider.clearError();
+            memberProvider.clearAllError();
             serviceProvider.clearError();
             netProvider.clearError();
             attendanceProvider.clearError();
 
             await Future.wait([
-              memberProvider.fetchMembers(page: 0, size: 1000),
+              memberProvider.fetchAllMembers(),
               serviceProvider.fetchServices(),
               netProvider.fetchNetworks(),
             ]);
@@ -264,7 +264,7 @@ class _AttendanceState extends State<Attendance> {
     }
 
     // 2. PRIORIDAD: CARGA INICIAL
-    if (memberProvider.isLoading ||
+    if (memberProvider.allLoading ||
         serviceProvider.isLoading ||
         netProvider.isLoading) {
       return NavShell(
@@ -276,7 +276,7 @@ class _AttendanceState extends State<Attendance> {
       );
     }
 
-    List<Member> membersToShow = memberProvider.members;
+    List<Member> membersToShow = memberProvider.allMembers;
 
     if (_selectedNetworkId != null) {
       membersToShow = membersToShow
@@ -429,7 +429,7 @@ class _AttendanceState extends State<Attendance> {
   Widget _buildMemberList(List<Member> members, isMobile) {
     final memberProvider = context.watch<MemberProvider>();
 
-    if (memberProvider.isLoading) {
+    if (memberProvider.allLoading) {
       return const Center(
         child: CircularProgressIndicator(color: primaryColor),
       );
