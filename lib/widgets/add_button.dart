@@ -32,7 +32,9 @@ class _ButtonState extends State<AddButton> {
       style: ElevatedButton.styleFrom(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: accentColor,
-        fixedSize: buttonSize,
+        minimumSize: buttonSize,
+        maximumSize: Size(double.infinity, buttonSize.height),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         elevation: 3,
       ),
       child: Row(

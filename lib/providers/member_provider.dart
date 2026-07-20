@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+import '../models/member_filters.dart';
 import '../models/member_model.dart';
 import '../services/api_client.dart';
 import '../utils/app_image_cache.dart';
@@ -12,14 +13,22 @@ import '../utils/app_log.dart';
 class MemberProvider with ChangeNotifier {
   final ApiClient _apiClient = ApiClient();
 
+  static const int defaultPageSize = 10;
+
+  // --- Estado de la LISTA PAGINADA (pantalla Miembros) ---
   List<Member> _members = [];
   bool _isLoading = false;
   String? _error;
-  String _searchQuery = '';
+  MemberFilters _filters = const MemberFilters();
 
   int _currentPage = 0;
   int _totalPages = 0;
-  int _pageSize = 10;
+  int _pageSize = defaultPageSize;
+
+  // --- Estado de TODOS LOS MIEMBROS (selectores/conteos/detalles) ---
+  List<Member> _allMembers = [];
+  bool _allLoading = false;
+  String? _allError;
 
   List<Member> get members => _members;
   bool get isLoading => _isLoading;
@@ -28,19 +37,17 @@ class MemberProvider with ChangeNotifier {
   int get totalPages => _totalPages;
   int get pageSize => _pageSize;
 
+  List<Member> get allMembers => _allMembers;
+  bool get allLoading => _allLoading;
+  String? get allError => _allError;
+
+  MemberFilters get filters => _filters;
+  bool get hasActiveFilters => _filters.isNotEmpty;
+
+  /// Busca en la lista completa y, como respaldo, en la página actual.
   List<Member> getMembersByIds(List<String> ids) {
-    return _members.where((member) => ids.contains(member.id)).toList();
-  }
-
-  List<Member> get allMembers => _members;
-
-  List<Member> get filteredMembers {
-    if (_searchQuery.isEmpty) return _members;
-    return _members.where((member) {
-      final query = _searchQuery.toLowerCase();
-      return member.fullName.toLowerCase().contains(query) ||
-          (member.networkName?.toLowerCase().contains(query) ?? false);
-    }).toList();
+    final pool = _allMembers.isNotEmpty ? _allMembers : _members;
+    return pool.where((member) => ids.contains(member.id)).toList();
   }
 
   void clearError() {
@@ -118,6 +125,7 @@ class MemberProvider with ChangeNotifier {
         // bytes nuevos (la URL se reutiliza).
         await AppImageCache.evict(oldUrl);
         await fetchMembers();
+        await fetchAllMembers();
       }
 
       return ok;
@@ -134,7 +142,7 @@ class MemberProvider with ChangeNotifier {
     _currentPage = page ?? _currentPage;
     _pageSize = size ?? _pageSize;
     _isLoading = true;
-    // _error = null;
+    _error = null;
     _members = [];
     notifyListeners();
 
@@ -147,7 +155,7 @@ class MemberProvider with ChangeNotifier {
           'pageNo': _currentPage,
           'pageSize': _pageSize,
           'sortType': 'asc',
-          'searchTerm': _searchQuery,
+          ..._filters.toQuery(),
         },
       );
 
@@ -174,8 +182,64 @@ class MemberProvider with ChangeNotifier {
     }
   }
 
+  /// Carga la primera página conservando los filtros vigentes (persisten al
+  /// salir/entrar de la pantalla). La paginación vuelve a la página 0.
+  Future<void> loadFirstPage({int size = defaultPageSize}) async {
+    await fetchMembers(page: 0, size: size);
+  }
+
+  /// Aplica un nuevo conjunto de filtros y recarga desde la página 0.
+  Future<void> applyFilters(MemberFilters filters) async {
+    _filters = filters;
+    await fetchMembers(page: 0);
+  }
+
+  /// Limpia todos los filtros y recarga desde la página 0.
+  Future<void> clearFilters() async {
+    _filters = const MemberFilters();
+    await fetchMembers(page: 0);
+  }
+
+  void clearAllError() {
+    _allError = null;
+    notifyListeners();
+  }
+
+  /// Carga TODOS los miembros para selectores/conteos/detalles, en un estado
+  /// separado que NO toca la paginación de la pantalla Miembros.
+  Future<void> fetchAllMembers() async {
+    _allLoading = true;
+    _allError = null;
+    notifyListeners();
+    try {
+      final response = await _apiClient.dio.get(
+        '/members',
+        queryParameters: {
+          'pageNo': 0,
+          'pageSize': 1000,
+          'sortType': 'asc',
+          'searchTerm': '',
+        },
+      );
+      final List<dynamic> data = response.data['content'] ?? [];
+      _allMembers = data.map((m) => Member.fromJson(m)).toList();
+    } on DioException catch (e) {
+      if (e.error == 'SIN_CONEXION' ||
+          e.type == DioExceptionType.connectionError) {
+        _allError = 'SIN_CONEXION';
+      } else {
+        _allError = 'Error al cargar miembros';
+      }
+    } catch (e) {
+      _allError = 'Ocurrió un error inesperado';
+    } finally {
+      _allLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> fetchAllMembersForGroups() async {
-    await fetchMembers(page: 0, size: 1000);
+    await fetchAllMembers();
   }
 
   Future<void> onPageChanged(int newPage) async {
@@ -196,13 +260,6 @@ class MemberProvider with ChangeNotifier {
     if (_currentPage > 0) {
       await fetchMembers(page: _currentPage - 1);
     }
-  }
-
-  void search(String query) {
-    _searchQuery = query;
-    _currentPage = 0;
-    fetchMembers();
-    notifyListeners();
   }
 
   Future<bool> addMember({
@@ -312,10 +369,12 @@ class MemberProvider with ChangeNotifier {
   // lib/providers/member_provider.dart
   Member? findById(String? id) {
     if (id == null) return null;
-    try {
-      return _members.firstWhere((m) => m.id == id);
-    } catch (_) {
-      return null;
+    for (final m in _allMembers) {
+      if (m.id == id) return m;
     }
+    for (final m in _members) {
+      if (m.id == id) return m;
+    }
+    return null;
   }
 }

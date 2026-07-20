@@ -136,7 +136,10 @@ class _CreateMemberState extends State<CreateMember> {
       }
 
       if (mounted && success) {
+        // Refresca la lista paginada (pantalla Miembros) y la lista completa
+        // (selectores/detalles) para que ambas reflejen el cambio al volver.
         await memberProvider.fetchMembers(page: 0);
+        await memberProvider.fetchAllMembers();
         _showSnackBar(_isEditing ? 'Miembro actualizado' : 'Miembro creado');
         Navigator.pop(context);
       } else if (mounted) {

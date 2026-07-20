@@ -6,6 +6,7 @@ import '../../models/member_model.dart';
 import '../../models/ministry_model.dart';
 import '../../providers/member_provider.dart';
 import '../../providers/ministry_provider.dart';
+import '../../routes/page_route_builder.dart';
 import '../../services/auth_service.dart';
 import '../../utils/user_permissions.dart';
 import '../../widgets/add_button.dart';
@@ -16,6 +17,7 @@ import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
 import '../../widgets/small_button.dart';
+import '../member_profile.dart';
 
 class MinistryMembers extends StatefulWidget {
   final MinistryModel ministry;
@@ -37,7 +39,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
     });
   }
 
@@ -61,16 +63,16 @@ class _MinistryMembersState extends State<MinistryMembers> {
     bool isMobile = MediaQuery.of(context).size.width < 700;
 
     if (ministryProvider.error == "SIN_CONEXION" ||
-        memberProvider.error == "SIN_CONEXION") {
+        memberProvider.allError == "SIN_CONEXION") {
       return NavShell(
         isSecondary: true,
         title: widget.ministry.name,
         body: NoConnectionWidget(
           onRefresh: () {
             ministryProvider.clearError();
-            memberProvider.clearError();
+            memberProvider.clearAllError();
             ministryProvider.fetchMinistryDetails(widget.ministry.id);
-            memberProvider.fetchMembers(page: 0, size: 1000);
+            memberProvider.fetchAllMembers();
           },
         ),
       );
@@ -106,7 +108,7 @@ class _MinistryMembersState extends State<MinistryMembers> {
                                 : null,
                             onPressed: () => _showAddMemberDialog(
                               context,
-                              memberProvider.members,
+                              memberProvider.allMembers,
                               isMobile,
                               currentMinistry,
                             ),
@@ -335,8 +337,22 @@ class _MinistryMembersState extends State<MinistryMembers> {
                   ),
                 ],
               ),
-              trailing: permissions.canSeeMembers
-                  ? IconButton(
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.visibility_outlined,
+                      color: primaryColor,
+                    ),
+                    tooltip: 'Ver perfil',
+                    onPressed: () => Navigator.push(
+                      context,
+                      createFadeRoute(MemberProfileScreen(member: member)),
+                    ),
+                  ),
+                  if (permissions.canSeeMembers)
+                    IconButton(
                       icon: const Icon(
                         Icons.delete_outline,
                         color: negativeColor,
@@ -364,8 +380,9 @@ class _MinistryMembersState extends State<MinistryMembers> {
                           },
                         );
                       },
-                    )
-                  : null,
+                    ),
+                ],
+              ),
             );
           },
         ),
