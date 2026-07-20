@@ -21,6 +21,7 @@ import '../widgets/states/app_skeleton.dart';
 import '../widgets/states/empty_state.dart';
 import '../widgets/states/error_state.dart';
 import 'create/create_member.dart';
+import 'member_profile.dart';
 
 class Members extends StatefulWidget {
   const Members({super.key});
@@ -129,6 +130,13 @@ class _MembersState extends State<Members> {
     Navigator.push(
       context,
       createFadeRoute(CreateMember(memberToEdit: member)),
+    );
+  }
+
+  void _openProfile(Member member) {
+    Navigator.push(
+      context,
+      createFadeRoute(MemberProfileScreen(member: member)),
     );
   }
 
@@ -397,6 +405,7 @@ class _MembersState extends State<Members> {
     return MemberTable(
       members: members,
       showNetworkColumn: true,
+      onView: _openProfile,
       onEdit: (m) => _openCreate(member: m),
       onDelete: (m) => _showDelete(context, m),
       onRefresh: () => provider.fetchMembers(),

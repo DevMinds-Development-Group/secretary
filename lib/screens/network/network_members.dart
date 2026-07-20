@@ -1,20 +1,28 @@
-import 'package:Koinos/screens/create/create_member.dart';
-import 'package:Koinos/widgets/add_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../colors.dart';
-import '../../../models/member_model.dart';
-import '../../../providers/member_provider.dart';
+import '../../colors.dart';
+import '../../models/member_filters.dart';
+import '../../models/member_model.dart';
 import '../../models/network_model.dart';
-import '../../providers/network_provider.dart';
+import '../../providers/member_provider.dart';
+import '../../providers/network_members_provider.dart';
 import '../../routes/page_route_builder.dart';
+import '../../theme/design_constants.dart';
+import '../../utils/window_size.dart';
+import '../../widgets/add_button.dart';
 import '../../widgets/app_chip.dart';
+import '../../widgets/body_width.dart';
 import '../../widgets/custom_card_container.dart';
 import '../../widgets/member_table.dart';
 import '../../widgets/nav_shell.dart';
 import '../../widgets/no_connection_widget.dart';
+import '../../widgets/pagination.dart';
+import '../../widgets/search_text_field.dart';
 import '../../widgets/showDeleteConfirmationDialog.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../create/create_member.dart';
+import '../member_profile.dart';
 
 class NetworkMembers extends StatefulWidget {
   final NetworkModel network;
@@ -26,38 +34,93 @@ class NetworkMembers extends StatefulWidget {
 }
 
 class _NetworkMembersState extends State<NetworkMembers> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _lastNameCtrl;
+  late final TextEditingController _phoneCtrl;
+  bool? _enabled;
+  bool _filtersExpanded = false;
+
   @override
   void initState() {
     super.initState();
+    final f = context.read<NetworkMembersProvider>().filters;
+    _nameCtrl = TextEditingController(text: f.name);
+    _lastNameCtrl = TextEditingController(text: f.lastName);
+    _phoneCtrl = TextEditingController(text: f.phone);
+    _enabled = f.enabled;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<MemberProvider>(
-        context,
-        listen: false,
-      ).fetchAllMembers();
+      context.read<NetworkMembersProvider>().loadFirstPage(widget.network.id);
     });
   }
 
-  Future<void> _openEditMember(Member member) async {
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _lastNameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  MemberFilters _currentFilters() => MemberFilters(
+        name: _nameCtrl.text,
+        lastName: _lastNameCtrl.text,
+        phone: _phoneCtrl.text,
+        enabled: _enabled,
+      );
+
+  void _applyFilters() {
+    context.read<NetworkMembersProvider>().applyFilters(_currentFilters());
+  }
+
+  void _setEnabled(bool? value) {
+    setState(() => _enabled = value);
+    _applyFilters();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _nameCtrl.clear();
+      _lastNameCtrl.clear();
+      _phoneCtrl.clear();
+      _enabled = null;
+    });
+    context.read<NetworkMembersProvider>().clearFilters();
+  }
+
+  int get _activeFilterCount {
+    var count = 0;
+    if (_nameCtrl.text.trim().isNotEmpty) count++;
+    if (_lastNameCtrl.text.trim().isNotEmpty) count++;
+    if (_phoneCtrl.text.trim().isNotEmpty) count++;
+    if (_enabled != null) count++;
+    return count;
+  }
+
+  Future<void> _openCreate({Member? member}) async {
     await Navigator.push(
       context,
       createFadeRoute(CreateMember(memberToEdit: member)),
     );
     if (mounted) {
-      Provider.of<MemberProvider>(
-        context,
-        listen: false,
-      ).fetchAllMembers();
+      context.read<NetworkMembersProvider>().loadFirstPage(widget.network.id);
     }
   }
 
-  void _confirmDeleteMember(Member member) {
+  void _openProfile(Member member) {
+    Navigator.push(
+      context,
+      createFadeRoute(MemberProfileScreen(member: member)),
+    );
+  }
+
+  void _confirmDelete(Member member) {
     showDeleteConfirmationDialog(
       context: context,
       itemName: member.fullName,
       onConfirm: () async {
-        final provider = Provider.of<MemberProvider>(context, listen: false);
-        final success = await provider.deleteMember(member.id);
+        final success =
+            await context.read<MemberProvider>().deleteMember(member.id);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -69,127 +132,262 @@ class _NetworkMembersState extends State<NetworkMembers> {
             backgroundColor: success ? accentColor : negativeColor,
           ),
         );
-        if (success) provider.fetchAllMembers();
+        if (success) {
+          context
+              .read<NetworkMembersProvider>()
+              .loadFirstPage(widget.network.id);
+        }
       },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isMobile = MediaQuery.of(context).size.width < 700;
-    final networkProvider = context.watch<NetworkProvider>();
-    final memberProvider = Provider.of<MemberProvider>(context);
+    final provider = context.watch<NetworkMembersProvider>();
 
-    if (memberProvider.allError == "SIN_CONEXION" ||
-        networkProvider.error == "SIN_CONEXION") {
+    if (provider.error == 'SIN_CONEXION') {
       return NavShell(
         isSecondary: true,
         title: widget.network.name,
         body: NoConnectionWidget(
           onRefresh: () {
-            memberProvider.clearAllError();
-            networkProvider.clearError();
-            memberProvider.fetchAllMembers();
+            provider.clearError();
+            provider.loadFirstPage(widget.network.id);
           },
         ),
       );
     }
 
-    final List<Member> membersInGroup = memberProvider.allMembers
-        .where((member) => member.networkId == widget.network.id)
-        .toList();
-
-    membersInGroup.sort(
-      (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
-    );
-
     return NavShell(
       isSecondary: true,
       title: widget.network.name,
-      body: SafeArea(
-        child: networkProvider.isLoading
-            ? const Center(
-                child: CircularProgressIndicator(color: primaryColor),
-              )
-            : Padding(
-                padding: EdgeInsets.symmetric(horizontal: isMobile ? 15 : 5),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 1500),
-                    child: Column(
-                      children: [
-                        SizedBox(height: 20),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: AddButton(
-                            size: Size(
-                              isMobile
-                                  ? MediaQuery.of(context).size.width * 0.9
-                                  : 200,
-                              isMobile ? 50 : 45,
-                            ),
-                            onPressed: () => Navigator.push(
-                              context,
-                              createFadeRoute(const CreateMember()),
-                            ),
-                            title: 'Crear Miembro',
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        _buildNetworkHeader(widget.network, isMobile),
-                        SizedBox(height: 20),
-                        Expanded(
-                          child: memberProvider.allLoading
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                    color: primaryColor,
-                                  ),
-                                )
-                              : membersInGroup.isEmpty
-                              ? _buildEmptyState(
-                                  isMobile,
-                                ) // Solo se muestra si terminó de cargar y está vacío
-                              : MemberTable(
-                                  members: membersInGroup,
-                                  showNetworkColumn: false,
-                                  onEdit: _openEditMember,
-                                  onDelete: _confirmDeleteMember,
-                                  onRefresh: () =>
-                                      memberProvider.fetchAllMembers(),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: Spacing.xl),
+          BodyWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildNetworkHeader(widget.network),
+                const SizedBox(height: Spacing.lg),
+                _buildToolbar(context, isCompact: context.isCompact),
+              ],
+            ),
+          ),
+          const SizedBox(height: Spacing.md),
+          Expanded(
+            child: BodyWidth(child: _buildTable(provider)),
+          ),
+          if (provider.totalPages > 0 && !provider.isLoading)
+            BodyWidth(
+              child: Pagination(
+                currentPage: provider.currentPage,
+                totalPages: provider.totalPages,
+                itemsPerPage: provider.pageSize,
+                onPageChanged: (page) => provider.onPageChanged(page),
+                onItemsPerPageChanged: (size) =>
+                    provider.onItemsPerPageChanged(size),
               ),
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildNetworkHeader(NetworkModel network, bool isMobile) {
+  Widget _buildTable(NetworkMembersProvider provider) {
+    if (provider.isLoading) {
+      return const AppSkeleton.list();
+    }
+    if (provider.members.isEmpty) {
+      return _EmptyMembers(
+        hasFilters: provider.hasActiveFilters,
+        onCreate: () => _openCreate(),
+      );
+    }
+    return MemberTable(
+      members: provider.members,
+      showNetworkColumn: false,
+      onView: _openProfile,
+      onEdit: (m) => _openCreate(member: m),
+      onDelete: _confirmDelete,
+      onRefresh: () => provider.refresh(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Barra de herramientas: filtros (web visibles / móvil desplegables) + crear.
+  // ---------------------------------------------------------------------------
+  Widget _buildToolbar(BuildContext context, {required bool isCompact}) {
+    final add = AddButton(
+      size: isCompact ? const Size(double.infinity, 48) : null,
+      onPressed: () => _openCreate(),
+      title: 'Crear Miembro',
+    );
+
+    if (!isCompact) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: _buildFilterFields(isCompact: false)),
+          const SizedBox(width: Spacing.lg),
+          add,
+        ],
+      );
+    }
+
+    final count = _activeFilterCount;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        add,
+        const SizedBox(height: Spacing.md),
+        OutlinedButton(
+          onPressed: () =>
+              setState(() => _filtersExpanded = !_filtersExpanded),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primaryText,
+            side: const BorderSide(color: alternateColor),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.lg,
+              vertical: Spacing.md,
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.tune, size: 18, color: primaryColor),
+              const SizedBox(width: Spacing.sm),
+              Text(count > 0 ? 'Filtros ($count)' : 'Filtros'),
+              const Spacer(),
+              Icon(
+                _filtersExpanded ? Icons.expand_less : Icons.expand_more,
+                color: secondaryText,
+              ),
+            ],
+          ),
+        ),
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 200),
+          crossFadeState: _filtersExpanded
+              ? CrossFadeState.showSecond
+              : CrossFadeState.showFirst,
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Padding(
+            padding: const EdgeInsets.only(top: Spacing.md),
+            child: _buildFilterFields(isCompact: true),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterFields({required bool isCompact}) {
+    final nameField = _filterField(
+      controller: _nameCtrl,
+      hint: 'Nombre…',
+      width: isCompact ? double.infinity : 220,
+    );
+    final lastNameField = _filterField(
+      controller: _lastNameCtrl,
+      hint: 'Apellido…',
+      width: isCompact ? double.infinity : 200,
+    );
+    final phoneField = _filterField(
+      controller: _phoneCtrl,
+      hint: 'Teléfono…',
+      width: isCompact ? double.infinity : 180,
+    );
+    final estado = _buildEstadoChips();
+    final clear = TextButton.icon(
+      onPressed: _clearFilters,
+      icon: const Icon(Icons.close, size: 18),
+      label: const Text('Limpiar'),
+      style: TextButton.styleFrom(foregroundColor: secondaryText),
+    );
+
+    if (isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          nameField,
+          const SizedBox(height: Spacing.md),
+          lastNameField,
+          const SizedBox(height: Spacing.md),
+          phoneField,
+          const SizedBox(height: Spacing.md),
+          estado,
+          if (_activeFilterCount > 0)
+            Align(alignment: Alignment.centerLeft, child: clear),
+        ],
+      );
+    }
+
+    return Wrap(
+      spacing: Spacing.md,
+      runSpacing: Spacing.md,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        nameField,
+        lastNameField,
+        phoneField,
+        estado,
+        if (_activeFilterCount > 0) clear,
+      ],
+    );
+  }
+
+  Widget _filterField({
+    required TextEditingController controller,
+    required String hint,
+    required double width,
+  }) {
+    return SizedBox(
+      width: width,
+      child: SearchTextField(
+        controller: controller,
+        hintText: hint,
+        onChanged: (_) => _applyFilters(),
+      ),
+    );
+  }
+
+  Widget _buildEstadoChips() {
+    Widget chip(String label, bool? value) => AppFilterChip(
+          label: label,
+          selected: _enabled == value,
+          onSelected: (_) => _setEnabled(value),
+        );
+
+    return Wrap(
+      spacing: Spacing.sm,
+      runSpacing: Spacing.sm,
+      children: [
+        chip('Todos', null),
+        chip('Activos', true),
+        chip('Inactivos', false),
+      ],
+    );
+  }
+
+  Widget _buildNetworkHeader(NetworkModel network) {
+    final isMobile = context.isCompact;
+    final leaders = _buildLeadersSection(network, isMobile);
     return CustomCardContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           isMobile
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: _buildLeadersSection(network, isMobile),
-                )
-              : Row(children: _buildLeadersSection(network, isMobile)),
+              ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: leaders)
+              : Row(children: leaders),
           const Divider(height: 30),
           Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               const Text(
                 'Misión de la Red:',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  // color: Colors.blueGrey,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Text(
                 network.mission ?? 'Sin misión definida',
                 style: TextStyle(
@@ -199,30 +397,12 @@ class _NetworkMembersState extends State<NetworkMembers> {
               ),
             ],
           ),
-          SizedBox(height: isMobile ? 0 : 8),
         ],
       ),
     );
   }
 
-  // Widget para cuando no hay miembros en la red
-  Widget _buildEmptyState(isMobile) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.group_off, size: isMobile ? 60 : 80, color: secondaryText),
-          SizedBox(height: 16),
-          Text(
-            'No hay miembros en esta red',
-            style: TextStyle(fontSize: isMobile ? 15 : 18, color: secondaryText),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildLeadersSection(NetworkModel network, isMobile) {
+  List<Widget> _buildLeadersSection(NetworkModel network, bool isMobile) {
     return [
       const Text(
         'Líderes:',
@@ -237,7 +417,7 @@ class _NetworkMembersState extends State<NetworkMembers> {
             avatar: CircleAvatar(
               backgroundColor: primaryColor,
               child: Text(
-                leader.name[0].toUpperCase(),
+                leader.name.isNotEmpty ? leader.name[0].toUpperCase() : '?',
                 style: const TextStyle(color: infoColor, fontSize: 15),
               ),
             ),
@@ -246,5 +426,34 @@ class _NetworkMembersState extends State<NetworkMembers> {
         }).toList(),
       ),
     ];
+  }
+}
+
+class _EmptyMembers extends StatelessWidget {
+  final bool hasFilters;
+  final VoidCallback onCreate;
+  const _EmptyMembers({required this.hasFilters, required this.onCreate});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.group_off, size: 72, color: secondaryText),
+          const SizedBox(height: Spacing.md),
+          Text(
+            hasFilters
+                ? 'No hay miembros que coincidan'
+                : 'No hay miembros en esta red',
+            style: const TextStyle(fontSize: 16, color: secondaryText),
+          ),
+          if (!hasFilters) ...[
+            const SizedBox(height: Spacing.lg),
+            AddButton(onPressed: onCreate, title: 'Crear Miembro'),
+          ],
+        ],
+      ),
+    );
   }
 }

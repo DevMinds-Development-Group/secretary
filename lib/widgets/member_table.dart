@@ -18,6 +18,9 @@ class MemberTable extends StatelessWidget {
   final void Function(Member) onEdit;
   final void Function(Member) onDelete;
 
+  /// Si se provee, muestra la acción "Ver perfil" antes de editar/eliminar.
+  final void Function(Member)? onView;
+
   /// Muestra la columna "Red" (útil en la pantalla global; redúndate dentro de
   /// una sola red).
   final bool showNetworkColumn;
@@ -30,12 +33,13 @@ class MemberTable extends StatelessWidget {
     required this.members,
     required this.onEdit,
     required this.onDelete,
+    this.onView,
     this.showNetworkColumn = true,
     this.onRefresh,
   });
 
   static const double _statusColWidth = 100;
-  static const double _actionsColWidth = 96;
+  double get _actionsColWidth => onView != null ? 144 : 96;
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +93,7 @@ class MemberTable extends StatelessWidget {
             width: _statusColWidth,
             child: Text('Estado', style: labelStyle),
           ),
-          if (!isCompact) const SizedBox(width: _actionsColWidth),
+          if (!isCompact) SizedBox(width: _actionsColWidth),
           if (isCompact) const SizedBox(width: 40),
         ],
       ),
@@ -134,6 +138,7 @@ class MemberTable extends StatelessWidget {
             SizedBox(
               width: _actionsColWidth,
               child: ActionButtons(
+                onView: onView == null ? null : () => onView!(member),
                 onEdit: () => onEdit(member),
                 onDelete: () => onDelete(member),
               ),
@@ -149,15 +154,19 @@ class MemberTable extends StatelessWidget {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: secondaryText),
       onSelected: (value) {
-        if (value == 'edit') {
+        if (value == 'view') {
+          onView?.call(member);
+        } else if (value == 'edit') {
           onEdit(member);
         } else if (value == 'delete') {
           onDelete(member);
         }
       },
-      itemBuilder: (_) => const [
-        PopupMenuItem(value: 'edit', child: Text('Editar')),
-        PopupMenuItem(value: 'delete', child: Text('Eliminar')),
+      itemBuilder: (_) => [
+        if (onView != null)
+          const PopupMenuItem(value: 'view', child: Text('Ver perfil')),
+        const PopupMenuItem(value: 'edit', child: Text('Editar')),
+        const PopupMenuItem(value: 'delete', child: Text('Eliminar')),
       ],
     );
   }
