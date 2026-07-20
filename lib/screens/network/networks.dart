@@ -37,7 +37,7 @@ class _NetworksState extends State<Networks> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
     });
   }
 
@@ -126,7 +126,7 @@ class _NetworksState extends State<Networks> {
                             itemCount: networks.length,
                             itemBuilder: (context, index) {
                               final network = networkProvider.networks[index];
-                              final membersInNetwork = memberProvider.members
+                              final membersInNetwork = memberProvider.allMembers
                                   .where((m) => m.networkName == network.name)
                                   .toList();
                               final leaderNames = network.leaders

@@ -37,7 +37,7 @@ class _MinistriesState extends State<Ministries> {
       Provider.of<MemberProvider>(
         context,
         listen: false,
-      ).fetchMembers(page: 0, size: 1000);
+      ).fetchAllMembers();
     });
   }
 

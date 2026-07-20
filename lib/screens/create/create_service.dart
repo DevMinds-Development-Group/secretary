@@ -98,7 +98,7 @@ class _CreateServiceState extends State<CreateService> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       appLog("!!! EJECUTANDO CARGA DE MIEMBROS DESDE CREATE_SERVICE !!!");
-      Provider.of<MemberProvider>(context, listen: false).fetchMembers();
+      Provider.of<MemberProvider>(context, listen: false).fetchAllMembers();
     });
   }
 
