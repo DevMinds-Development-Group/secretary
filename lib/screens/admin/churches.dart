@@ -1,13 +1,25 @@
-import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../colors.dart';
 import '../../models/tenant_model.dart';
 import '../../providers/tenant_provider.dart';
-import '../../widgets/add_button.dart';
+import '../../theme/design_constants.dart';
+import '../../utils/window_size.dart';
+import '../../widgets/body_width.dart';
+import '../../widgets/button.dart';
+import '../../widgets/custom_card_container.dart';
+import '../../widgets/nav_destinations.dart';
+import '../../widgets/nav_shell.dart';
+import '../../widgets/search_text_field.dart';
+import '../../widgets/states/app_skeleton.dart';
+import '../../widgets/states/empty_state.dart';
+import '../../widgets/states/error_state.dart';
+import '../../widgets/status_pill.dart';
+import 'church_provision_dialog.dart';
 
-/// Administración de iglesias. Es una pantalla del Ministerio: una iglesia no
-/// administra a las demás, y el servidor lo rechaza con 403 aunque se llegue aquí.
+/// Administración de iglesias. Es una pantalla del Ministerio: una iglesia no administra a las
+/// demás, y el servidor lo rechaza con 403 aunque se llegue hasta aquí.
 class ChurchesScreen extends StatefulWidget {
   const ChurchesScreen({super.key});
 
@@ -16,6 +28,8 @@ class ChurchesScreen extends StatefulWidget {
 }
 
 class _ChurchesScreenState extends State<ChurchesScreen> {
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
@@ -26,76 +40,135 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = context.isCompact;
     final tenants = context.watch<TenantProvider>();
 
-    if (!tenants.isMinistry) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text('Sólo el Ministerio administra las iglesias.'),
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return NavShell(
+      current: NavSection.admin,
+      title: 'Iglesias',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Iglesias', style: Theme.of(context).textTheme.titleLarge),
-              // El alta de iglesias es administración de plataforma, no dato de
-              // congregación, así que el Ministerio sí puede.
-              ElevatedButton.icon(
-                onPressed: () => _openProvisionDialog(context, tenants),
-                icon: const Icon(Icons.add),
-                label: const Text('Dar de alta'),
-                style: ElevatedButton.styleFrom(backgroundColor: accentColor),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (tenants.isLoading) const LinearProgressIndicator(),
-          if (tenants.error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(tenants.error!, style: TextStyle(color: negativeColor)),
-            ),
-          Expanded(
-            child: ListView.separated(
-              itemCount: tenants.churches.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (_, index) => _churchTile(context, tenants, tenants.churches[index]),
-            ),
-          ),
+          const SizedBox(height: Spacing.xl),
+          BodyWidth(child: _buildHeader(isCompact, tenants)),
+          const SizedBox(height: Spacing.lg),
+          Expanded(child: BodyWidth(child: _buildList(tenants))),
         ],
       ),
     );
   }
 
-  Widget _churchTile(BuildContext context, TenantProvider tenants, TenantModel church) {
-    return ListTile(
-      leading: Icon(
-        Icons.church_outlined,
-        color: church.enabled ? primaryColor : Colors.grey,
-      ),
-      title: Text(church.name),
-      subtitle: Text([
-        church.slug,
-        if (church.phone != null && church.phone!.isNotEmpty) church.phone!,
-        if (!church.enabled) 'deshabilitada',
-      ].join(' · ')),
-      trailing: Switch(
-        value: church.enabled,
-        onChanged: (enabled) => _confirmStatusChange(context, tenants, church, enabled),
+  Widget _buildHeader(bool isCompact, TenantProvider tenants) {
+    final textTheme = Theme.of(context).textTheme;
+
+    final heading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('Iglesias', style: textTheme.headlineMedium),
+        const SizedBox(height: Spacing.xxs),
+        Text(
+          'Congregaciones del ministerio y sus administradores.',
+          style: textTheme.bodyMedium?.copyWith(color: secondaryText),
+        ),
+      ],
+    );
+
+    // El alta de iglesias es administración de plataforma, no dato de congregación, así que el
+    // Ministerio sí puede: por eso va con Button y no con AddButton, que se oculta en modo consulta.
+    final provisionButton = Button(
+      text: 'Dar de alta',
+      icon: Icons.add_business_rounded,
+      size: isCompact ? const Size(double.infinity, 48) : const Size(220, 48),
+      onPressed: () => _openProvisionDialog(tenants),
+    );
+
+    final search = SearchTextField(
+      hintText: 'Buscar por nombre o identificador',
+      onChanged: (value) => setState(() => _query = value),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        heading,
+        const SizedBox(height: Spacing.lg),
+        if (isCompact)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              provisionButton,
+              const SizedBox(height: Spacing.md),
+              search,
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(child: search),
+              const SizedBox(width: Spacing.md),
+              provisionButton,
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildList(TenantProvider tenants) {
+    if (tenants.isLoading && tenants.churches.isEmpty) {
+      return const AppSkeleton.list();
+    }
+    if (tenants.error != null && tenants.churches.isEmpty) {
+      return ErrorState(
+        error: tenants.error,
+        onRetry: () => tenants.fetchChurches(),
+      );
+    }
+
+    final visible = _visibleChurches(tenants.churches);
+    if (visible.isEmpty) {
+      return EmptyState(
+        icon: Icons.church_outlined,
+        title: _query.isEmpty ? 'Todavía no hay iglesias' : 'Ninguna coincide',
+        message: _query.isEmpty
+            ? 'Da de alta la primera congregación del ministerio.'
+            : 'Prueba con otro nombre o identificador.',
+        action: _query.isEmpty
+            ? Button(
+                text: 'Dar de alta',
+                icon: Icons.add_business_rounded,
+                size: const Size(220, 48),
+                onPressed: () => _openProvisionDialog(tenants),
+              )
+            : null,
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => tenants.fetchChurches(),
+      child: ListView.separated(
+        padding: const EdgeInsets.only(bottom: Spacing.xl),
+        itemCount: visible.length,
+        separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
+        itemBuilder: (_, index) => _ChurchCard(
+          church: visible[index],
+          onStatusChanged: (enabled) => _confirmStatusChange(tenants, visible[index], enabled),
+        ),
       ),
     );
   }
 
+  List<TenantModel> _visibleChurches(List<TenantModel> churches) {
+    final needle = _query.trim().toLowerCase();
+    if (needle.isEmpty) return churches;
+    return churches
+        .where((church) =>
+            church.name.toLowerCase().contains(needle) ||
+            church.slug.toLowerCase().contains(needle))
+        .toList();
+  }
+
   Future<void> _confirmStatusChange(
-    BuildContext context,
     TenantProvider tenants,
     TenantModel church,
     bool enabled,
@@ -106,8 +179,8 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
         builder: (dialogContext) => AlertDialog(
           title: Text('Deshabilitar ${church.displayName}'),
           content: const Text(
-            'Sus usuarios dejarán de poder entrar. Su histórico se conserva y '
-            'sigue contando en los informes del Ministerio.',
+            'Sus usuarios dejarán de poder entrar. Su histórico se conserva y sigue contando '
+            'en los informes del Ministerio.',
           ),
           actions: [
             TextButton(
@@ -116,7 +189,7 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Deshabilitar'),
+              child: Text('Deshabilitar', style: TextStyle(color: negativeColor)),
             ),
           ],
         ),
@@ -126,186 +199,73 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
     await tenants.updateStatus(church.id, enabled);
   }
 
-  Future<void> _openProvisionDialog(BuildContext context, TenantProvider tenants) async {
+  Future<void> _openProvisionDialog(TenantProvider tenants) async {
     final result = await showDialog<ChurchProvisionResult>(
       context: context,
       builder: (_) => ChangeNotifierProvider<TenantProvider>.value(
         value: tenants,
-        child: const _ProvisionChurchDialog(),
+        child: const ChurchProvisionDialog(),
       ),
     );
-    if (result != null && context.mounted) {
-      await _showCredentialDialog(context, result);
+    if (result != null && mounted) {
+      await showChurchCredentialDialog(context, result);
     }
   }
+}
 
-  /// La contraseña sólo se muestra aquí: no se guarda en claro en ningún sitio y
-  /// el servidor no la puede volver a enseñar.
-  Future<void> _showCredentialDialog(BuildContext context, ChurchProvisionResult result) {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('${result.church.name} dada de alta'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Copia estas credenciales ahora: la contraseña no se puede volver a ver.'),
-            const SizedBox(height: 16),
-            SelectableText('Usuario: ${result.adminUsername}'),
-            SelectableText('Contraseña: ${result.oneTimePassword}'),
-            const SizedBox(height: 12),
-            const Text(
-              'Quien la reciba debe cambiarla al entrar.',
-              style: TextStyle(fontStyle: FontStyle.italic),
+/// Ficha de una iglesia, con el mismo lenguaje visual que las tarjetas de asistencia.
+class _ChurchCard extends StatelessWidget {
+  final TenantModel church;
+  final ValueChanged<bool> onStatusChanged;
+
+  const _ChurchCard({required this.church, required this.onStatusChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return CustomCardContainer(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.lg,
+        vertical: Spacing.md,
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: church.enabled
+                ? primaryColor.withValues(alpha: 0.12)
+                : secondaryText.withValues(alpha: 0.12),
+            child: Icon(
+              Icons.church_rounded,
+              color: church.enabled ? primaryColor : secondaryText,
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Ya la he copiado'),
+          ),
+          const SizedBox(width: Spacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(church.name, style: textTheme.titleMedium),
+                const SizedBox(height: Spacing.xxs),
+                Text(
+                  [
+                    church.slug,
+                    if (church.phone != null && church.phone!.isNotEmpty) church.phone!,
+                  ].join(' · '),
+                  style: textTheme.bodySmall?.copyWith(color: secondaryText),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Spacing.md),
+          church.enabled ? StatusPill.active() : StatusPill.inactive('Deshabilitada'),
+          Switch(
+            value: church.enabled,
+            onChanged: onStatusChanged,
           ),
         ],
       ),
     );
-  }
-}
-
-class _ProvisionChurchDialog extends StatefulWidget {
-  const _ProvisionChurchDialog();
-
-  @override
-  State<_ProvisionChurchDialog> createState() => _ProvisionChurchDialogState();
-}
-
-class _ProvisionChurchDialogState extends State<_ProvisionChurchDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _shortName = TextEditingController();
-  final _slug = TextEditingController();
-  final _adminUsername = TextEditingController();
-  final _phone = TextEditingController();
-  bool _submitting = false;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _shortName.dispose();
-    _slug.dispose();
-    _adminUsername.dispose();
-    _phone.dispose();
-    super.dispose();
-  }
-
-  /// El slug viaja en cabeceras y URLs y no se puede cambiar después, así que se
-  /// propone a partir del nombre y se deja editar antes de crear.
-  void _suggestSlug(String name) {
-    if (_slug.text.isNotEmpty) return;
-    final suggestion = name
-        .toLowerCase()
-        .replaceAll(RegExp(r'[áàä]'), 'a')
-        .replaceAll(RegExp(r'[éèë]'), 'e')
-        .replaceAll(RegExp(r'[íìï]'), 'i')
-        .replaceAll(RegExp(r'[óòö]'), 'o')
-        .replaceAll(RegExp(r'[úùü]'), 'u')
-        .replaceAll('ñ', 'n')
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
-        .replaceAll(RegExp(r'^-+|-+$'), '');
-    _slug.text = suggestion;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tenants = context.watch<TenantProvider>();
-    return AlertDialog(
-      title: const Text('Dar de alta una iglesia'),
-      content: SizedBox(
-        width: 460,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: _name,
-                  decoration: const InputDecoration(labelText: 'Nombre de la iglesia'),
-                  onChanged: _suggestSlug,
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Obligatorio' : null,
-                ),
-                TextFormField(
-                  controller: _shortName,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre corto',
-                    helperText: 'El que se ve en la barra superior y en el selector',
-                  ),
-                ),
-                TextFormField(
-                  controller: _slug,
-                  decoration: const InputDecoration(
-                    labelText: 'Identificador corto',
-                    helperText: 'Minúsculas, números y guiones. No se puede cambiar después',
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) return 'Obligatorio';
-                    if (!RegExp(r'^[a-z0-9]+(-[a-z0-9]+)*$').hasMatch(value.trim())) {
-                      return 'Sólo minúsculas, números y guiones';
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: _phone,
-                  decoration: const InputDecoration(labelText: 'Teléfono (opcional)'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _adminUsername,
-                  decoration: const InputDecoration(
-                    labelText: 'Usuario administrador inicial',
-                    helperText: 'Único entre todas las iglesias. A partir de él, la iglesia gestiona los suyos',
-                  ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Obligatorio' : null,
-                ),
-                if (tenants.error != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(tenants.error!, style: TextStyle(color: negativeColor)),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _submitting ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: _submitting ? null : () => _submit(context, tenants),
-          child: Text(_submitting ? 'Creando…' : 'Dar de alta'),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _submit(BuildContext context, TenantProvider tenants) async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _submitting = true);
-    final result = await tenants.provisionChurch(
-      name: _name.text.trim(),
-      shortName: _shortName.text.trim(),
-      slug: _slug.text.trim(),
-      adminUsername: _adminUsername.text.trim(),
-      phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-    );
-    if (!context.mounted) return;
-    setState(() => _submitting = false);
-    if (result != null) Navigator.of(context).pop(result);
   }
 }

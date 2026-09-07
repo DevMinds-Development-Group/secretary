@@ -60,16 +60,7 @@ class Admin extends StatelessWidget {
           // Lógica para la navegación
           switch (title) {
             case 'Iglesias':
-              Navigator.push(
-                context,
-                createFadeRoute(
-                  const NavShell(
-                    current: NavSection.admin,
-                    title: 'Iglesias',
-                    body: ChurchesScreen(),
-                  ),
-                ),
-              );
+              Navigator.push(context, createFadeRoute(const ChurchesScreen()));
               break;
             case 'Usuarios':
               Navigator.push(context, createFadeRoute(const Users()));
