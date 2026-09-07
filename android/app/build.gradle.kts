@@ -1,12 +1,4 @@
 import kotlin.io.path.exists
-import java.util.Properties
-import java.io.FileInputStream
-
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-}
 
 plugins {
     id("com.android.application")
@@ -19,15 +11,6 @@ android {
     namespace = "com.koinos.app"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
-
-    signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { rootProject.file(it) }
-            storePassword = keystoreProperties["storePassword"] as String?
-        }
-    }
 
 
     compileOptions {
@@ -51,14 +34,27 @@ android {
         versionName = flutter.versionName
     }
 
-    buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("release")
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("APP_KEYSTORE_PATH") ?: "upload-keystore.jks"
+            storeFile = file(keystorePath)
+            storePassword = System.getenv("APP_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("APP_KEY_ALIAS")
+            keyPassword = System.getenv("APP_KEYSTORE_PASSWORD")
         }
-        getByName("debug") {
+    }
+
+    buildTypes {
+        getByName("release") {
+            // Importante: Esto vincula la configuración de firma que creamos arriba
             signingConfig = signingConfigs.getByName("release")
+
+            isMinifyEnabled = false // o true si usas ProGuard
+            isShrinkResources = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     applicationVariants.all {

@@ -21,7 +21,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x.x'
+          flutter-version: '3.32.4'
           channel: 'stable'
 
       # 2. Descifrar Keystore
@@ -33,18 +33,32 @@ jobs:
       - name: Get Version from pubspec
         id: pubspec
         run: |
-          VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          BASE_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | xargs)
+          FULL_VERSION="${BASE_VERSION}+${{ github.run_number }}"
+          echo "VERSION=$FULL_VERSION" >> $GITHUB_ENV
 
       # 4. Compilar APK Firmado
       - name: Build APK
-        run: flutter build apk --release
+        run: |
+          VERSION_NAME=$(echo "${{ env.VERSION }}" | cut -d'+' -f1)
+          VERSION_CODE=${{ github.run_number }}
+          flutter build apk --release \
+            --build-name=$VERSION_NAME \
+            --build-number=$VERSION_CODE
         env:
           # Estas variables deben coincidir con tu android/app/build.gradle
           APP_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           APP_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           APP_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           APP_KEYSTORE_PATH: "upload-keystore.jks"
+
+      - name: Read Changelog
+        id: read_changelog
+        run: |
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT  # <--- Esto asegura que el EOF no se pegue al texto
+          echo "EOF" >> $GITHUB_OUTPUT
 
       # 5. Crear Release en GitHub
       - name: Create GitHub Release
@@ -53,10 +67,15 @@ jobs:
           tag_name: v${{ env.VERSION }}
           name: Release ${{ env.VERSION }}
           body: |
-            ## Nueva actualización disponible
-            - Build Number: ${{ github.run_number }}
-            - Commit: ${{ github.sha }}
-            - Descarga el archivo `app-release.apk` abajo para actualizar.
+            ## Detalles del Cambio
+            ${{ steps.read_changelog.outputs.CHANGELOG }}
+
+            ---
+            ### Información Técnica
+            - **Build Number:** ${{ github.run_number }}
+            - **Commit:** ${{ github.sha }}
+      
+            Descarga el archivo `app-release.apk` abajo para actualizar.
           files: build/app/outputs/flutter-apk/app-release.apk
           draft: false
           prerelease: false
@@ -87,6 +106,6 @@ jobs:
                 "versionName": "v${{ env.VERSION }}",
                 "downloadUrl": "https://github.com/DevMinds-Development-Group/secretary/releases/latest/download/app-release.apk",
                 "publicId": "v${{ env.VERSION }}",
-                "releaseNotes": "Actualización menor con resolución de errores y mejoras de rendimiento.",
+                "releaseNotes": "Puedes ver el registro de cambios en la siguiente dirección: https://github.com/DevMinds-Development-Group/secretary/releases/tag/v${{ env.VERSION }}",
                 "isMandatory": true
               }'
