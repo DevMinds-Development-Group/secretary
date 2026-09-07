@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import '../../colors.dart';
 import '../../models/apostol_dashboard_model.dart';
 import '../../providers/apostol_dashboard_provider.dart';
+import '../../widgets/church_breakdown_table.dart';
 import '../../services/api_client.dart';
 import '../../theme/design_constants.dart';
 import '../../utils/download_stub.dart'
@@ -96,6 +97,12 @@ class _SupervisionDashboardState extends State<SupervisionDashboard> {
               _groupHeader('Resumen general'),
               const SizedBox(height: Spacing.md),
               _buildOverviewKpis(d),
+              // Sólo llega en el consolidado; al descender a una iglesia el
+              // servidor no lo manda y la sección desaparece sola.
+              if (d.consolidated != null) ...[
+                const SizedBox(height: Spacing.lg),
+                ChurchBreakdownTable(consolidated: d.consolidated!),
+              ],
               const SizedBox(height: Spacing.xl),
               GrowthLineChart(
                 growth: d.overview.membershipGrowth,

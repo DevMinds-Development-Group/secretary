@@ -1,6 +1,8 @@
 import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 
+import '../services/tenant_scope.dart';
+
 class ActionButtons extends StatelessWidget {
   final VoidCallback? onView;
   final VoidCallback onEdit;
@@ -15,6 +17,8 @@ class ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // En modo consulta se conserva «ver» y desaparecen editar y borrar.
+    final canWrite = TenantScope.canWriteChurchData;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -25,16 +29,18 @@ class ActionButtons extends StatelessWidget {
             onPressed: onView,
             tooltip: 'Ver perfil',
           ),
-        IconButton(
-          icon: Icon(Icons.edit, color: primaryColor.withOpacity(0.8)),
-          onPressed: onEdit,
-          tooltip: 'Editar',
-        ),
-        IconButton(
-          icon: Icon(Icons.delete, color: negativeColor.withOpacity(0.8)),
-          onPressed: onDelete,
-          tooltip: 'Eliminar',
-        ),
+        if (canWrite)
+          IconButton(
+            icon: Icon(Icons.edit, color: primaryColor.withOpacity(0.8)),
+            onPressed: onEdit,
+            tooltip: 'Editar',
+          ),
+        if (canWrite)
+          IconButton(
+            icon: Icon(Icons.delete, color: negativeColor.withOpacity(0.8)),
+            onPressed: onDelete,
+            tooltip: 'Eliminar',
+          ),
       ],
     );
   }

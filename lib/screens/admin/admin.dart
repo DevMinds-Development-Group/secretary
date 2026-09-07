@@ -7,6 +7,8 @@ import '../../routes/page_route_builder.dart';
 import '../../widgets/body_width.dart';
 import '../../widgets/nav_destinations.dart';
 import '../../widgets/nav_shell.dart';
+import '../../services/tenant_scope.dart';
+import 'churches.dart';
 import 'logs.dart';
 
 class Admin extends StatelessWidget {
@@ -34,6 +36,10 @@ class Admin extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
+            // El alta de iglesias es del Ministerio: una iglesia no administra a
+            // las demás, y el servidor lo rechaza aunque se llegue a la pantalla.
+            if (TenantScope.isMinistry)
+              _buildCard(context, Icons.church, 'Iglesias'),
             _buildCard(context, Icons.people, 'Usuarios'),
             _buildCard(context, Icons.admin_panel_settings, 'Roles'),
             _buildCard(context, Icons.history, 'Logs'),
@@ -53,6 +59,18 @@ class Admin extends StatelessWidget {
         onTap: () {
           // Lógica para la navegación
           switch (title) {
+            case 'Iglesias':
+              Navigator.push(
+                context,
+                createFadeRoute(
+                  const NavShell(
+                    current: NavSection.admin,
+                    title: 'Iglesias',
+                    body: ChurchesScreen(),
+                  ),
+                ),
+              );
+              break;
             case 'Usuarios':
               Navigator.push(context, createFadeRoute(const Users()));
               break;

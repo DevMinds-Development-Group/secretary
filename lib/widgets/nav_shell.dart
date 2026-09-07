@@ -1,3 +1,4 @@
+import 'church_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -62,6 +63,7 @@ class NavShell extends StatelessWidget {
   PreferredSizeWidget _buildAppBar({required bool primary}) {
     final trailingActions = <Widget>[
       ...?actions,
+      const ChurchSelector(),
       const UserMenu(),
       const SizedBox(width: 4),
     ];
