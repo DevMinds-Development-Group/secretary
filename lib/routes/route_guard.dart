@@ -9,10 +9,39 @@ import '../services/auth_service.dart';
 
 class RouteGuard {
   static Widget checkAuth(BuildContext context, Widget destination) {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    return _RouteGuard(destination: destination);
+  }
+}
 
+/// Comprueba que hay sesión antes de dejar ver la pantalla.
+///
+/// Es un `StatefulWidget` y no un `FutureBuilder` suelto porque el futuro tiene que pedirse una
+/// sola vez. Pidiéndolo en el `build`, cada reconstrucción creaba un futuro nuevo, el
+/// `FutureBuilder` volvía a `waiting` y la pantalla entera se cambiaba por el indicador de carga
+/// para reaparecer un instante después: la página se destruía y se rehacía bajo cualquier diálogo
+/// que hubiera abierto encima.
+class _RouteGuard extends StatefulWidget {
+  final Widget destination;
+
+  const _RouteGuard({required this.destination});
+
+  @override
+  State<_RouteGuard> createState() => _RouteGuardState();
+}
+
+class _RouteGuardState extends State<_RouteGuard> {
+  late final Future<String?> _token;
+
+  @override
+  void initState() {
+    super.initState();
+    _token = context.read<AuthService>().getToken();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: authService.getToken(),
+      future: _token,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
@@ -26,7 +55,7 @@ class RouteGuard {
         }
 
         // SI HAY TOKEN: Permitir ver la pantalla de destino, atada al alcance de inquilino
-        return TenantScopedPage(child: destination);
+        return TenantScopedPage(child: widget.destination);
       },
     );
   }

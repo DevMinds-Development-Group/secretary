@@ -54,6 +54,13 @@ hacerlo con el diálogo todavía montado dejaba nodos de foco apuntando a elemen
 diálogo cuelga del ámbito de foco de la página que se está deshaciendo. El framework lo caza con la
 pantalla roja de «`_dependents.isEmpty`».
 
+`RouteGuard` guarda el futuro del token en su estado en lugar de pedirlo en el `build`. Pidiéndolo
+en el `build`, cada reconstrucción creaba un futuro nuevo, el `FutureBuilder` volvía a `waiting` y
+la pantalla entera se cambiaba por el indicador de carga para reaparecer un instante después: la
+página se destruía y se rehacía bajo cualquier diálogo abierto encima. Cada forma de llegar a una
+ruta protegida —entrar, cambiar de sección, el 401 del interceptor— crea la ruta de nuevo, así que
+el token se vuelve a leer cuando toca.
+
 El selector pide la lista de iglesias al montarse si aún no la tiene. Al recargar, el alcance se
 restaura del almacenamiento pero los nombres no vienen con él, y la barra decía «Consolidado»
 mientras la aplicación miraba de verdad una iglesia.
