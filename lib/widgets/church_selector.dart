@@ -72,18 +72,25 @@ class _ChurchSelectorState extends State<ChurchSelector> {
     );
   }
 
+  /// El diálogo sólo devuelve la elección; el alcance se cambia cuando ya no está en pantalla.
+  ///
+  /// Cambiarlo es destruir la pantalla entera —`TenantScopedPage` cambia su clave y el subárbol se
+  /// deshace—, y hacerlo con el diálogo todavía montado dejaba nodos de foco apuntando a elementos
+  /// muertos: el diálogo cuelga del ámbito de foco de la página que se está destruyendo. El
+  /// framework lo caza con la pantalla roja de «_dependents.isEmpty».
   Future<void> _openPicker(BuildContext context, TenantProvider tenants) async {
     if (tenants.churches.isEmpty) {
       await tenants.fetchChurches();
     }
     if (!context.mounted) return;
-    await showDialog<void>(
+    final choice = await showDialog<_ScopeChoice>(
       context: context,
       builder: (_) => ChangeNotifierProvider<TenantProvider>.value(
         value: tenants,
         child: const _ChurchPickerDialog(),
       ),
     );
+    if (choice != null) await tenants.selectChurch(choice.churchId);
   }
 }
 
@@ -135,7 +142,7 @@ class _ChurchPickerDialogState extends State<_ChurchPickerDialog> {
                     title: const Text('Consolidado'),
                     subtitle: const Text('Todas las iglesias juntas'),
                     selected: tenants.isConsolidatedView,
-                    onTap: () => _select(context, tenants, null),
+                    onTap: () => _select(context, null),
                   ),
                   const Divider(height: 1),
                   if (tenants.isLoading)
@@ -149,7 +156,7 @@ class _ChurchPickerDialogState extends State<_ChurchPickerDialog> {
                       title: Text(church.displayName),
                       subtitle: Text(church.enabled ? church.slug : '${church.slug} · deshabilitada'),
                       selected: tenants.selectedChurchId == church.id,
-                      onTap: () => _select(context, tenants, church.id),
+                      onTap: () => _select(context, church.id),
                     ),
                   ),
                 ],
@@ -167,8 +174,24 @@ class _ChurchPickerDialogState extends State<_ChurchPickerDialog> {
     );
   }
 
-  Future<void> _select(BuildContext context, TenantProvider tenants, String? churchId) async {
-    await tenants.selectChurch(churchId);
-    if (context.mounted) Navigator.of(context).pop();
+  /// Primero se cierra el diálogo y sólo después se cambia el alcance.
+  ///
+  /// Cambiarlo es destruir la pantalla entera: `TenantScopedPage` cambia su clave y el subárbol se
+  /// deshace. Hacerlo con el diálogo todavía en pantalla dejaba nodos de foco apuntando a elementos
+  /// ya muertos —el diálogo cuelga del ámbito de foco de la página que se está destruyendo— y el
+  /// framework lo caza con la pantalla roja de «_dependents.isEmpty».
+  ///
+  /// Se suelta el foco antes por lo mismo: un campo enfocado en la pantalla que va a desaparecer.
+  void _select(BuildContext context, String? churchId) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    Navigator.of(context).pop(_ScopeChoice(churchId));
   }
+}
+
+/// Lo que el diálogo devuelve. Es una clase y no un `String?` porque nulo ya significa
+/// «consolidado», y hay que poder distinguirlo de cerrar sin elegir.
+class _ScopeChoice {
+  final String? churchId;
+
+  const _ScopeChoice(this.churchId);
 }

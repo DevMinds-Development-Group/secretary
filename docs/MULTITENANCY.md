@@ -48,6 +48,12 @@ Ese «hay selector» se consulta en `TenantScope`, que es estático, y no en el 
 al entrar o salir —cuando el árbol se rehace entero— y suscribir el `NavShell` al proveedor lo hacía
 reconstruirse justo mientras `TenantScopedPage` destruye ese mismo subárbol.
 
+El diálogo no cambia el alcance: devuelve la elección y el cambio se aplica cuando ya se ha
+cerrado. Cambiar de iglesia destruye la pantalla entera —`TenantScopedPage` cambia su clave—, y
+hacerlo con el diálogo todavía montado dejaba nodos de foco apuntando a elementos ya muertos: el
+diálogo cuelga del ámbito de foco de la página que se está deshaciendo. El framework lo caza con la
+pantalla roja de «`_dependents.isEmpty`».
+
 El selector pide la lista de iglesias al montarse si aún no la tiene. Al recargar, el alcance se
 restaura del almacenamiento pero los nombres no vienen con él, y la barra decía «Consolidado»
 mientras la aplicación miraba de verdad una iglesia.
