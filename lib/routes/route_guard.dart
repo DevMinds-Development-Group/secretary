@@ -2,6 +2,8 @@ import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../widgets/tenant_scoped_page.dart';
+
 import '../screens/home/home.dart';
 import '../services/auth_service.dart';
 
@@ -23,8 +25,8 @@ class RouteGuard {
           return const Home();
         }
 
-        // SI HAY TOKEN: Permitir ver la pantalla de destino
-        return destination;
+        // SI HAY TOKEN: Permitir ver la pantalla de destino, atada al alcance de inquilino
+        return TenantScopedPage(child: destination);
       },
     );
   }
