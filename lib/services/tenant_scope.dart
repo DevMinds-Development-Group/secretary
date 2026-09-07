@@ -47,16 +47,30 @@ class TenantScope {
       adoptFromToken(jwtToken);
     }
     if (isMinistry) {
-      _selectedChurchId = await _storage.read(key: _selectedChurchKey);
+      _selectedChurchId = await _readStored();
     }
   }
 
   static Future<void> selectChurch(String? churchId) async {
     _selectedChurchId = churchId;
-    if (churchId == null) {
-      await _storage.delete(key: _selectedChurchKey);
-    } else {
-      await _storage.write(key: _selectedChurchKey, value: churchId);
+    // El estado en memoria manda; el almacenamiento sólo sirve para recordar la elección entre
+    // sesiones, así que un fallo suyo no debe tumbar la operación.
+    try {
+      if (churchId == null) {
+        await _storage.delete(key: _selectedChurchKey);
+      } else {
+        await _storage.write(key: _selectedChurchKey, value: churchId);
+      }
+    } catch (_) {
+      // La elección sigue viva en esta sesión aunque no se haya podido persistir.
+    }
+  }
+
+  static Future<String?> _readStored() async {
+    try {
+      return await _storage.read(key: _selectedChurchKey);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -66,7 +80,13 @@ class TenantScope {
     _homeTenantSlug = null;
     _homeTenantType = null;
     _selectedChurchId = null;
-    await _storage.delete(key: _selectedChurchKey);
+    // Lo de memoria se limpia primero y pase lo que pase: cerrar sesión no puede fallar porque el
+    // almacenamiento seguro no esté disponible.
+    try {
+      await _storage.delete(key: _selectedChurchKey);
+    } catch (_) {
+      // Sin persistencia que borrar, no hay nada que arrastrar a la sesión siguiente.
+    }
   }
 
   static Map<String, dynamic> _decodeClaims(String jwtToken) {
