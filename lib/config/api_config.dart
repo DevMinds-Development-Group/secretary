@@ -11,7 +11,7 @@ class ApiConfig {
   /// `flutter run --dart-define=API_BASE_URL=http://localhost:8080/api/v1`
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://vri-secretary-backend-develop.up.railway.app/api/v1',
+    defaultValue: 'https://backend-vientorecio.teamdevminds.xyz/api/v1',
   );
 
   /// Cabecera con la que el Ministerio consulta una iglesia concreta.
