@@ -1,6 +1,8 @@
 import 'package:Koinos/colors.dart';
 import 'package:flutter/material.dart';
 
+import '../services/tenant_scope.dart';
+
 class AddButton extends StatefulWidget {
   final VoidCallback onPressed;
   final Size? size; // Tamaño opcional
@@ -22,6 +24,12 @@ class AddButton extends StatefulWidget {
 class _ButtonState extends State<AddButton> {
   @override
   Widget build(BuildContext context) {
+    // El Ministerio supervisa y no opera: el servidor rechaza sus escrituras de
+    // datos de congregación con 403, así que la interfaz no las ofrece. Va aquí,
+    // en el botón compartido, y no en cada pantalla, para que no se olvide en la
+    // próxima que se añada.
+    if (!TenantScope.canWriteChurchData) return const SizedBox.shrink();
+
     bool isMobile = MediaQuery.of(context).size.width < 700;
     Size defaultSize = Size(isMobile ? 120 : 140, isMobile ? 50 : 45);
     Size buttonSize = widget.size ?? defaultSize;

@@ -1,4 +1,5 @@
 import '../services/auth_service.dart';
+import '../services/tenant_scope.dart';
 
 class UserPermissions {
   final String? role;
@@ -54,7 +55,11 @@ class UserPermissions {
     'ROLE_SECRETARIO',
   ].contains(role);
 
-  bool get canSeeAdmin => ['ROLE_ADMIN'].contains(role);
+  /// El Ministerio entra a Administración por ser el inquilino superior y no por su rol: ahí es
+  /// donde da de alta las iglesias, y su usuario lleva ROLE_APOSTOL, no ROLE_ADMIN. Dentro, cada
+  /// tarjeta decide lo suyo — la de Iglesias sólo la ve él.
+  bool get canSeeAdmin =>
+      ['ROLE_ADMIN'].contains(role) || TenantScope.isMinistry;
 
   // Supervisión: administradores, apóstoles y pastores.
   bool get canSeeSupervision =>
