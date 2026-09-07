@@ -4,8 +4,8 @@ FROM debian:bookworm-slim AS build-env
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y curl git unzip python3
 
-# Clonar el SDK de Flutter (canal stable)
-RUN git clone https://github.com/flutter/flutter.git /usr/local/flutter
+# Clonar el SDK de Flutter (canal stable, versión fijada)
+RUN git clone https://github.com/flutter/flutter.git -b 3.35.5 --depth 1 /usr/local/flutter
 ENV PATH="/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${PATH}"
 
 # Ejecutar doctor para descargar herramientas y configurar
