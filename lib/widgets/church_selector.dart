@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/tenant_provider.dart';
+import '../utils/window_size.dart';
 import 'package:Koinos/colors.dart';
 
 /// Selector de iglesia de la barra superior. Sólo aparece para el Ministerio:
@@ -10,6 +11,10 @@ import 'package:Koinos/colors.dart';
 /// «Consolidado» es una opción explícita y no la ausencia de selección, para que
 /// se vea en todo momento qué se está mirando.
 class ChurchSelector extends StatelessWidget {
+  /// Lo que ocupa todo lo demás de la barra en móvil: el logotipo (116), el menú de usuario (80),
+  /// el icono y los márgenes de este botón (42) y un respiro (12).
+  static const double _chromeWidth = 250;
+
   const ChurchSelector({super.key});
 
   @override
@@ -17,17 +22,29 @@ class ChurchSelector extends StatelessWidget {
     final tenants = context.watch<TenantProvider>();
     if (!tenants.isMinistry) return const SizedBox.shrink();
 
+    // La barra la comparten el logotipo, este selector y el menú de usuario. En móvil no caben los
+    // tres a su gusto, así que el nombre se queda con lo que sobra y se recorta: con un ancho fijo
+    // el botón crecía hasta montarse encima del logotipo.
+    final compact = context.isCompact;
+    final maxLabel = compact
+        ? (MediaQuery.sizeOf(context).width - _chromeWidth).clamp(48.0, 180.0)
+        : 180.0;
+
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.only(right: compact ? 0 : 8),
       child: TextButton.icon(
         onPressed: () => _openPicker(context, tenants),
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12),
+          minimumSize: const Size(0, 40),
+        ),
         icon: Icon(
           tenants.isConsolidatedView ? Icons.account_balance_outlined : Icons.church_outlined,
           size: 18,
           color: primaryColor,
         ),
         label: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 180),
+          constraints: BoxConstraints(maxWidth: maxLabel),
           child: Text(
             tenants.scopeLabel,
             overflow: TextOverflow.ellipsis,

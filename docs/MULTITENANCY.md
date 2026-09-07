@@ -39,6 +39,11 @@ se vea en todo momento qué se está mirando. A partir de ocho iglesias el diál
 Al elegir una iglesia, el interceptor añade `X-Tenant-Id` a cada petición; sin selección, el
 servidor entrega el consolidado.
 
+En móvil la barra la comparten el logotipo, el selector y el menú de usuario, y no caben los tres a
+su gusto: el logotipo reserva menos sitio cuando hay selector y el nombre de la iglesia se queda con
+lo que sobre del ancho de pantalla, recortado con puntos suspensivos. Con anchos fijos el botón
+crecía hasta montarse encima del logotipo.
+
 ## Modo consulta
 
 El Ministerio supervisa y no opera: el servidor rechaza sus escrituras de datos de congregación con

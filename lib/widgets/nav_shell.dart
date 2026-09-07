@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../colors.dart';
+import '../providers/tenant_provider.dart';
 import '../services/auth_service.dart';
 import '../theme/motion.dart';
 import '../utils/user_permissions.dart';
@@ -60,7 +61,7 @@ class NavShell extends StatelessWidget {
   // ---------------------------------------------------------------------------
   // Header (AppBar minimalista). Primario = logo; secundario = back + título.
   // ---------------------------------------------------------------------------
-  PreferredSizeWidget _buildAppBar({required bool primary}) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, {required bool primary}) {
     final trailingActions = <Widget>[
       ...?actions,
       const ChurchSelector(),
@@ -73,8 +74,12 @@ class NavShell extends StatelessWidget {
     }
     // Navbar primaria: solo el logo (sin título), centrado sobre la columna del
     // riel (80px) para que navbar y riel se lean como una sola pieza.
+    // El logotipo cede sitio cuando hay selector de iglesia: en móvil la barra no da para el
+    // logotipo entero y el nombre de la iglesia a la vez, y se solapaban.
+    final withSelector = context.isCompact && context.watch<TenantProvider>().isMinistry;
+
     return AppBar(
-      leadingWidth: 200,
+      leadingWidth: withSelector ? 116 : 200,
       leading:
           Center(
             child: Image.asset(
@@ -121,7 +126,7 @@ class NavShell extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: _buildAppBar(primary: !secondary),
+      appBar: _buildAppBar(context, primary: !secondary),
       body: body,
       floatingActionButton: floatingActionButton,
       bottomNavigationBar: DecoratedBox(
@@ -155,7 +160,7 @@ class NavShell extends StatelessWidget {
     bool secondary = false,
   }) {
     return Scaffold(
-      appBar: _buildAppBar(primary: !secondary),
+      appBar: _buildAppBar(context, primary: !secondary),
       floatingActionButton: floatingActionButton,
       body: _NavRail(
         items: visible,
