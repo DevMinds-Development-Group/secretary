@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../config/api_config.dart';
 import '../utils/app_log.dart';
+import 'tenant_scope.dart';
 
 // --- MODELOS INTERNOS PARA EL AUTHSERVICE ---
 class UserProfile {
@@ -93,15 +95,19 @@ class AuthService with ChangeNotifier {
 
   List<String> get permissions => _permissions;
 
+  /// El Ministerio supervisa y no opera: la interfaz no debe ofrecerle acciones
+  /// de escritura que el servidor va a rechazar con 403.
+  bool get isMinistry => TenantScope.isMinistry;
+
+  bool get canWriteChurchData => TenantScope.canWriteChurchData;
+
+  String? get tenantSlug => TenantScope.homeTenantSlug;
+
   bool hasPermission(String permissionName) {
     return _permissions.contains(permissionName);
   }
 
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: 'https://vri-secretary-backend-production.up.railway.app/api/v1',
-    ),
-  );
+  final Dio _dio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   Future<void> fetchUserProfile(String username) async {
@@ -164,6 +170,7 @@ class AuthService with ChangeNotifier {
       if (response.statusCode == 200 && response.data['jwtToken'] != null) {
         final token = response.data['jwtToken'];
         await _saveToken(token);
+        TenantScope.adoptFromToken(token);
         await fetchUserProfile(username);
         return null; // Éxito
       }
@@ -189,6 +196,8 @@ class AuthService with ChangeNotifier {
       final savedRoleDesc = await _secureStorage.read(key: 'user_role_desc');
       final savedRawRole = await _secureStorage.read(key: 'raw_role');
 
+      await TenantScope.restore(await getToken());
+
       if (savedName != null) {
         _userName = savedName;
         _userRoleDescription = savedRoleDesc;
@@ -211,6 +220,7 @@ class AuthService with ChangeNotifier {
 
   Future<void> signOut() async {
     await _secureStorage.deleteAll();
+    await TenantScope.clear();
     _userName = null;
     _userRoleDescription = null;
     _rawRole = null;

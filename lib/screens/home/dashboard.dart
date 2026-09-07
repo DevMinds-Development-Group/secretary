@@ -8,6 +8,7 @@ import '../../providers/dashboard_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/update_service.dart';
 import '../../theme/design_constants.dart';
+import '../../utils/grid_metrics.dart';
 import '../../utils/window_size.dart';
 import '../../widgets/body_width.dart';
 import '../../widgets/custom_card_container.dart';
@@ -188,7 +189,7 @@ class _DashboardState extends State<Dashboard> {
       builder: (context, constraints) {
         const gap = Spacing.md;
         final maxWidth = constraints.maxWidth;
-        final itemWidth = (maxWidth - (columns - 1) * gap) / columns;
+        final itemWidth = gridItemWidth(available: maxWidth, columns: columns, gap: gap);
 
         return Wrap(
           spacing: gap,

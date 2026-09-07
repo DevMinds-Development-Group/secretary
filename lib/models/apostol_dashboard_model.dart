@@ -28,6 +28,10 @@ class ApostolDashboardModel {
   final MembershipSection membership;
   final SystemActivitySection systemActivity;
 
+  /// Sólo llega en la lectura consolidada del Ministerio; al descender a una
+  /// iglesia el servidor no lo manda, porque ahí no significa nada.
+  final ConsolidatedSection? consolidated;
+
   ApostolDashboardModel({
     this.generatedAt,
     required this.periodStart,
@@ -40,6 +44,7 @@ class ApostolDashboardModel {
     required this.events,
     required this.membership,
     required this.systemActivity,
+    this.consolidated,
   });
 
   factory ApostolDashboardModel.fromJson(Map<String, dynamic> json) {
@@ -59,6 +64,11 @@ class ApostolDashboardModel {
       membership: MembershipSection.fromJson(json['membership'] ?? const {}),
       systemActivity:
           SystemActivitySection.fromJson(json['systemActivity'] ?? const {}),
+      consolidated: json['consolidated'] == null
+          ? null
+          : ConsolidatedSection.fromJson(
+              Map<String, dynamic>.from(json['consolidated']),
+            ),
     );
   }
 }
@@ -518,6 +528,68 @@ class SystemActivitySection {
               ?.map((e) => SystemActivityUser.fromJson(e ?? const {}))
               .toList() ??
           const [],
+    );
+  }
+}
+
+
+/// Desglose por iglesia del informe consolidado. La suma de estas filas coincide
+/// con el resumen: es lo que hace fiable el informe.
+class ConsolidatedSection {
+  final int churchCount;
+  final List<ChurchBreakdown> churches;
+
+  ConsolidatedSection({required this.churchCount, required this.churches});
+
+  factory ConsolidatedSection.fromJson(Map<String, dynamic> json) {
+    return ConsolidatedSection(
+      churchCount: (json['churchCount'] as num?)?.toInt() ?? 0,
+      churches: (json['churches'] as List?)
+              ?.map((e) => ChurchBreakdown.fromJson(Map<String, dynamic>.from(e)))
+              .toList() ??
+          const [],
+    );
+  }
+}
+
+class ChurchBreakdown {
+  final String tenantId;
+  final String churchName;
+  final String churchSlug;
+  final bool enabled;
+  final int members;
+  final int networks;
+  final int ministries;
+  final int memberAttendance;
+  final int visitors;
+  final int newConverts;
+
+  ChurchBreakdown({
+    required this.tenantId,
+    required this.churchName,
+    required this.churchSlug,
+    required this.enabled,
+    required this.members,
+    required this.networks,
+    required this.ministries,
+    required this.memberAttendance,
+    required this.visitors,
+    required this.newConverts,
+  });
+
+  factory ChurchBreakdown.fromJson(Map<String, dynamic> json) {
+    int asInt(String key) => (json[key] as num?)?.toInt() ?? 0;
+    return ChurchBreakdown(
+      tenantId: json['tenantId']?.toString() ?? '',
+      churchName: json['churchName']?.toString() ?? '',
+      churchSlug: json['churchSlug']?.toString() ?? '',
+      enabled: json['enabled'] as bool? ?? true,
+      members: asInt('members'),
+      networks: asInt('networks'),
+      ministries: asInt('ministries'),
+      memberAttendance: asInt('memberAttendance'),
+      visitors: asInt('visitors'),
+      newConverts: asInt('newConverts'),
     );
   }
 }
