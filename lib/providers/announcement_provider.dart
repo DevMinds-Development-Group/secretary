@@ -1,9 +1,22 @@
 import 'package:dio/dio.dart';
+
+import '../config/api_config.dart';
 import 'package:flutter/material.dart';
 
 import '../models/announcement_model.dart';
 
 class AnnouncementProvider with ChangeNotifier {
+  /// Iglesia cuyos eventos se muestran en la pantalla pública de anuncios.
+  ///
+  /// La pantalla es anónima, así que el servidor no puede deducir la iglesia y
+  /// hay que nombrarla. Se puede fijar en compilación para una instalación
+  /// dedicada a una congregación:
+  /// `flutter build --dart-define=PUBLIC_CHURCH_SLUG=nueva-esperanza`
+  static const String churchSlug = String.fromEnvironment(
+    'PUBLIC_CHURCH_SLUG',
+    defaultValue: 'casa-de-restauracion',
+  );
+
   List<Announcement> _announcements = [];
   bool _isLoading = false;
 
@@ -27,8 +40,11 @@ class AnnouncementProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Llamada anónima: sin token no hay inquilino, así que hay que decir de qué
+      // iglesia se piden los eventos.
       final response = await Dio().get(
-        'https://vri-secretary-backend-production.up.railway.app/api/v1/event-definitions/weekly',
+        '${ApiConfig.baseUrl}/event-definitions/weekly',
+        queryParameters: {ApiConfig.publicChurchParam: churchSlug},
       );
       if (response.statusCode == 200) {
         final List data = response.data;

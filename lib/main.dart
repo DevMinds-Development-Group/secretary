@@ -11,6 +11,7 @@ import 'package:Koinos/providers/network_provider.dart';
 import 'package:Koinos/providers/role_provider.dart';
 import 'package:Koinos/providers/service_provider.dart';
 import 'package:Koinos/providers/service_type_provider.dart';
+import 'package:Koinos/providers/tenant_provider.dart';
 import 'package:Koinos/providers/user_provider.dart';
 import 'package:Koinos/routes/routes.dart';
 import 'package:Koinos/services/auth_service.dart';
@@ -43,6 +44,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => AnnouncementProvider()),
         ChangeNotifierProvider(create: (context) => DashboardProvider()),
         ChangeNotifierProvider(create: (context) => ApostolDashboardProvider()),
+        ChangeNotifierProvider(create: (context) => TenantProvider()),
         ChangeNotifierProvider.value(value: authService),
       ],
       child: const MyApp(),

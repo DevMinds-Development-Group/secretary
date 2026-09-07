@@ -5,7 +5,9 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../config/api_config.dart';
 import '../main.dart';
+import 'tenant_scope.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -13,10 +15,7 @@ class ApiClient {
 
   ApiClient()
     : _dio = Dio(
-        BaseOptions(
-          baseUrl:
-              'https://backend-vientorecio.teamdevminds.xyz/api/v1',
-        ),
+        BaseOptions(baseUrl: ApiConfig.baseUrl),
       ) {
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -26,6 +25,13 @@ class ApiClient {
             options.headers['Authorization'] = 'Bearer $token';
           } else {
             print('No se encontró token para la petición a: ${options.path}');
+          }
+
+          // Sólo la manda el Ministerio, y sólo cuando ha descendido a una
+          // iglesia. Sin ella el servidor entrega el consolidado.
+          final selectedChurch = TenantScope.selectedChurchId;
+          if (selectedChurch != null) {
+            options.headers[ApiConfig.tenantHeader] = selectedChurch;
           }
           return handler.next(options);
         },
@@ -39,6 +45,7 @@ class ApiClient {
           if (e.response?.statusCode == 401) {
             print('TOKEN EXPIRADO: Limpiando sesión...');
             await _secureStorage.deleteAll();
+            await TenantScope.clear();
 
             navigatorKey.currentState?.pushNamedAndRemoveUntil(
               'login',
