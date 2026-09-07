@@ -15,6 +15,7 @@ import '../../services/api_client.dart';
 import '../../theme/design_constants.dart';
 import '../../utils/download_stub.dart'
     if (dart.library.html) '../../utils/download_web.dart';
+import '../../utils/grid_metrics.dart';
 import '../../utils/window_size.dart';
 import '../../widgets/app_chip.dart';
 import '../../widgets/body_width.dart';
@@ -564,7 +565,7 @@ class _SupervisionDashboardState extends State<SupervisionDashboard> {
       builder: (context, constraints) {
         const gap = Spacing.md;
         final itemWidth =
-            (constraints.maxWidth - (columns - 1) * gap) / columns;
+            gridItemWidth(available: constraints.maxWidth, columns: columns, gap: gap);
         return Wrap(
           spacing: gap,
           runSpacing: gap,
