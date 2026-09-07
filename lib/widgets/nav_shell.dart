@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../colors.dart';
-import '../providers/tenant_provider.dart';
 import '../services/auth_service.dart';
+import '../services/tenant_scope.dart';
 import '../theme/motion.dart';
 import '../utils/user_permissions.dart';
 import '../utils/window_size.dart';
@@ -76,7 +76,10 @@ class NavShell extends StatelessWidget {
     // riel (80px) para que navbar y riel se lean como una sola pieza.
     // El logotipo cede sitio cuando hay selector de iglesia: en móvil la barra no da para el
     // logotipo entero y el nombre de la iglesia a la vez, y se solapaban.
-    final withSelector = context.isCompact && context.watch<TenantProvider>().isMinistry;
+    // El alcance se lee del estático y no del proveedor a propósito: sólo cambia al entrar o salir
+    // —cuando el árbol se rehace entero— y suscribir aquí, tan arriba, hacía que la barra se
+    // reconstruyera justo mientras `TenantScopedPage` destruye este mismo subárbol.
+    final withSelector = context.isCompact && TenantScope.isMinistry;
 
     return AppBar(
       leadingWidth: withSelector ? 116 : 200,

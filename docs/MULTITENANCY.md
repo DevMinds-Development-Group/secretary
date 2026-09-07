@@ -44,6 +44,14 @@ su gusto: el logotipo reserva menos sitio cuando hay selector y el nombre de la 
 lo que sobre del ancho de pantalla, recortado con puntos suspensivos. Con anchos fijos el botón
 crecía hasta montarse encima del logotipo.
 
+Ese «hay selector» se consulta en `TenantScope`, que es estático, y no en el proveedor: sólo cambia
+al entrar o salir —cuando el árbol se rehace entero— y suscribir el `NavShell` al proveedor lo hacía
+reconstruirse justo mientras `TenantScopedPage` destruye ese mismo subárbol.
+
+El selector pide la lista de iglesias al montarse si aún no la tiene. Al recargar, el alcance se
+restaura del almacenamiento pero los nombres no vienen con él, y la barra decía «Consolidado»
+mientras la aplicación miraba de verdad una iglesia.
+
 ## Modo consulta
 
 El Ministerio supervisa y no opera: el servidor rechaza sus escrituras de datos de congregación con

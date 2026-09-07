@@ -10,12 +10,29 @@ import 'package:Koinos/colors.dart';
 ///
 /// «Consolidado» es una opción explícita y no la ausencia de selección, para que
 /// se vea en todo momento qué se está mirando.
-class ChurchSelector extends StatelessWidget {
+class ChurchSelector extends StatefulWidget {
   /// Lo que ocupa todo lo demás de la barra en móvil: el logotipo (116), el menú de usuario (80),
   /// el icono y los márgenes de este botón (42) y un respiro (12).
   static const double _chromeWidth = 250;
 
   const ChurchSelector({super.key});
+
+  @override
+  State<ChurchSelector> createState() => _ChurchSelectorState();
+}
+
+class _ChurchSelectorState extends State<ChurchSelector> {
+  @override
+  void initState() {
+    super.initState();
+    // Al recargar, el alcance se restaura del almacenamiento pero los nombres no vienen con él: sin
+    // esto la barra decía «Consolidado» mientras la aplicación miraba de verdad una iglesia.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final tenants = context.read<TenantProvider>();
+      if (tenants.isMinistry && tenants.churches.isEmpty) tenants.fetchChurches();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +44,7 @@ class ChurchSelector extends StatelessWidget {
     // el botón crecía hasta montarse encima del logotipo.
     final compact = context.isCompact;
     final maxLabel = compact
-        ? (MediaQuery.sizeOf(context).width - _chromeWidth).clamp(48.0, 180.0)
+        ? (MediaQuery.sizeOf(context).width - ChurchSelector._chromeWidth).clamp(48.0, 180.0)
         : 180.0;
 
     return Padding(
