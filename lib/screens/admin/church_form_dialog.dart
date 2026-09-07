@@ -8,37 +8,61 @@ import '../../theme/design_constants.dart';
 import '../../widgets/button.dart';
 import '../../widgets/custom_text_form_field.dart';
 
-/// Alta de una iglesia con su administrador inicial, en una sola operación.
-class ChurchProvisionDialog extends StatefulWidget {
-  const ChurchProvisionDialog({super.key});
+/// Alta y edición de una iglesia.
+///
+/// Comparten formulario porque comparten campos; lo que sólo existe al dar de alta es el
+/// identificador corto —inmutable después— y el usuario administrador inicial.
+class ChurchFormDialog extends StatefulWidget {
+  /// Nulo para dar de alta; con valor, para editar.
+  final TenantModel? church;
+
+  const ChurchFormDialog({super.key, this.church});
+
+  bool get isEditing => church != null;
 
   @override
-  State<ChurchProvisionDialog> createState() => _ChurchProvisionDialogState();
+  State<ChurchFormDialog> createState() => _ChurchFormDialogState();
 }
 
-class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
+class _ChurchFormDialogState extends State<ChurchFormDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _shortName = TextEditingController();
-  final _slug = TextEditingController();
+  late final TextEditingController _name;
+  late final TextEditingController _shortName;
+  late final TextEditingController _slug;
+  late final TextEditingController _phone;
+  late final TextEditingController _address;
+  late final TextEditingController _email;
   final _adminUsername = TextEditingController();
-  final _phone = TextEditingController();
   bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final church = widget.church;
+    _name = TextEditingController(text: church?.name ?? '');
+    _shortName = TextEditingController(text: church?.shortName ?? '');
+    _slug = TextEditingController(text: church?.slug ?? '');
+    _phone = TextEditingController(text: church?.phone ?? '');
+    _address = TextEditingController(text: church?.address ?? '');
+    _email = TextEditingController(text: church?.email ?? '');
+  }
 
   @override
   void dispose() {
     _name.dispose();
     _shortName.dispose();
     _slug.dispose();
-    _adminUsername.dispose();
     _phone.dispose();
+    _address.dispose();
+    _email.dispose();
+    _adminUsername.dispose();
     super.dispose();
   }
 
-  /// El identificador viaja en cabeceras y URLs y no se puede cambiar después, así que se propone
-  /// a partir del nombre y se deja editar antes de crear.
+  /// El identificador se propone a partir del nombre y se deja editar antes de crear. Al editar no
+  /// se toca: cambiarlo rompería los enlaces existentes.
   void _suggestSlug(String name) {
-    if (_slug.text.isNotEmpty) return;
+    if (widget.isEditing || _slug.text.isNotEmpty) return;
     _slug.text = name
         .toLowerCase()
         .replaceAll(RegExp(r'[áàä]'), 'a')
@@ -57,7 +81,7 @@ class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
     final textTheme = Theme.of(context).textTheme;
 
     return AlertDialog(
-      title: const Text('Dar de alta una iglesia'),
+      title: Text(widget.isEditing ? 'Editar iglesia' : 'Dar de alta una iglesia'),
       content: SizedBox(
         width: 460,
         child: Form(
@@ -84,7 +108,9 @@ class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
                 CustomTextFormField(
                   controller: _slug,
                   labelText: 'Identificador corto',
-                  hintText: 'Minúsculas, números y guiones. No se puede cambiar después',
+                  // Al editar se muestra pero no se toca: cambiarlo rompería enlaces y la
+                  // cabecera con la que el Ministerio consulta esta iglesia.
+                  readOnly: widget.isEditing,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) return 'Obligatorio';
                     if (!RegExp(r'^[a-z0-9]+(-[a-z0-9]+)*$').hasMatch(value.trim())) {
@@ -93,11 +119,11 @@ class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
                     return null;
                   },
                 ),
-                // El aviso va debajo y siempre visible: el identificador no se puede cambiar
-                // después, así que no basta con un texto que desaparece al escribir.
                 const SizedBox(height: Spacing.xxs),
                 Text(
-                  'Viaja en enlaces y no se puede cambiar después.',
+                  widget.isEditing
+                      ? 'No se puede cambiar: viaja en enlaces ya repartidos.'
+                      : 'Viaja en enlaces y no se puede cambiar después.',
                   style: textTheme.bodySmall?.copyWith(color: secondaryText),
                 ),
                 const SizedBox(height: Spacing.sm),
@@ -106,21 +132,34 @@ class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
                   labelText: 'Teléfono (opcional)',
                   keyboardType: TextInputType.phone,
                 ),
-                const SizedBox(height: Spacing.lg),
-                Text('Administrador inicial', style: textTheme.titleSmall),
-                const SizedBox(height: Spacing.xxs),
-                Text(
-                  'A partir de él, la iglesia gestiona sus propios usuarios.',
-                  style: textTheme.bodySmall?.copyWith(color: secondaryText),
+                const SizedBox(height: Spacing.sm),
+                CustomTextFormField(
+                  controller: _address,
+                  labelText: 'Dirección (opcional)',
                 ),
                 const SizedBox(height: Spacing.sm),
                 CustomTextFormField(
-                  controller: _adminUsername,
-                  labelText: 'Usuario administrador',
-                  hintText: 'Único entre todas las iglesias',
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Obligatorio' : null,
+                  controller: _email,
+                  labelText: 'Correo (opcional)',
+                  keyboardType: TextInputType.emailAddress,
                 ),
+                if (!widget.isEditing) ...[
+                  const SizedBox(height: Spacing.lg),
+                  Text('Administrador inicial', style: textTheme.titleSmall),
+                  const SizedBox(height: Spacing.xxs),
+                  Text(
+                    'A partir de él, la iglesia gestiona sus propios usuarios.',
+                    style: textTheme.bodySmall?.copyWith(color: secondaryText),
+                  ),
+                  const SizedBox(height: Spacing.sm),
+                  CustomTextFormField(
+                    controller: _adminUsername,
+                    labelText: 'Usuario administrador',
+                    hintText: 'Único entre todas las iglesias',
+                    validator: (value) =>
+                        (value == null || value.trim().isEmpty) ? 'Obligatorio' : null,
+                  ),
+                ],
                 if (tenants.error != null) ...[
                   const SizedBox(height: Spacing.md),
                   Text(
@@ -139,7 +178,7 @@ class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
           child: const Text('Cancelar'),
         ),
         Button(
-          text: 'Dar de alta',
+          text: widget.isEditing ? 'Guardar' : 'Dar de alta',
           isLoading: _submitting,
           size: const Size(160, 44),
           onPressed: _submitting ? () {} : () => _submit(tenants),
@@ -151,17 +190,67 @@ class _ChurchProvisionDialogState extends State<ChurchProvisionDialog> {
   Future<void> _submit(TenantProvider tenants) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _submitting = true);
-    final result = await tenants.provisionChurch(
-      name: _name.text.trim(),
-      shortName: _shortName.text.trim(),
-      slug: _slug.text.trim(),
-      adminUsername: _adminUsername.text.trim(),
-      phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-    );
+
+    final Object? outcome = widget.isEditing
+        ? await _saveEdit(tenants)
+        : await tenants.provisionChurch(
+            name: _name.text.trim(),
+            shortName: _shortName.text.trim(),
+            slug: _slug.text.trim(),
+            adminUsername: _adminUsername.text.trim(),
+            phone: _emptyToNull(_phone),
+            address: _emptyToNull(_address),
+            email: _emptyToNull(_email),
+          );
+
     if (!mounted) return;
     setState(() => _submitting = false);
-    if (result != null) Navigator.of(context).pop(result);
+    if (outcome != null && outcome != false) Navigator.of(context).pop(outcome);
   }
+
+  Future<bool> _saveEdit(TenantProvider tenants) {
+    return tenants.updateChurch(
+      churchId: widget.church!.id,
+      name: _name.text.trim(),
+      shortName: _shortName.text.trim(),
+      phone: _emptyToNull(_phone),
+      address: _emptyToNull(_address),
+      email: _emptyToNull(_email),
+    );
+  }
+
+  String? _emptyToNull(TextEditingController controller) =>
+      controller.text.trim().isEmpty ? null : controller.text.trim();
+}
+
+/// Abre el alta y devuelve las credenciales del administrador inicial, o nulo si se canceló.
+Future<ChurchProvisionResult?> showChurchProvisionDialog(
+  BuildContext context,
+  TenantProvider tenants,
+) {
+  return showDialog<ChurchProvisionResult>(
+    context: context,
+    builder: (_) => ChangeNotifierProvider<TenantProvider>.value(
+      value: tenants,
+      child: const ChurchFormDialog(),
+    ),
+  );
+}
+
+/// Abre la edición y devuelve si se guardó.
+Future<bool> showChurchEditDialog(
+  BuildContext context,
+  TenantProvider tenants,
+  TenantModel church,
+) async {
+  final saved = await showDialog<bool>(
+    context: context,
+    builder: (_) => ChangeNotifierProvider<TenantProvider>.value(
+      value: tenants,
+      child: ChurchFormDialog(church: church),
+    ),
+  );
+  return saved ?? false;
 }
 
 /// La contraseña sólo se muestra aquí: no se guarda en claro en ningún sitio y el servidor no la

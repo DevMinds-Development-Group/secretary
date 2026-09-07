@@ -119,6 +119,50 @@ class TenantProvider with ChangeNotifier {
     }
   }
 
+  /// Datos de contacto y nombres. El identificador corto no se puede cambiar: viaja en enlaces y
+  /// en la cabecera con la que el Ministerio consulta una iglesia.
+  Future<bool> updateChurch({
+    required String churchId,
+    required String name,
+    required String shortName,
+    String? address,
+    String? phone,
+    String? email,
+  }) async {
+    _error = null;
+    try {
+      await _apiClient.dio.put(
+        '/tenants/$churchId',
+        data: {
+          'name': name,
+          'shortName': shortName.isEmpty ? name : shortName,
+          // El servidor exige el slug en la petición aunque no lo cambie, así que se manda el
+          // que ya tiene.
+          'slug': _slugOf(churchId),
+          // Cadena vacía y no nulo: el servidor ignora los campos nulos al actualizar, así que
+          // mandar nulo haría imposible borrar un teléfono o una dirección.
+          'address': address ?? '',
+          'phone': phone ?? '',
+          'email': email ?? '',
+        },
+      );
+      await fetchChurches();
+      return true;
+    } on DioException catch (e) {
+      _error = (e.response?.data is Map ? e.response?.data['message'] : null) ??
+          'No se pudo guardar la iglesia';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  String _slugOf(String churchId) {
+    for (final church in _churches) {
+      if (church.id == churchId) return church.slug;
+    }
+    return '';
+  }
+
   Future<bool> updateStatus(String churchId, bool enabled) async {
     try {
       await _apiClient.dio.patch(

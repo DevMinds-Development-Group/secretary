@@ -16,7 +16,7 @@ import '../../widgets/states/app_skeleton.dart';
 import '../../widgets/states/empty_state.dart';
 import '../../widgets/states/error_state.dart';
 import '../../widgets/status_pill.dart';
-import 'church_provision_dialog.dart';
+import 'church_form_dialog.dart';
 
 /// Administración de iglesias. Es una pantalla del Ministerio: una iglesia no administra a las
 /// demás, y el servidor lo rechaza con 403 aunque se llegue hasta aquí.
@@ -152,6 +152,7 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
         separatorBuilder: (_, __) => const SizedBox(height: Spacing.sm),
         itemBuilder: (_, index) => _ChurchCard(
           church: visible[index],
+          onEdit: () => _openEditDialog(tenants, visible[index]),
           onStatusChanged: (enabled) => _confirmStatusChange(tenants, visible[index], enabled),
         ),
       ),
@@ -200,15 +201,18 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
   }
 
   Future<void> _openProvisionDialog(TenantProvider tenants) async {
-    final result = await showDialog<ChurchProvisionResult>(
-      context: context,
-      builder: (_) => ChangeNotifierProvider<TenantProvider>.value(
-        value: tenants,
-        child: const ChurchProvisionDialog(),
-      ),
-    );
+    final result = await showChurchProvisionDialog(context, tenants);
     if (result != null && mounted) {
       await showChurchCredentialDialog(context, result);
+    }
+  }
+
+  Future<void> _openEditDialog(TenantProvider tenants, TenantModel church) async {
+    final saved = await showChurchEditDialog(context, tenants, church);
+    if (saved && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${church.displayName} actualizada')),
+      );
     }
   }
 }
@@ -216,9 +220,14 @@ class _ChurchesScreenState extends State<ChurchesScreen> {
 /// Ficha de una iglesia, con el mismo lenguaje visual que las tarjetas de asistencia.
 class _ChurchCard extends StatelessWidget {
   final TenantModel church;
+  final VoidCallback onEdit;
   final ValueChanged<bool> onStatusChanged;
 
-  const _ChurchCard({required this.church, required this.onStatusChanged});
+  const _ChurchCard({
+    required this.church,
+    required this.onEdit,
+    required this.onStatusChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -260,6 +269,13 @@ class _ChurchCard extends StatelessWidget {
           ),
           const SizedBox(width: Spacing.md),
           church.enabled ? StatusPill.active() : StatusPill.inactive('Deshabilitada'),
+          // No se usa ActionButtons: se oculta en modo consulta —que es el del Ministerio— y aquí
+          // no hay borrado, sólo baja lógica con el interruptor.
+          IconButton(
+            icon: Icon(Icons.edit_outlined, color: primaryColor.withValues(alpha: 0.8)),
+            tooltip: 'Editar',
+            onPressed: onEdit,
+          ),
           Switch(
             value: church.enabled,
             onChanged: onStatusChanged,

@@ -53,7 +53,16 @@ Ponerlo ahí y no en cada pantalla es lo que evita que se olvide en la próxima 
 ## Administración de iglesias
 
 `screens/admin/churches.dart`, accesible desde Administración y sólo visible para el Ministerio.
-Permite dar de alta una iglesia con su administrador inicial y habilitarlas o deshabilitarlas.
+Permite dar de alta una iglesia con su administrador inicial, editar sus datos y habilitarlas o
+deshabilitarlas.
+
+El alta y la edición comparten formulario (`church_form_dialog.dart`) porque comparten campos. Lo
+que sólo existe al dar de alta es el **identificador corto** —al editar se muestra pero no se toca,
+porque viaja en enlaces y en la cabecera con la que el Ministerio consulta una iglesia— y el
+usuario administrador inicial.
+
+Al editar, los campos opcionales se mandan como cadena vacía y no como nulo: el servidor ignora los
+nulos al actualizar, así que mandar nulo haría imposible borrar un teléfono o una dirección.
 
 La **contraseña de un solo uso** del administrador se muestra una vez, en un diálogo que hay que
 cerrar a conciencia: no se guarda en claro en ningún sitio y el servidor no la puede volver a
